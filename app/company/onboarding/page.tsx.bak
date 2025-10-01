@@ -1,0 +1,564 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import Header from '@/components/Header';
+import { 
+  Building2, 
+  ArrowRight, 
+  Check, 
+  Upload, 
+  Globe, 
+  Users, 
+  MapPin,
+  Calendar,
+  DollarSign,
+  TrendingUp,
+  Info,
+  ChevronLeft,
+  ChevronRight,
+  Briefcase,
+  Code,
+  Heart
+} from 'lucide-react';
+import { industries, locations } from '@/lib/data';
+import { FirebaseCompany, createCompanyProfile } from '@/lib/firebase';
+
+export default function CompanyOnboardingPage() {
+  const router = useRouter();
+  const [currentStep, setCurrentStep] = useState(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);  
+  // 회사 정보 상태
+  const [companyData, setCompanyData] = useState<Partial<FirebaseCompany>>({
+    name: '',
+    nameEn: '',
+    industry: '',
+    location: '',
+    employeeCount: '',
+    description: '',
+    established: '',
+    website: '',
+    email: '',
+    phone: '',
+    ceo: '',
+    slogan: '',
+    vision: '',
+    mission: '',
+    techStack: [],
+    benefits: []
+  });
+
+  const [techInput, setTechInput] = useState('');
+  const [benefitInput, setBenefitInput] = useState('');
+
+  const totalSteps = 4;
+
+  const handleInputChange = (field: string, value: any) => {
+    setCompanyData(prev => ({
+      ...prev,
+      [field]: value
+    }));  };
+
+  const handleNext = () => {
+    if (validateCurrentStep()) {
+      if (currentStep < totalSteps) {
+        setCurrentStep(currentStep + 1);
+      } else {
+        handleSubmit();
+      }
+    }
+  };
+
+  const handlePrev = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
+
+  const validateCurrentStep = () => {
+    switch (currentStep) {
+      case 1:
+        return companyData.name && companyData.nameEn && companyData.industry && companyData.location;
+      case 2:
+        return companyData.employeeCount && companyData.established && companyData.ceo;
+      case 3:
+        return companyData.description && companyData.slogan;
+      case 4:
+        return true;
+      default:
+        return false;
+    }  };
+
+  const handleAddTech = () => {
+    if (techInput.trim()) {
+      setCompanyData(prev => ({
+        ...prev,
+        techStack: [...(prev.techStack || []), techInput.trim()]
+      }));
+      setTechInput('');
+    }
+  };
+
+  const handleRemoveTech = (tech: string) => {
+    setCompanyData(prev => ({
+      ...prev,
+      techStack: prev.techStack?.filter(t => t !== tech) || []
+    }));
+  };
+
+  const handleAddBenefit = () => {
+    if (benefitInput.trim()) {
+      setCompanyData(prev => ({
+        ...prev,
+        benefits: [...(prev.benefits || []), benefitInput.trim()]
+      }));
+      setBenefitInput('');
+    }
+  };
+
+  const handleRemoveBenefit = (benefit: string) => {
+    setCompanyData(prev => ({      ...prev,
+      benefits: prev.benefits?.filter(b => b !== benefit) || []
+    }));
+  };
+
+  const handleSubmit = async () => {
+    setIsSubmitting(true);
+    try {
+      // Firebase에 회사 정보 저장
+      await createCompanyProfile({
+        ...companyData,
+        rating: 0,
+        reviewCount: 0,
+        openPositions: 0,
+        isVerified: false,
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      });
+      
+      // 대시보드로 이동
+      router.push('/company/dashboard');
+    } catch (error) {
+      console.error('Error creating company profile:', error);
+      alert('회사 정보 저장 중 오류가 발생했습니다.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const renderStepContent = () => {
+    switch (currentStep) {
+      case 1:
+        return (
+          <div className="space-y-6">
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">기본 정보</h2>
+            <p className="text-gray-600 mb-8">회사의 기본 정보를 입력해주세요.</p>
+            
+            <div className="grid md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  회사명 (한글) *
+                </label>
+                <input
+                  type="text"
+                  value={companyData.name}
+                  onChange={(e) => handleInputChange('name', e.target.value)}
+                  placeholder="예: 삼성전자"
+                  className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  회사명 (영문) *
+                </label>
+                <input
+                  type="text"
+                  value={companyData.nameEn}
+                  onChange={(e) => handleInputChange('nameEn', e.target.value)}
+                  placeholder="예: Samsung Electronics"                  className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  산업 분야 *
+                </label>
+                <select
+                  value={companyData.industry}
+                  onChange={(e) => handleInputChange('industry', e.target.value)}
+                  className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
+                >
+                  <option value="">선택하세요</option>
+                  {industries.map(industry => (
+                    <option key={industry} value={industry}>{industry}</option>
+                  ))}
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  본사 위치 *
+                </label>
+                <select
+                  value={companyData.location}
+                  onChange={(e) => handleInputChange('location', e.target.value)}
+                  className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
+                >
+                  <option value="">선택하세요</option>                  {locations.map(location => (
+                    <option key={location} value={location}>{location}</option>
+                  ))}
+                </select>
+              </div>
+              
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  이메일 *
+                </label>
+                <input
+                  type="email"
+                  value={companyData.email}
+                  onChange={(e) => handleInputChange('email', e.target.value)}
+                  placeholder="company@example.com"
+                  className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
+                />
+              </div>
+              
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  전화번호
+                </label>
+                <input
+                  type="tel"
+                  value={companyData.phone}
+                  onChange={(e) => handleInputChange('phone', e.target.value)}
+                  placeholder="02-1234-5678"
+                  className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
+                />              </div>
+            </div>
+          </div>
+        );
+      
+      case 2:
+        return (
+          <div className="space-y-6">
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">회사 상세 정보</h2>
+            <p className="text-gray-600 mb-8">회사의 상세 정보를 입력해주세요.</p>
+            
+            <div className="grid md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  직원 수 *
+                </label>
+                <select
+                  value={companyData.employeeCount}
+                  onChange={(e) => handleInputChange('employeeCount', e.target.value)}
+                  className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
+                >
+                  <option value="">선택하세요</option>
+                  <option value="1-10">1-10명</option>
+                  <option value="11-50">11-50명</option>
+                  <option value="51-200">51-200명</option>
+                  <option value="201-500">201-500명</option>
+                  <option value="501-1000">501-1000명</option>
+                  <option value="1000-3000">1,000-3,000명</option>
+                  <option value="3000-10000">3,000-10,000명</option>                  <option value="10000+">10,000명 이상</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  설립연도 *
+                </label>
+                <input
+                  type="text"
+                  value={companyData.established}
+                  onChange={(e) => handleInputChange('established', e.target.value)}
+                  placeholder="예: 2015"
+                  className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  대표자명 *
+                </label>
+                <input
+                  type="text"
+                  value={companyData.ceo}
+                  onChange={(e) => handleInputChange('ceo', e.target.value)}
+                  placeholder="예: 홍길동"
+                  className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
+                />
+              </div>              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  웹사이트
+                </label>
+                <input
+                  type="url"
+                  value={companyData.website}
+                  onChange={(e) => handleInputChange('website', e.target.value)}
+                  placeholder="https://example.com"
+                  className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  매출 (선택)
+                </label>
+                <input
+                  type="text"
+                  value={companyData.revenue}
+                  onChange={(e) => handleInputChange('revenue', e.target.value)}
+                  placeholder="예: 1,200억원"
+                  className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">                  투자 유치 (선택)
+                </label>
+                <input
+                  type="text"
+                  value={companyData.funding}
+                  onChange={(e) => handleInputChange('funding', e.target.value)}
+                  placeholder="예: Series C (500억원)"
+                  className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
+                />
+              </div>
+            </div>
+          </div>
+        );
+        
+      case 3:
+        return (
+          <div className="space-y-6">
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">회사 소개</h2>
+            <p className="text-gray-600 mb-8">회사의 비전과 소개를 작성해주세요.</p>
+            
+            <div className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  회사 소개 *
+                </label>
+                <textarea
+                  value={companyData.description}
+                  onChange={(e) => handleInputChange('description', e.target.value)}
+                  placeholder="회사에 대한 간단한 소개를 입력해주세요."                  rows={4}
+                  className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  슬로건 *
+                </label>
+                <input
+                  type="text"
+                  value={companyData.slogan}
+                  onChange={(e) => handleInputChange('slogan', e.target.value)}
+                  placeholder="예: 혁신과 도전으로 더 나은 세상을 만들어갑니다"
+                  className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  비전
+                </label>
+                <textarea
+                  value={companyData.vision}
+                  onChange={(e) => handleInputChange('vision', e.target.value)}
+                  placeholder="회사의 비전을 입력해주세요."
+                  rows={3}
+                  className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
+                />              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  미션
+                </label>
+                <textarea
+                  value={companyData.mission}
+                  onChange={(e) => handleInputChange('mission', e.target.value)}
+                  placeholder="회사의 미션을 입력해주세요."
+                  rows={3}
+                  className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
+                />
+              </div>
+            </div>
+          </div>
+        );
+        
+      case 4:
+        return (
+          <div className="space-y-6">
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">기술 스택 & 복지</h2>
+            <p className="text-gray-600 mb-8">사용하는 기술 스택과 제공하는 복지를 입력해주세요.</p>
+            
+            <div className="space-y-8">
+              {/* 기술 스택 */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-3">
+                  기술 스택                </label>
+                <div className="flex gap-2 mb-3">
+                  <input
+                    type="text"
+                    value={techInput}
+                    onChange={(e) => setTechInput(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddTech())}
+                    placeholder="예: React, Node.js, Python"
+                    className="flex-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddTech}
+                    className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+                  >
+                    추가
+                  </button>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {companyData.techStack?.map(tech => (
+                    <span key={tech} className="px-3 py-1 bg-gray-100 rounded-full text-sm flex items-center gap-1">
+                      {tech}
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveTech(tech)}
+                        className="text-gray-500 hover:text-red-500"
+                      >
+                        ×
+                      </button>
+                    </span>                  ))}
+                </div>
+              </div>
+              
+              {/* 복지 */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-3">
+                  주요 복지
+                </label>
+                <div className="flex gap-2 mb-3">
+                  <input
+                    type="text"
+                    value={benefitInput}
+                    onChange={(e) => setBenefitInput(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddBenefit())}
+                    placeholder="예: 4대보험, 재택근무, 스톡옵션"
+                    className="flex-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddBenefit}
+                    className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+                  >
+                    추가
+                  </button>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {companyData.benefits?.map(benefit => (
+                    <span key={benefit} className="px-3 py-1 bg-green-50 border border-green-200 rounded-full text-sm flex items-center gap-1">                      {benefit}
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveBenefit(benefit)}
+                        className="text-gray-500 hover:text-red-500"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+        
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Header />
+      
+      <div className="container mx-auto px-4 lg:px-8 py-12">
+        <div className="max-w-4xl mx-auto">
+          {/* Progress Steps */}
+          <div className="mb-12">
+            <div className="flex items-center justify-between">              {[1, 2, 3, 4].map((step, index) => (
+                <React.Fragment key={step}>
+                  <div className="flex flex-col items-center">
+                    <div
+                      className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                        currentStep >= step
+                          ? 'bg-primary-600 text-white'
+                          : 'bg-gray-200 text-gray-500'
+                      }`}
+                    >
+                      {currentStep > step ? (
+                        <Check className="w-5 h-5" />
+                      ) : (
+                        <span>{step}</span>
+                      )}
+                    </div>
+                    <span className="mt-2 text-xs text-gray-600">
+                      {step === 1 && '기본 정보'}
+                      {step === 2 && '상세 정보'}
+                      {step === 3 && '회사 소개'}
+                      {step === 4 && '기술 & 복지'}
+                    </span>
+                  </div>
+                  {index < 3 && (
+                    <div
+                      className={`flex-1 h-1 ${
+                        currentStep > step ? 'bg-primary-600' : 'bg-gray-200'
+                      }`}
+                    />
+                  )}                </React.Fragment>
+              ))}
+            </div>
+          </div>
+
+          {/* Form Content */}
+          <div className="bg-white rounded-xl shadow-sm p-8">
+            {renderStepContent()}
+            
+            {/* Navigation Buttons */}
+            <div className="mt-10 flex justify-between">
+              <button
+                type="button"
+                onClick={handlePrev}
+                disabled={currentStep === 1}
+                className={`flex items-center gap-2 px-6 py-2 rounded-lg ${
+                  currentStep === 1
+                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+              >
+                <ChevronLeft className="w-4 h-4" />
+                이전
+              </button>
+              
+              <button
+                type="button"
+                onClick={handleNext}
+                disabled={isSubmitting}
+                className="flex items-center gap-2 px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50"
+              >                {currentStep === totalSteps ? (
+                  isSubmitting ? '저장 중...' : '완료'
+                ) : (
+                  '다음'
+                )}
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

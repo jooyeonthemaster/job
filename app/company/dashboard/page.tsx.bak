@@ -1,0 +1,290 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import Header from '@/components/Header';
+import { 
+  Building2, 
+  Edit, 
+  Eye,
+  Star,
+  Users,
+  Briefcase,
+  TrendingUp,
+  BarChart3,
+  PieChart,
+  MapPin,
+  Calendar,
+  DollarSign,
+  Globe,
+  Award,
+  Settings,
+  Plus,
+  ChevronRight,
+  ExternalLink,
+  MessageSquare
+} from 'lucide-react';
+import { FirebaseCompany, getCompanyProfile } from '@/lib/firebase';
+
+export default function CompanyDashboard() {
+  const router = useRouter();  const [company, setCompany] = useState<FirebaseCompany | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('overview');
+
+  // Mock data - 실제로는 Firebase에서 가져와야 함
+  useEffect(() => {
+    const fetchCompanyData = async () => {
+      try {
+        // 실제로는 현재 로그인한 사용자의 UID를 사용해야 함
+        const mockCompany: FirebaseCompany = {
+          id: '1',
+          uid: 'mock-uid',
+          name: '테스트 기업',
+          nameEn: 'Test Company',
+          logo: '',
+          industry: 'Technology',
+          location: '서울 강남구',
+          employeeCount: '51-200',
+          description: '혁신적인 기술 기업입니다.',
+          rating: 4.5,
+          reviewCount: 23,
+          openPositions: 5,
+          benefits: ['4대보험', '재택근무', '스톡옵션', '유연근무'],
+          techStack: ['React', 'Node.js', 'TypeScript', 'AWS'],
+          established: '2020',
+          email: 'contact@testcompany.com',
+          phone: '02-1234-5678',
+          ceo: '홍길동',
+          slogan: '혁신으로 미래를 만들어갑니다',
+          vision: '글로벌 기술 리더',          mission: '기술로 더 나은 세상을 만듭니다',
+          website: 'https://testcompany.com',
+          revenue: '100억원',
+          funding: 'Series A (50억원)',
+          growthRate: 45,
+          turnoverRate: 8,
+          recommendRate: 92,
+          interviewDifficulty: 3.5,
+          createdAt: '2024-01-01',
+          updatedAt: '2024-09-20',
+          isVerified: true,
+          isActive: true,
+          stats: {
+            currentEmployees: 120,
+            lastYearEmployees: 85,
+            avgSalary: 5500,
+            avgTenure: 2.3,
+            femaleRatio: 35,
+            foreignerRatio: 12
+          }
+        };
+        
+        setCompany(mockCompany);
+      } catch (error) {
+        console.error('Error fetching company data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCompanyData();  }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">로딩 중...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!company) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600">회사 정보를 불러올 수 없습니다.</p>
+        </div>
+      </div>
+    );
+  }
+
+  const stats = [
+    {
+      label: '채용 중인 포지션',
+      value: company.openPositions || 0,
+      icon: Briefcase,
+      color: 'text-blue-600',
+      bgColor: 'bg-blue-50'
+    },    {
+      label: '전체 직원 수',
+      value: company.stats?.currentEmployees || 0,
+      icon: Users,
+      color: 'text-green-600',
+      bgColor: 'bg-green-50'
+    },
+    {
+      label: '평균 평점',
+      value: company.rating || 0,
+      icon: Star,
+      color: 'text-yellow-600',
+      bgColor: 'bg-yellow-50'
+    },
+    {
+      label: '성장률',
+      value: `${company.growthRate || 0}%`,
+      icon: TrendingUp,
+      color: 'text-purple-600',
+      bgColor: 'bg-purple-50'
+    }
+  ];
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Header />
+      
+      <div className="container mx-auto px-4 lg:px-8 py-8">
+        {/* Dashboard Header */}
+        <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
+          <div className="flex items-start justify-between">            <div className="flex items-start gap-6">
+              <div className="w-24 h-24 rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center shrink-0">
+                <Building2 className="w-12 h-12 text-gray-500" />
+              </div>
+              
+              <div>
+                <div className="flex items-center gap-3 mb-2">
+                  <h1 className="text-2xl font-bold text-gray-900">{company.name}</h1>
+                  {company.isVerified && (
+                    <span className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full flex items-center gap-1">
+                      <Award className="w-3 h-3" />
+                      인증됨
+                    </span>
+                  )}
+                </div>
+                <p className="text-gray-600">{company.nameEn}</p>
+                
+                <div className="flex flex-wrap items-center gap-4 mt-4 text-sm text-gray-600">
+                  <span className="flex items-center gap-1">
+                    <MapPin className="w-4 h-4" />
+                    {company.location}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Calendar className="w-4 h-4" />
+                    {company.established}년 설립
+                  </span>
+                  <span className="flex items-center gap-1">                    <Globe className="w-4 h-4" />
+                    {company.industry}
+                  </span>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex gap-3">
+              <Link
+                href={`/companies/${company.id}`}
+                className="flex items-center gap-2 px-4 py-2 border rounded-lg hover:bg-gray-50"
+              >
+                <Eye className="w-4 h-4" />
+                프로필 보기
+              </Link>
+              <Link
+                href="/company/edit"
+                className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+              >
+                <Edit className="w-4 h-4" />
+                정보 수정
+              </Link>
+              <Link
+                href="/company/jobs/new"
+                className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+              >
+                <Plus className="w-4 h-4" />
+                채용공고 등록              </Link>
+            </div>
+          </div>
+        </div>
+
+        {/* Stats Grid */}
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+          {stats.map((stat, index) => (
+            <div key={index} className="bg-white rounded-xl shadow-sm p-6">
+              <div className="flex items-start justify-between mb-4">
+                <div className={`p-3 rounded-lg ${stat.bgColor}`}>
+                  <stat.icon className={`w-6 h-6 ${stat.color}`} />
+                </div>
+                <ChevronRight className="w-5 h-5 text-gray-400" />
+              </div>
+              <p className="text-sm text-gray-600 mb-1">{stat.label}</p>
+              <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Tab Navigation */}
+        <div className="bg-white rounded-xl shadow-sm mb-6">
+          <div className="border-b">
+            <div className="flex gap-6 px-6">
+              {['overview', 'jobs', 'applications', 'analytics', 'settings'].map((tab) => (
+                <button
+                  key={tab}                  onClick={() => setActiveTab(tab)}
+                  className={`py-4 px-2 border-b-2 font-medium text-sm transition-colors ${
+                    activeTab === tab
+                      ? 'border-primary-600 text-primary-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  {tab === 'overview' && '개요'}
+                  {tab === 'jobs' && '채용공고'}
+                  {tab === 'applications' && '지원현황'}
+                  {tab === 'analytics' && '분석'}
+                  {tab === 'settings' && '설정'}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Tab Content */}
+          <div className="p-6">
+            {activeTab === 'overview' && (
+              <div className="space-y-6">
+                {/* Company Info */}
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">회사 정보</h3>
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-500 mb-2">슬로건</h4>
+                      <p className="text-gray-900">{company.slogan || '-'}</p>                    </div>
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-500 mb-2">비전</h4>
+                      <p className="text-gray-900">{company.vision || '-'}</p>
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-500 mb-2">미션</h4>
+                      <p className="text-gray-900">{company.mission || '-'}</p>
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-500 mb-2">대표자</h4>
+                      <p className="text-gray-900">{company.ceo || '-'}</p>
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-500 mb-2">웹사이트</h4>
+                      <a href={company.website} target="_blank" rel="noopener noreferrer" 
+                         className="text-primary-600 hover:underline flex items-center gap-1">
+                        {company.website || '-'}
+                        {company.website && <ExternalLink className="w-3 h-3" />}
+                      </a>
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-500 mb-2">매출</h4>
+                      <p className="text-gray-900">{company.revenue || '-'}</p>
+                    </div>
+                  </div>
+                </div>              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

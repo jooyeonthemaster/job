@@ -36,9 +36,11 @@ import {
   DollarSign,
   FileText,
   Building,
-  GraduationCap
+  GraduationCap,
+  Target
 } from 'lucide-react';
 import { getTalentById, getSimilarTalents, type TalentProfile } from '@/lib/talentData';
+import { getJobseekerProfile, JobseekerProfile } from '@/lib/firebase/jobseeker-service';
 
 export default function TalentDetailPage() {
   const params = useParams();
@@ -48,23 +50,119 @@ export default function TalentDetailPage() {
   const [activeTab, setActiveTab] = useState('overview');
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [showContactModal, setShowContactModal] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [isRealData, setIsRealData] = useState(false);
+
+  // JobseekerProfile을 TalentProfile로 변환
+  const convertJobseekerToTalent = (js: JobseekerProfile): TalentProfile => {
+    return {
+      id: js.uid,
+      name: js.fullName || 'Unknown',
+      title: js.headline || js.desiredPositions?.[0] || 'Job Seeker',
+      nationality: 'Korea',
+      location: js.preferredLocations?.[0] || 'Not specified',
+      experience: js.experiences && js.experiences.length > 0
+        ? Math.round(js.experiences.reduce((total, exp) => {
+            const start = new Date(exp.startDate);
+            const end = exp.current ? new Date() : new Date(exp.endDate);
+            const years = (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24 * 365);
+            return total + years;
+          }, 0))
+        : 0,
+      skills: js.skills || [],
+      rating: undefined,
+      availability: 'Available',
+      expectedSalary: js.salaryRange ? {
+        min: typeof js.salaryRange.min === 'string' ? parseInt(js.salaryRange.min) * 10000 : js.salaryRange.min,
+        max: typeof js.salaryRange.max === 'string' ? parseInt(js.salaryRange.max) * 10000 : js.salaryRange.max
+      } : { min: 0, max: 0 },
+      languages: js.languages?.map(lang => ({
+        language: lang,
+        level: 'Fluent' as const
+      })) || [],
+      profileImage: js.profileImageUrl,
+      aboutMe: js.introduction,
+      workExperience: js.experiences?.map(exp => ({
+        company: exp.company,
+        position: exp.position,
+        location: 'Korea',
+        startDate: exp.startDate,
+        endDate: exp.endDate,
+        current: exp.current,
+        description: exp.description,
+        achievements: [],
+        technologies: []
+      })),
+      education: js.educations?.map(edu => ({
+        institution: edu.school,
+        degree: edu.degree,
+        field: edu.field,
+        location: 'Korea',
+        startYear: parseInt(edu.startYear) || 0,
+        endYear: edu.endYear ? parseInt(edu.endYear) : undefined,
+        current: edu.current,
+        gpa: undefined
+      })),
+      visaStatus: js.visaSponsorship ? '비자 후원 필요' : undefined,
+      desiredPositions: js.desiredPositions,
+      preferredLocations: js.preferredLocations,
+      workType: js.workType,
+      companySize: js.companySize,
+      remoteWork: js.remoteWork,
+      visaSponsorship: js.visaSponsorship
+    };
+  };
 
   useEffect(() => {
-    if (params?.id) {
-      const profileData = getTalentById(params.id as string);
-      if (profileData) {
-        setTalent(profileData);
-        setSimilarTalents(getSimilarTalents(params.id as string));
-      } else {
-        router.push('/talent');
+    const loadProfile = async () => {
+      if (params?.id) {
+        setLoading(true);
+        
+        // 먼저 더미 데이터에서 찾기
+        const dummyProfile = getTalentById(params.id as string);
+        if (dummyProfile) {
+          setTalent(dummyProfile);
+          setSimilarTalents(getSimilarTalents(params.id as string));
+          setIsRealData(false);
+          setLoading(false);
+          return;
+        }
+        
+        // 더미 데이터에 없으면 Firebase에서 찾기
+        try {
+          const jobseekerProfile = await getJobseekerProfile(params.id as string);
+          if (jobseekerProfile) {
+            const convertedProfile = convertJobseekerToTalent(jobseekerProfile);
+            setTalent(convertedProfile);
+            setSimilarTalents([]);
+            setIsRealData(true);
+            console.log('✅ Loaded real jobseeker profile:', convertedProfile);
+          } else {
+            console.error('Profile not found');
+            router.push('/talent');
+          }
+        } catch (error) {
+          console.error('Error loading profile:', error);
+          router.push('/talent');
+        } finally {
+          setLoading(false);
+        }
       }
-    }
+    };
+    
+    loadProfile();
   }, [params?.id, router]);
 
-  if (!talent) {
+  if (loading || !talent) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <div className="flex items-center justify-center h-96">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
+            <p className="text-gray-500">프로필을 불러오는 중...</p>
+          </div>
+        </div>
       </div>
     );
   }
@@ -109,13 +207,21 @@ export default function TalentDetailPage() {
       {/* Back Navigation */}
       <div className="bg-white border-b">
         <div className="container mx-auto px-4 lg:px-8 py-4">
-          <Link 
-            href="/talent"
-            className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span>인재 목록으로 돌아가기</span>
-          </Link>
+          <div className="flex items-center justify-between">
+            <Link 
+              href="/talent"
+              className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>인재 목록으로 돌아가기</span>
+            </Link>
+            {isRealData && (
+              <span className="inline-flex items-center gap-1 px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
+                <Database className="w-3 h-3" />
+                실제 Firebase 데이터
+              </span>
+            )}
+          </div>
         </div>
       </div>
 
@@ -130,9 +236,19 @@ export default function TalentDetailPage() {
             <div className="flex flex-col lg:flex-row gap-6">
               {/* Profile Image */}
               <div className="shrink-0">
-                <div className="w-32 h-32 rounded-2xl bg-gradient-to-br from-primary-100 to-primary-200 shadow-lg flex items-center justify-center text-3xl font-bold text-primary-700">
-                  {talent.name.split(' ').map(n => n[0]).join('')}
-                </div>
+                {talent.profileImage ? (
+                  <div className="w-32 h-32 rounded-2xl overflow-hidden shadow-lg">
+                    <img 
+                      src={talent.profileImage} 
+                      alt={talent.name}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                ) : (
+                  <div className="w-32 h-32 rounded-2xl bg-gradient-to-br from-primary-100 to-primary-200 shadow-lg flex items-center justify-center text-3xl font-bold text-primary-700">
+                    {talent.name.split(' ').map(n => n[0]).join('')}
+                  </div>
+                )}
               </div>
 
               {/* Profile Info */}
@@ -195,39 +311,32 @@ export default function TalentDetailPage() {
                         className="px-6 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
                       >
                         <MessageCircle className="w-4 h-4" />
-                        연락하기
+                        채용 신청하기
                       </button>
-                      <button className="px-6 py-2.5 border border-gray-300 hover:bg-gray-50 rounded-lg font-medium transition-colors flex items-center justify-center gap-2">
-                        <FileText className="w-4 h-4" />
-                        이력서 다운로드
+                      <button 
+                        onClick={() => setIsBookmarked(!isBookmarked)}
+                        className={`px-6 py-2.5 border rounded-lg font-medium transition-colors flex items-center justify-center gap-2 ${
+                          isBookmarked 
+                            ? 'bg-red-50 border-red-200 text-red-600' 
+                            : 'border-gray-300 hover:bg-gray-50 text-gray-700'
+                        }`}
+                      >
+                        <Heart className={`w-4 h-4 ${isBookmarked ? 'fill-current' : ''}`} />
+                        {isBookmarked ? '관심 인재' : '관심 추가'}
                       </button>
-                      <div className="flex gap-2">
-                        <button 
-                          onClick={() => setIsBookmarked(!isBookmarked)}
-                          className={`px-3 py-2 border rounded-lg transition-colors flex items-center justify-center ${
-                            isBookmarked 
-                              ? 'bg-red-50 border-red-200 text-red-600' 
-                              : 'border-gray-300 hover:bg-gray-50'
-                          }`}
-                        >
-                          <Heart className={`w-4 h-4 ${isBookmarked ? 'fill-current' : ''}`} />
-                        </button>
-                        <button className="px-3 py-2 border border-gray-300 hover:bg-gray-50 rounded-lg transition-colors flex items-center justify-center">
-                          <Share2 className="w-4 h-4" />
-                        </button>
-                      </div>
                     </div>
                   </div>
 
                   {/* Salary Expectation */}
-                  <div className="mt-6 p-4 bg-gray-50 rounded-xl">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm text-gray-600 mb-1">희망 연봉</p>
-                        <p className="text-xl font-bold text-gray-900">
-                          {formatSalary(talent.expectedSalary.min, talent.expectedSalary.max)}
-                        </p>
-                      </div>
+                  {talent.expectedSalary && (
+                    <div className="mt-6 p-4 bg-gray-50 rounded-xl">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm text-gray-600 mb-1">희망 연봉</p>
+                          <p className="text-xl font-bold text-gray-900">
+                            {formatSalary(talent.expectedSalary.min, talent.expectedSalary.max)}
+                          </p>
+                        </div>
                       {talent.preferredWorkStyle && (
                         <div>
                           <p className="text-sm text-gray-600 mb-1">선호 근무 형태</p>
@@ -240,8 +349,9 @@ export default function TalentDetailPage() {
                           </div>
                         </div>
                       )}
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -256,10 +366,7 @@ export default function TalentDetailPage() {
               { id: 'overview', label: '개요', icon: FileText },
               { id: 'experience', label: '경력사항', icon: Briefcase },
               { id: 'education', label: '학력', icon: GraduationCap },
-              { id: 'skills', label: '기술스택', icon: Code },
-              { id: 'projects', label: '프로젝트', icon: BookOpen },
-              { id: 'reviews', label: '평가', icon: Star },
-              { id: 'certifications', label: '자격증', icon: Award }
+              { id: 'skills', label: '기술스택', icon: Code }
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -354,6 +461,83 @@ export default function TalentDetailPage() {
                       })}
                     </div>
                   </div>
+
+                  {/* 선호 조건 */}
+                  {(talent.desiredPositions || talent.workType || talent.companySize || talent.remoteWork || talent.preferredLocations) && (
+                    <div className="bg-white rounded-xl shadow-sm p-6">
+                      <h2 className="text-xl font-bold text-gray-900 mb-4">선호 조건</h2>
+                      <div className="space-y-4">
+                        {/* 희망 직무 */}
+                        {talent.desiredPositions && talent.desiredPositions.length > 0 && (
+                          <div>
+                            <p className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-1">
+                              <Target className="w-4 h-4" />
+                              희망 직무
+                            </p>
+                            <div className="flex flex-wrap gap-2">
+                              {talent.desiredPositions.map((pos: string) => (
+                                <span key={pos} className="px-3 py-1 bg-blue-100 text-blue-700 rounded-lg text-sm font-medium">
+                                  {pos}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* 희망 근무지 (전체) */}
+                        {talent.preferredLocations && talent.preferredLocations.length > 0 && (
+                          <div>
+                            <p className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-1">
+                              <MapPin className="w-4 h-4" />
+                              희망 근무지
+                            </p>
+                            <div className="flex flex-wrap gap-2">
+                              {talent.preferredLocations.map((loc: string) => (
+                                <span key={loc} className="px-3 py-1 bg-green-100 text-green-700 rounded-lg text-sm font-medium">
+                                  {loc}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="grid md:grid-cols-2 gap-4">
+                          {/* 고용 형태 */}
+                          {talent.workType && (
+                            <div>
+                              <p className="text-sm font-medium text-gray-700 mb-1 flex items-center gap-1">
+                                <Briefcase className="w-4 h-4" />
+                                고용 형태
+                              </p>
+                              <p className="text-sm text-gray-600">{talent.workType}</p>
+                            </div>
+                          )}
+
+                          {/* 회사 규모 */}
+                          {talent.companySize && (
+                            <div>
+                              <p className="text-sm font-medium text-gray-700 mb-1 flex items-center gap-1">
+                                <Building className="w-4 h-4" />
+                                선호 회사 규모
+                              </p>
+                              <p className="text-sm text-gray-600">{talent.companySize}</p>
+                            </div>
+                          )}
+
+                          {/* 재택근무 */}
+                          {talent.remoteWork && (
+                            <div>
+                              <p className="text-sm font-medium text-gray-700 mb-1">재택근무</p>
+                              <p className="text-sm text-gray-600">
+                                {talent.remoteWork === '완전' ? '완전 재택근무' :
+                                 talent.remoteWork === '부분' ? '부분 재택근무' : '재택근무 불가'}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </>
               )}
 
@@ -486,220 +670,11 @@ export default function TalentDetailPage() {
                 </div>
               )}
 
-              {/* Projects Section */}
-              {activeTab === 'projects' && talent.projects && (
-                <div className="space-y-6">
-                  <h2 className="text-2xl font-bold text-gray-900">프로젝트 포트폴리오</h2>
-                  {talent.projects.map((project) => (
-                    <div key={project.id} className="bg-white rounded-xl shadow-sm p-6">
-                      <div className="mb-4">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-1">{project.title}</h3>
-                        <div className="flex items-center gap-4 text-sm text-gray-600">
-                          <span className="font-medium text-primary-600">{project.role}</span>
-                          <span>{project.duration}</span>
-                          {project.teamSize && <span>팀 규모: {project.teamSize}명</span>}
-                        </div>
-                      </div>
-                      <p className="text-gray-600 mb-4">{project.description}</p>
-                      {project.client && (
-                        <p className="text-sm text-gray-600 mb-4">
-                          <span className="font-medium">클라이언트:</span> {project.client}
-                        </p>
-                      )}
-                      <div className="mb-4">
-                        <p className="text-sm font-medium text-gray-700 mb-2">주요 성과</p>
-                        <ul className="space-y-1">
-                          {project.outcomes.map((outcome, idx) => (
-                            <li key={idx} className="text-sm text-gray-600 flex items-start gap-2">
-                              <TrendingUp className="w-4 h-4 text-green-500 mt-0.5 shrink-0" />
-                              <span>{outcome}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        {project.technologies.map((tech) => (
-                          <span key={tech} className="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-lg">
-                            {tech}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Reviews Section */}
-              {activeTab === 'reviews' && talent.reviews && (
-                <div className="space-y-6">
-                  <div className="flex items-center justify-between">
-                    <h2 className="text-2xl font-bold text-gray-900">고객 평가</h2>
-                    <div className="flex items-center gap-2">
-                      <div className="flex items-center">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <Star 
-                            key={star} 
-                            className={`w-5 h-5 ${
-                              star <= Math.floor(talent.rating || 0) 
-                                ? 'fill-yellow-400 text-yellow-400' 
-                                : 'text-gray-300'
-                            }`} 
-                          />
-                        ))}
-                      </div>
-                      <span className="text-lg font-semibold text-gray-900">{talent.rating}</span>
-                      <span className="text-gray-600">({talent.reviews.length}개 리뷰)</span>
-                    </div>
-                  </div>
-                  
-                  {talent.reviews.map((review) => (
-                    <div key={review.id} className="bg-white rounded-xl shadow-sm p-6">
-                      <div className="flex items-start justify-between mb-4">
-                        <div>
-                          <div className="flex items-center gap-3 mb-2">
-                            <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-sm font-medium">
-                              {review.clientName.split(' ').map(n => n[0]).join('')}
-                            </div>
-                            <div>
-                              <p className="font-semibold text-gray-900">{review.clientName}</p>
-                              <p className="text-sm text-gray-600">{review.clientTitle} at {review.clientCompany}</p>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          {review.verified && (
-                            <span className="flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
-                              <Shield className="w-3 h-3" />
-                              인증됨
-                            </span>
-                          )}
-                          <div className="flex items-center">
-                            {[1, 2, 3, 4, 5].map((star) => (
-                              <Star 
-                                key={star} 
-                                className={`w-4 h-4 ${
-                                  star <= review.rating 
-                                    ? 'fill-yellow-400 text-yellow-400' 
-                                    : 'text-gray-300'
-                                }`} 
-                              />
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                      <p className="text-gray-600 mb-3">{review.comment}</p>
-                      <div className="flex items-center justify-between text-sm text-gray-500">
-                        <span>프로젝트: {review.projectTitle}</span>
-                        <span>{review.date}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Certifications Section */}
-              {activeTab === 'certifications' && talent.certifications && (
-                <div className="space-y-6">
-                  <h2 className="text-2xl font-bold text-gray-900">자격증 및 인증</h2>
-                  {talent.certifications.map((cert, idx) => (
-                    <div key={idx} className="bg-white rounded-xl shadow-sm p-6">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <h3 className="text-lg font-semibold text-gray-900 mb-1">{cert.name}</h3>
-                          <p className="text-gray-600 mb-2">{cert.issuer}</p>
-                          <div className="flex items-center gap-4 text-sm text-gray-600">
-                            <span className="flex items-center gap-1">
-                              <Calendar className="w-3.5 h-3.5" />
-                              발급일: {cert.date}
-                            </span>
-                            {cert.expiryDate && (
-                              <span className="flex items-center gap-1">
-                                <Clock className="w-3.5 h-3.5" />
-                                만료일: {cert.expiryDate}
-                              </span>
-                            )}
-                          </div>
-                          {cert.credentialId && (
-                            <p className="text-sm text-gray-600 mt-1">
-                              자격증 번호: {cert.credentialId}
-                            </p>
-                          )}
-                        </div>
-                        {cert.url && (
-                          <a 
-                            href={cert.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-1 text-primary-600 hover:text-primary-700 text-sm font-medium"
-                          >
-                            확인하기
-                            <ExternalLink className="w-3.5 h-3.5" />
-                          </a>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
             </div>
 
             {/* Sidebar */}
             <div className="space-y-6">
-              {/* Contact Information */}
-              <div className="bg-white rounded-xl shadow-sm p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">연락처 정보</h3>
-                <div className="space-y-3">
-                  {talent.email && (
-                    <a href={`mailto:${talent.email}`} className="flex items-center gap-3 text-gray-600 hover:text-primary-600 transition-colors">
-                      <Mail className="w-4 h-4" />
-                      <span className="text-sm">{talent.email}</span>
-                    </a>
-                  )}
-                  {talent.phone && (
-                    <a href={`tel:${talent.phone}`} className="flex items-center gap-3 text-gray-600 hover:text-primary-600 transition-colors">
-                      <Phone className="w-4 h-4" />
-                      <span className="text-sm">{talent.phone}</span>
-                    </a>
-                  )}
-                  {talent.linkedin && (
-                    <a href={`https://${talent.linkedin}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-gray-600 hover:text-primary-600 transition-colors">
-                      <Linkedin className="w-4 h-4" />
-                      <span className="text-sm">{talent.linkedin}</span>
-                    </a>
-                  )}
-                  {talent.github && (
-                    <a href={`https://${talent.github}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-gray-600 hover:text-primary-600 transition-colors">
-                      <Github className="w-4 h-4" />
-                      <span className="text-sm">{talent.github}</span>
-                    </a>
-                  )}
-                  {talent.portfolio && (
-                    <a href={`https://${talent.portfolio}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-gray-600 hover:text-primary-600 transition-colors">
-                      <Globe className="w-4 h-4" />
-                      <span className="text-sm">{talent.portfolio}</span>
-                    </a>
-                  )}
-                </div>
-              </div>
 
-              {/* Quick Actions */}
-              <div className="bg-gradient-to-br from-primary-50 to-primary-100 rounded-xl p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">빠른 액션</h3>
-                <div className="space-y-2">
-                  <button className="w-full px-4 py-2 bg-white hover:bg-gray-50 rounded-lg text-sm font-medium text-gray-700 transition-colors flex items-center justify-center gap-2">
-                    <Download className="w-4 h-4" />
-                    이력서 PDF 다운로드
-                  </button>
-                  <button className="w-full px-4 py-2 bg-white hover:bg-gray-50 rounded-lg text-sm font-medium text-gray-700 transition-colors flex items-center justify-center gap-2">
-                    <Calendar className="w-4 h-4" />
-                    면접 일정 잡기
-                  </button>
-                  <button className="w-full px-4 py-2 bg-white hover:bg-gray-50 rounded-lg text-sm font-medium text-gray-700 transition-colors flex items-center justify-center gap-2">
-                    <FileText className="w-4 h-4" />
-                    계약서 전송
-                  </button>
-                </div>
-              </div>
 
               {/* Similar Talents */}
               {similarTalents.length > 0 && (
@@ -739,26 +714,77 @@ export default function TalentDetailPage() {
         </div>
       </section>
 
-      {/* Contact Modal */}
+      {/* 채용 신청 Modal */}
       {showContactModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6">
-            <h3 className="text-xl font-bold text-gray-900 mb-4">메시지 보내기</h3>
-            <form className="space-y-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" onClick={() => setShowContactModal(false)}>
+          <div className="bg-white rounded-2xl max-w-md w-full p-6" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">채용 신청하기</h3>
+            <p className="text-sm text-gray-600 mb-4">
+              {talent.name}님에게 채용 제안을 보냅니다. 관리자가 검토 후 연결해드립니다.
+            </p>
+            <form className="space-y-4" onSubmit={async (e) => {
+              e.preventDefault();
+              const formData = new FormData(e.currentTarget);
+              const applicationData = {
+                talentId: talent.id,
+                talentName: talent.name,
+                position: formData.get('position') as string,
+                message: formData.get('message') as string,
+                companyName: formData.get('companyName') as string,
+                contactEmail: formData.get('contactEmail') as string,
+                status: 'pending' as const,
+                createdAt: new Date().toISOString()
+              };
+              
+              try {
+                // Firebase에 저장하는 로직 (아래에서 구현)
+                const { submitTalentApplication } = await import('@/lib/firebase/application-service');
+                await submitTalentApplication(applicationData);
+                alert('채용 신청이 완료되었습니다. 관리자가 검토 후 연락드리겠습니다.');
+                setShowContactModal(false);
+              } catch (error) {
+                console.error('Application submission error:', error);
+                alert('채용 신청 중 오류가 발생했습니다. 다시 시도해주세요.');
+              }
+            }}>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">제목</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">회사명</label>
                 <input 
-                  type="text" 
+                  type="text"
+                  name="companyName"
+                  required
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary-500"
-                  placeholder="프로젝트 제안"
+                  placeholder="삼성전자"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">제안 직무</label>
+                <input 
+                  type="text"
+                  name="position"
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary-500"
+                  placeholder="프론트엔드 개발자"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">담당자 이메일</label>
+                <input 
+                  type="email"
+                  name="contactEmail"
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary-500"
+                  placeholder="hr@company.com"
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">메시지</label>
                 <textarea 
+                  name="message"
                   rows={4}
+                  required
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary-500"
-                  placeholder="메시지를 입력하세요..."
+                  placeholder="채용 제안 내용을 입력하세요..."
                 />
               </div>
               <div className="flex gap-3">
@@ -773,7 +799,7 @@ export default function TalentDetailPage() {
                   type="submit"
                   className="flex-1 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium transition-colors"
                 >
-                  전송
+                  신청하기
                 </button>
               </div>
             </form>

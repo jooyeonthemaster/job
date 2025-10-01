@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(tree:*)",
+      "Bash(Get-ChildItem -Directory -Depth 0)",
+      "Bash(Select-Object Name)",
+      "Bash(Get-ChildItem -Path app -Directory)",
+      "Bash(cat:*)",
+      "Bash(powershell:*)",
+      "Bash(Get-ChildItem -Recurse -Directory)",
+      "Bash(Select-Object FullName)",
+      "Bash(Sort-Object FullName)",
+      "Read(//c/Users/jooye/Desktop/git2/hiseoul-job-platform/**)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

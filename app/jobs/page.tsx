@@ -1,8 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Header from '@/components/Header';
 import JobGridCard from '@/components/JobGridCard';
+import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
+import { db } from '@/lib/firebase/config';
 import { 
   Search, 
   MapPin, 
@@ -18,46 +20,109 @@ import {
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 
-// Sample job data with Korean companies
-const generateJobs = (count: number, startId: number) => {
-  const companies = [
-    '삼성전자', '네이버', '카카오', 'LG전자', 'SK하이닉스', 
-    '현대자동차', '쿠팡', '배달의민족', '토스', '라인플러스',
-    'NC소프트', '넥슨', '크래프톤', '스마일게이트', '펄어비스'
-  ];
-  
-  const positions = [
-    'Frontend Developer', 'Backend Engineer', 'Full Stack Developer',
-    'DevOps Engineer', 'Data Scientist', 'Product Manager',
-    'UX/UI Designer', 'QA Engineer', 'Mobile Developer',
-    'Cloud Architect', 'AI/ML Engineer', 'Security Engineer'
-  ];
-  
-  const locations = ['서울', '판교', '강남', '구로', '성수', '을지로'];
-  const experiences = ['신입', '1-3년', '3-5년', '5-10년', '10년+'];
-  
-  return Array.from({ length: count }, (_, i) => ({
-    id: startId + i,
-    company: companies[Math.floor(Math.random() * companies.length)],
-    position: positions[Math.floor(Math.random() * positions.length)],
-    location: locations[Math.floor(Math.random() * locations.length)],
-    experience: experiences[Math.floor(Math.random() * experiences.length)],
-    salary: `${Math.floor(Math.random() * 3 + 4)}000-${Math.floor(Math.random() * 3 + 7)}000만원`,
-    type: Math.random() > 0.3 ? '정규직' : '계약직',
-    skills: ['React', 'TypeScript', 'Node.js', 'AWS'].slice(0, Math.floor(Math.random() * 3 + 2)),
-    deadline: `D-${Math.floor(Math.random() * 30 + 1)}`,
-    isNew: Math.random() > 0.7,
-    isHot: Math.random() > 0.8,
-    applicants: Math.floor(Math.random() * 100 + 10),
-    views: Math.floor(Math.random() * 1000 + 100)
-  }));
-};
-
-const topJobs = generateJobs(20, 1);
-const middleJobs = generateJobs(25, 21);
-const bottomJobs = generateJobs(30, 46);
-
 export default function JobsPage() {
+  const [topJobs, setTopJobs] = useState<any[]>([]);
+  const [middleJobs, setMiddleJobs] = useState<any[]>([]);
+  const [bottomJobs, setBottomJobs] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Firebase 데이터를 JobGridCard 형식으로 변환
+  const transformJobData = (job: any) => {
+    const getExperienceLabel = (level: string) => {
+      const labels: Record<string, string> = {
+        ENTRY: '신입',
+        JUNIOR: '1-3년',
+        MID: '3-5년',
+        SENIOR: '5-10년',
+        EXECUTIVE: '10년+'
+      };
+      return labels[level] || level;
+    };
+
+    const getEmploymentTypeLabel = (type: string) => {
+      const labels: Record<string, string> = {
+        FULL_TIME: '정규직',
+        PART_TIME: '계약직',
+        CONTRACT: '파트타임',
+        INTERNSHIP: '인턴'
+      };
+      return labels[type] || type;
+    };
+
+    const getDaysUntilDeadline = (deadline: string) => {
+      const deadlineDate = new Date(deadline);
+      const today = new Date();
+      const diff = Math.ceil((deadlineDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+      return diff > 0 ? `D-${diff}` : '마감';
+    };
+
+    const isNew = () => {
+      const postedDate = job.postedAt?.toDate?.() || new Date(job.postedAt);
+      const daysSincePosted = Math.floor((new Date().getTime() - postedDate.getTime()) / (1000 * 60 * 60 * 24));
+      return daysSincePosted <= 7;
+    };
+
+    return {
+      id: job.id,
+      company: job.company?.name || '회사명',
+      position: job.title || job.titleEn || '',
+      location: job.location || '',
+      experience: getExperienceLabel(job.experienceLevel),
+      salary: `${(job.salary?.min / 10000).toFixed(0)}만-${(job.salary?.max / 10000).toFixed(0)}만원`,
+      type: getEmploymentTypeLabel(job.employmentType),
+      skills: job.tags || [],
+      deadline: getDaysUntilDeadline(job.deadline),
+      isNew: isNew(),
+      isHot: (job.views || 0) > 500 || (job.applicants || 0) > 50,
+      applicants: job.applicants || 0,
+      views: job.views || 0
+    };
+  };
+
+  // Firebase에서 활성화된 공고 가져오기
+  useEffect(() => {
+    const fetchJobs = async () => {
+      try {
+        const jobsRef = collection(db, 'jobs');
+        const q = query(jobsRef, where('status', '==', 'active'));
+        const querySnapshot = await getDocs(q);
+        
+        const allJobs: any[] = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+
+        // display.position별로 분류 및 변환
+        const top = allJobs
+          .filter((job: any) => job.display?.position === 'top')
+          .sort((a: any, b: any) => (a.display?.priority || 999) - (b.display?.priority || 999))
+          .slice(0, 20)
+          .map(transformJobData);
+
+        const middle = allJobs
+          .filter((job: any) => job.display?.position === 'middle')
+          .sort((a: any, b: any) => (a.display?.priority || 999) - (b.display?.priority || 999))
+          .slice(0, 25)
+          .map(transformJobData);
+
+        const bottom = allJobs
+          .filter((job: any) => job.display?.position === 'bottom')
+          .sort((a: any, b: any) => (a.display?.priority || 999) - (b.display?.priority || 999))
+          .slice(0, 30)
+          .map(transformJobData);
+
+        setTopJobs(top);
+        setMiddleJobs(middle);
+        setBottomJobs(bottom);
+      } catch (error) {
+        console.error('Error fetching jobs:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchJobs();
+  }, []);
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedLocation, setSelectedLocation] = useState('all');
   const [selectedExperience, setSelectedExperience] = useState('all');
@@ -89,6 +154,20 @@ export default function JobsPage() {
     { id: '5-10', label: '5-10년' },
     { id: '10+', label: '10년 이상' },
   ];
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <div className="container mx-auto px-4 lg:px-8 py-20">
+          <div className="text-center">
+            <div className="w-16 h-16 border-4 border-primary-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-gray-600">채용공고를 불러오는 중...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">

@@ -8,8 +8,8 @@ export interface TalentProfile {
   skills: string[];
   languages: { language: string; level: string }[];
   availability: string;
-  expectedSalary: { min: number; max: number };
-  bio: string;
+  expectedSalary?: { min: number; max: number };
+  bio?: string;
   rating?: number;
   completedProjects?: number;
   profileImage?: string;
@@ -28,6 +28,13 @@ export interface TalentProfile {
   visaStatus?: string;
   preferredWorkStyle?: string[];
   currentEmployment?: string;
+  // 추가: 구직자 선호 조건
+  desiredPositions?: string[];
+  preferredLocations?: string[];
+  workType?: string;
+  companySize?: string;
+  remoteWork?: string;
+  visaSponsorship?: boolean;
 }
 
 export interface Education {

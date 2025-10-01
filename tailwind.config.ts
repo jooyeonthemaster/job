@@ -81,6 +81,9 @@ const config: Config = {
         '2xl': '1.5rem',
         '3xl': '2rem',
       },
+      borderWidth: {
+        '3': '3px',
+      },
     },
   },
   plugins: [],
