@@ -322,3 +322,24 @@ export const getJobPostingStats = async () => {
   }
 };
 
+/**
+ * 채용 공고 노출 위치 업데이트
+ */
+export const updateJobDisplayPosition = async (
+  jobId: string,
+  position: 'top' | 'middle' | 'bottom',
+  priority: number
+): Promise<void> => {
+  try {
+    const jobRef = doc(db, 'jobs', jobId);
+    await updateDoc(jobRef, {
+      'display.position': position,
+      'display.priority': priority,
+      'display.assignedAt': new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Error updating job display position:', error);
+    throw error;
+  }
+};
+

@@ -134,15 +134,6 @@ const JobSeekerOnboardingInner = () => {
         <p className="text-lg text-gray-600 max-w-2xl mx-auto">
           더 나은 매칭을 위해 프로필 정보를 완성해주세요
         </p>
-        {/* Debug Button */}
-        {process.env.NODE_ENV === 'development' && (
-          <button
-            onClick={() => debugFirebaseAuth()}
-            className="mt-4 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm hover:bg-gray-300"
-          >
-            🔍 Debug Firebase
-          </button>
-        )}
       </motion.div>
 
       {/* Step Indicator Card */}

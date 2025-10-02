@@ -103,26 +103,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (user) {
             const userDocRef = doc(db, 'users', user.uid);
             const userDoc = await getDoc(userDocRef);
+
+            let userProfileData = null;
+
             // Firestore를 기준으로 사용자 타입 판별하여 전역 설정
             try {
               const type = await getUserType(user.uid);
               setUserType(type);
-              
+
               // 프로필 데이터 가져오기
               if (type) {
-                const profile = await getUserProfile(user.uid, type);
-                setUserProfile(profile);
+                userProfileData = await getUserProfile(user.uid, type);
+                setUserProfile(userProfileData);
               }
             } catch (e) {
               console.error('Failed to detect user type:', e);
             }
-            
+
             if (userDoc.exists()) {
               const data = userDoc.data() as any;
-              if (data && data.onboardingCompleted === false) {
-                // 개인 온보딩 미완료 시에만 온보딩 페이지로 유도
-                if (data.role === 'jobseeker' && !pathname.startsWith('/onboarding')) {
-                  router.push('/onboarding/job-seeker?step=1');
+              // 온보딩 완료 여부 체크 - 프로필이 있으면 온보딩 완료로 간주
+              const hasProfile = userProfileData && (userProfileData as any).fullName;
+
+              // 온보딩이 명시적으로 false이고, 프로필도 없고, 이미 온보딩 페이지가 아닌 경우만 리다이렉트
+              if (data && data.onboardingCompleted === false && !hasProfile) {
+                // 개인 온보딩 미완료 시에만 온보딩 페이지로 유도 (간단한 온보딩)
+                if (data.role === 'jobseeker' && !pathname.startsWith('/onboarding') && !pathname.startsWith('/jobseeker-dashboard')) {
+                  router.push('/onboarding/job-seeker/quick');
                 }
                 // 기업은 company-auth 온보딩 플로우를 따르므로 여기서는 리다이렉트하지 않음
               }

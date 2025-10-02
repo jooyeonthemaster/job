@@ -1,10 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
+import { useAuth } from '@/contexts/AuthContext';
+import { submitJobApplication } from '@/lib/firebase/application-service';
 import Header from '@/components/Header';
+import JobApplicationModal from '@/components/JobApplicationModal';
 import Link from 'next/link';
 import {
   Building2,
@@ -37,10 +40,13 @@ import {
 
 export default function JobDetailPage() {
   const params = useParams();
+  const router = useRouter();
+  const { user, userProfile, isAuthenticated } = useAuth();
   const [activeTab, setActiveTab] = useState('detail');
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [job, setJob] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [isApplicationModalOpen, setIsApplicationModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchJob = async () => {
@@ -64,6 +70,44 @@ export default function JobDetailPage() {
   const handleCopyLink = () => {
     navigator.clipboard.writeText(window.location.href);
     alert('링크가 복사되었습니다!');
+  };
+
+  const handleApplyClick = () => {
+    if (!isAuthenticated) {
+      alert('로그인이 필요합니다.');
+      router.push('/login/jobseeker');
+      return;
+    }
+    setIsApplicationModalOpen(true);
+  };
+
+  const handleSubmitApplication = async (message: string) => {
+    try {
+      if (!user || !userProfile) {
+        throw new Error('사용자 정보를 찾을 수 없습니다.');
+      }
+
+      await submitJobApplication({
+        jobId: job.id,
+        jobTitle: job.title,
+        companyId: job.companyId,
+        companyName: job.company?.name || '회사명',
+        applicantId: user.uid,
+        applicantName: userProfile.fullName || user.displayName || '이름 없음',
+        applicantEmail: user.email || '',
+        message: message,
+        status: 'pending',
+        managerName: job.manager?.name,
+        managerEmail: job.manager?.email,
+        managerPhone: job.manager?.phone
+      });
+
+      alert('✅ 지원이 완료되었습니다!\n관리자 검토 후 담당자가 연락드릴 예정입니다.');
+      setIsApplicationModalOpen(false);
+    } catch (error: any) {
+      console.error('Application submission error:', error);
+      throw new Error(error.message || '지원서 제출에 실패했습니다.');
+    }
   };
 
   const formatSalary = (min: number, max: number) => {
@@ -339,7 +383,10 @@ export default function JobDetailPage() {
                         <span className="font-medium text-gray-900">{job.views || 0}</span>
                       </div>
                     </div>
-                    <button className="w-full btn-primary py-3 text-lg font-medium">
+                    <button 
+                      onClick={handleApplyClick}
+                      className="w-full btn-primary py-3 text-lg font-medium"
+                    >
                       지원하기
                     </button>
                     {job.visaSponsorship && (
@@ -400,11 +447,23 @@ export default function JobDetailPage() {
           <button className="p-3 rounded-lg border bg-white border-gray-300 text-gray-600">
             <Bookmark className="w-5 h-5" />
           </button>
-          <button className="flex-1 btn-primary py-3">
+          <button 
+            onClick={handleApplyClick}
+            className="flex-1 btn-primary py-3"
+          >
             지원하기
           </button>
         </div>
       </div>
+
+      {/* Application Modal */}
+      <JobApplicationModal
+        isOpen={isApplicationModalOpen}
+        onClose={() => setIsApplicationModalOpen(false)}
+        onSubmit={handleSubmitApplication}
+        jobTitle={job?.title || ''}
+        companyName={job?.company?.name || ''}
+      />
     </div>
   );
 }

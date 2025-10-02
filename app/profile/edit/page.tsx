@@ -56,7 +56,7 @@ const ProfileEditInner = () => {
         console.log('🔄 Loaded existing profile for edit:', profile);
         
         if (!profile) {
-          router.push('/onboarding/job-seeker?step=1');
+          router.push('/onboarding/job-seeker/quick');
           return;
         }
         
