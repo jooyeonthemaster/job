@@ -62,17 +62,23 @@ export default function JobGridCard({ job, size = 'medium' }: JobGridCardProps) 
   };
 
   return (
-    <Link href={`/jobs/${job.id}`} className="block relative">
-      <div 
-        className={cn(
-          "relative bg-white border transition-all duration-300 cursor-pointer h-full",
-          sizeClasses[size],
-          "shadow-sm hover:shadow-lg",
-          isHovered ? "z-50 border-primary-400 rounded-t-xl border-b-0" : "border-gray-200 rounded-xl"
-        )}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-      >
+    <div
+      className={cn(
+        "relative",
+        isHovered ? "z-[100]" : "z-0"
+      )}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <Link href={`/jobs/${job.id}`} className="block">
+        <div
+          className={cn(
+            "relative bg-white border transition-all duration-300 cursor-pointer h-full",
+            sizeClasses[size],
+            "shadow-sm hover:shadow-lg",
+            isHovered ? "border-primary-400 rounded-t-xl border-b-0" : "border-gray-200 rounded-xl"
+          )}
+        >
         {/* Badges */}
         <div className="absolute top-2 right-2 flex gap-1">
           {job.isNew && (
@@ -144,7 +150,7 @@ export default function JobGridCard({ job, size = 'medium' }: JobGridCardProps) 
         {/* Hover Content - Extended Info (Absolute Overlay) */}
         {isHovered && (
           <div className={cn(
-            "absolute -left-[1px] -right-[1px] top-full -mt-[1px] bg-white rounded-b-xl border-x border-b border-primary-400 shadow-xl z-50 transition-all duration-200",
+            "absolute -left-[1px] -right-[1px] top-full -mt-[1px] bg-white rounded-b-xl border-x border-b border-primary-400 shadow-xl transition-all duration-200",
             sizeClasses[size]
           )}>
             <div className="space-y-2">
@@ -158,7 +164,7 @@ export default function JobGridCard({ job, size = 'medium' }: JobGridCardProps) 
                   <span>{job.salary}</span>
                 </div>
               )}
-              
+
               {/* Skills */}
               {size !== 'small' && job.skills.length > 0 && (
                 <div className="flex flex-wrap gap-1">
@@ -172,7 +178,7 @@ export default function JobGridCard({ job, size = 'medium' }: JobGridCardProps) 
                   ))}
                 </div>
               )}
-              
+
               {/* Stats */}
               <div className={cn(
                 "flex items-center justify-between pt-2 border-t border-gray-100",
@@ -192,7 +198,7 @@ export default function JobGridCard({ job, size = 'medium' }: JobGridCardProps) 
                   {job.deadline}
                 </span>
               </div>
-              
+
               {/* Apply Button (for medium and large sizes) */}
               {size !== 'small' && (
                 <button className="w-full py-2 bg-primary-500 hover:bg-primary-600 text-white text-sm font-medium rounded-lg transition-colors flex items-center justify-center gap-1">
@@ -203,7 +209,8 @@ export default function JobGridCard({ job, size = 'medium' }: JobGridCardProps) 
             </div>
           </div>
         )}
-      </div>
-    </Link>
+        </div>
+      </Link>
+    </div>
   );
 }

@@ -285,7 +285,7 @@ export default function JobsPage() {
                 </Link>
               </div>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {topJobs.map((job, index) => (
                 <motion.div
                   key={job.id}
@@ -301,8 +301,8 @@ export default function JobsPage() {
           
           {/* Middle 25 Jobs - 5x5 Grid */}
           <div className="mb-16">
-            <div className="relative bg-gradient-to-r from-emerald-800 to-emerald-700 rounded-2xl p-6 mb-8 overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-bl from-green-900/30 via-transparent to-emerald-900/20"></div>
+            <div className="relative bg-gradient-to-r from-emerald-800 to-emerald-700 rounded-2xl px-8 py-12 mb-16 overflow-hidden">
+              <div className="absolute top-8 left-0 right-0 bottom-0 bg-gradient-to-bl from-green-900/30 via-transparent to-emerald-900/20"></div>
               <div className="relative flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <div className="flex items-center justify-center w-12 h-12 bg-white/20 rounded-xl backdrop-blur-md">
@@ -342,8 +342,8 @@ export default function JobsPage() {
           
           {/* Bottom 30 Jobs - 6x5 Grid */}
           <div>
-            <div className="relative bg-gradient-to-r from-green-900 to-emerald-800 rounded-2xl p-6 mb-8 overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-tr from-green-950/40 via-transparent to-emerald-950/30"></div>
+            <div className="relative bg-gradient-to-r from-green-900 to-emerald-800 rounded-2xl px-8 py-12 mb-16 overflow-hidden">
+              <div className="absolute top-8 left-0 right-0 bottom-0 bg-gradient-to-tr from-green-950/40 via-transparent to-emerald-950/30"></div>
               <div className="relative flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <div className="flex items-center justify-center w-12 h-12 bg-white/20 rounded-xl backdrop-blur-md">

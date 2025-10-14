@@ -30,13 +30,6 @@ interface Props {
   uid: string;
 }
 
-interface ExtendedOnboardingStep4 extends OnboardingStep4 {
-  revenue?: string;
-  funding?: string;
-  avgSalary?: number;
-  avgTenure?: number;
-}
-
 const techStackOptions = [
   'React', 'Vue.js', 'Angular', 'Next.js', 'Node.js', 'Express',
   'Django', 'Spring', 'Ruby on Rails', 'PHP', 'Laravel', '.NET',
@@ -47,7 +40,7 @@ const techStackOptions = [
 ];
 
 export default function Step4Benefits({ data, onSave, onBack, uid }: Props) {
-  const [formData, setFormData] = useState<ExtendedOnboardingStep4>(data || {
+  const [formData, setFormData] = useState<OnboardingStep4>(data || {
     techStack: [],
     benefits: {
       workEnvironment: [],
@@ -99,13 +92,9 @@ export default function Step4Benefits({ data, onSave, onBack, uid }: Props) {
     
     try {
       setLoading(true);
-      // 비즈니스 정보는 따로 저장해야 할 수 있음
-      const { revenue, funding, avgSalary, avgTenure, ...step4Data } = formData;
-      await saveOnboardingStep4(uid, step4Data);
-      
-      // TODO: 비즈니스 정보도 저장하는 로직 추가 필요
-      
-      onSave(step4Data);
+      // 모든 데이터 저장 (revenue, funding, avgSalary, avgTenure 포함)
+      await saveOnboardingStep4(uid, formData);
+      onSave(formData);
     } catch (error) {
       console.error('Error saving step 4:', error);
       setErrors({ submit: '저장 중 오류가 발생했습니다.' });

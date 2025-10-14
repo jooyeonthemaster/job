@@ -544,3 +544,4 @@ interface TalentProfile {
 **향후**: 온보딩 개선으로 프로젝트/자격증 수집
 
 
+

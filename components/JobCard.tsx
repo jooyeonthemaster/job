@@ -1,7 +1,7 @@
 'use client';
 
 import { Job } from '@/types';
-import { Building2, MapPin, Clock, Users, DollarSign, Globe, Briefcase } from 'lucide-react';
+import { Building2, MapPin, Users, DollarSign, Globe, Briefcase } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 
@@ -40,22 +40,10 @@ export default function JobCard({ job }: JobCardProps) {
     return labels[type] || type;
   };
 
-  const daysUntilDeadline = Math.ceil((new Date(job.deadline).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-  const isUrgent = daysUntilDeadline <= 7;
-
   return (
-    <Link href={`/jobs/${job.id}`} className="block group">
-      <div className="bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden h-full flex flex-col">
+    <Link href={`/jobs/${job.id}`} className="block group relative">
+      <div className="bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden h-full flex flex-col relative">
         <div className="p-6 flex-1">
-          {/* Badges */}
-          {isUrgent && (
-            <div className="mb-3">
-              <span className="px-2 py-1 bg-red-100 text-red-700 text-xs font-bold rounded-full">
-                마감임박 D-{daysUntilDeadline}
-              </span>
-            </div>
-          )}
-
           {/* Company Info */}
           <div className="flex items-center gap-3 mb-3">
             <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center shrink-0">

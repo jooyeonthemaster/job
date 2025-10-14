@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import OptimizedImage from './OptimizedImage';
+import RollingBanner from './RollingBanner';
 
 export default function Header() {
   const pathname = usePathname();
@@ -149,8 +150,13 @@ export default function Header() {
   ];
 
   return (
-    <header className="sticky top-0 w-full z-50 bg-white/95 backdrop-blur-md border-b border-gray-100 shadow-sm">
-      <nav className="container mx-auto px-4 lg:px-8">
+    <>
+      {/* Rolling Banner */}
+      <RollingBanner />
+
+      {/* Main Header */}
+      <header className="sticky top-0 w-full z-50 bg-white/95 backdrop-blur-md border-b border-gray-100 shadow-sm">
+        <nav className="container mx-auto px-4 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <div className="flex items-center gap-10">
@@ -168,18 +174,40 @@ export default function Header() {
                   key={item.name}
                   href={item.href}
                   className={cn(
-                    "text-sm font-medium transition-colors relative py-2",
+                    "text-[15px] font-bold transition-all duration-200 relative py-2 px-1",
                     pathname === item.href
-                      ? "text-primary-600"
-                      : "text-gray-600 hover:text-primary-600"
+                      ? "text-primary-600 scale-105"
+                      : "text-gray-700 hover:text-primary-600 hover:scale-105"
                   )}
                 >
                   {item.name}
                   {pathname === item.href && (
-                    <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary-500 rounded-full" />
+                    <span className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-primary-400 via-primary-600 to-primary-400 rounded-full shadow-sm" />
                   )}
                 </Link>
               ))}
+            </div>
+
+            {/* Ad Banner Slot */}
+            <div className="hidden xl:flex items-center ml-6 pl-6 border-l border-gray-200">
+              <div className="group relative">
+                <div className="w-[200px] h-[50px] bg-gradient-to-br from-gray-50 to-gray-100 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center cursor-pointer hover:border-primary-400 hover:bg-gradient-to-br hover:from-primary-50 hover:to-blue-50 transition-all duration-300">
+                  <div className="text-center">
+                    <div className="text-xs font-semibold text-gray-400 group-hover:text-primary-600 transition-colors">
+                      광고 배너 영역
+                    </div>
+                    <div className="text-[10px] text-gray-400 mt-0.5 group-hover:text-primary-500">
+                      200 x 50
+                    </div>
+                  </div>
+                </div>
+
+                {/* Hover tooltip */}
+                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none z-50">
+                  광고 문의: ad@globaltalent.com
+                  <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-gray-900 rotate-45"></div>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -226,10 +254,10 @@ export default function Header() {
                   href={item.href}
                   onClick={() => setMobileMenuOpen(false)}
                   className={cn(
-                    "px-4 py-3 text-sm font-medium rounded-lg transition-colors",
+                    "px-4 py-3 text-[15px] font-bold rounded-lg transition-colors",
                     pathname === item.href
-                      ? "bg-primary-50 text-primary-600"
-                      : "text-gray-600 hover:bg-gray-50"
+                      ? "bg-primary-50 text-primary-600 shadow-sm"
+                      : "text-gray-700 hover:bg-gray-50"
                   )}
                 >
                   {item.name}
@@ -296,5 +324,6 @@ export default function Header() {
         )}
       </nav>
     </header>
+    </>
   );
 }

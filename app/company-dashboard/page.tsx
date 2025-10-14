@@ -6,7 +6,11 @@ import Link from 'next/link';
 import { auth, db } from '@/lib/firebase/config';
 import { signOut, onAuthStateChanged } from 'firebase/auth';
 import { collection, query, where, getDocs, orderBy, deleteDoc, doc } from 'firebase/firestore';
-import { getCompanyProfile } from '@/lib/firebase/company-service';
+import { 
+  getCompanyProfile, 
+  calculateCompanyProfileCompletion,
+  getCompanyProfileChecklist 
+} from '@/lib/firebase/company-service';
 import { CompanyProfile } from '@/lib/firebase/company-types';
 import {
   Building2,
@@ -32,7 +36,10 @@ import {
   Award,
   DollarSign,
   MoreVertical,
-  Trash2
+  Trash2,
+  CheckCircle,
+  AlertCircle,
+  ChevronRight
 } from 'lucide-react';
 
 function CompanyDashboardContent() {
@@ -231,6 +238,72 @@ function CompanyDashboardContent() {
                 </h1>
                 <p className="text-gray-600">오늘의 채용 현황을 확인하세요</p>
               </div>
+
+              {/* Profile Completion Checklist */}
+              {(() => {
+                const completionPercentage = calculateCompanyProfileCompletion(company);
+                const checklist = getCompanyProfileChecklist(company);
+                const completedItems = checklist.filter(item => item.completed).length;
+                const totalItems = checklist.length;
+
+                return completionPercentage < 100 && (
+                  <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-primary-500">
+                    <div className="flex items-start justify-between mb-4">
+                      <div>
+                        <h2 className="text-lg font-semibold text-gray-900 mb-1">
+                          기업 프로필 완성하기
+                        </h2>
+                        <p className="text-sm text-gray-600">
+                          {totalItems - completedItems}개 항목 남음 ({completionPercentage}% 완료)
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2 px-3 py-1 bg-primary-50 rounded-full">
+                        <TrendingUp className="w-4 h-4 text-primary-600" />
+                        <span className="text-sm font-medium text-primary-600">
+                          {100 - completionPercentage}% 남음
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Progress Bar */}
+                    <div className="h-2 bg-gray-200 rounded-full overflow-hidden mb-4">
+                      <div
+                        className="h-full bg-gradient-to-r from-primary-500 to-primary-600 transition-all duration-500"
+                        style={{ width: `${completionPercentage}%` }}
+                      />
+                    </div>
+
+                    {/* Checklist Items */}
+                    <div className="grid md:grid-cols-2 gap-3">
+                      {checklist.map((item) => (
+                        <Link
+                          key={item.id}
+                          href={item.link}
+                          className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors group"
+                        >
+                          <div className="mt-0.5">
+                            {item.completed ? (
+                              <CheckCircle className="w-5 h-5 text-green-500" />
+                            ) : (
+                              <AlertCircle className="w-5 h-5 text-orange-500" />
+                            )}
+                          </div>
+                          <div className="flex-1">
+                            <h4 className="text-sm font-medium text-gray-900 group-hover:text-primary-600">
+                              {item.title}
+                            </h4>
+                            <p className="text-xs text-gray-500 mt-0.5">
+                              {item.description}
+                            </p>
+                          </div>
+                          <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-primary-600 mt-1" />
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
+
               {/* Quick Actions */}
               <div className="bg-white rounded-xl p-6 shadow-sm">
                 <h2 className="text-xl font-bold text-gray-900 mb-4">빠른 작업</h2>

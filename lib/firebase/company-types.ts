@@ -153,6 +153,12 @@ export interface OnboardingStep4 {
   // 기술 스택 & 복지
   techStack: string[];
   benefits: CompanyBenefits;
+  // 비즈니스 정보
+  revenue?: string;
+  funding?: string;
+  // 통계 정보
+  avgSalary?: number;
+  avgTenure?: number;
 }
 
 export interface OnboardingStep5 {

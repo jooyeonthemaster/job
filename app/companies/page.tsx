@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Header from '@/components/Header';
 import CompanyCard from '@/components/CompanyCard';
-import { companies } from '@/lib/data';
+import OptimizedImage from '@/components/OptimizedImage';
+import { getAllCompanies } from '@/lib/firebase/company-service';
 import { 
   Search, 
   Building2, 
@@ -18,7 +19,8 @@ import {
   ChevronRight,
   Clock,
   Code,
-  DollarSign
+  DollarSign,
+  Loader2
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -34,88 +36,40 @@ const industries = [
   'Education'
 ];
 
-// 추가 회사 데이터 생성
-const extendedCompanies = [
-  ...companies,
-  {
-    id: '7',
-    name: '라인플러스',
-    nameEn: 'LINE Plus',
-    logo: 'https://via.placeholder.com/100',
-    industry: 'Internet',
-    location: '경기도 성남시',
-    employeeCount: '1,000-3,000',
-    description: 'Global messaging platform',
-    rating: 4.3,
-    reviewCount: 520,
-    openPositions: 14,
-    benefits: ['4대보험', '퇴직금', '스톡옵션', '유연근무', '글로벌 근무'],
-    techStack: ['Java', 'Kotlin', 'Go', 'Kubernetes'],
-    established: '2013'
-  },
-  {
-    id: '8',
-    name: '우아한형제들',
-    nameEn: 'Woowa Brothers',
-    logo: 'https://via.placeholder.com/100',
-    industry: 'Food Delivery',
-    location: '서울 송파구',
-    employeeCount: '1,000-3,000',
-    description: 'Food delivery innovation leader',
-    rating: 4.4,
-    reviewCount: 890,
-    openPositions: 20,
-    benefits: ['4대보험', '퇴직금', '성과급', '식사지원', '자기계발지원'],
-    techStack: ['Java', 'Spring Boot', 'React', 'AWS'],
-    established: '2010'
-  },
-  {
-    id: '9',
-    name: '크래프톤',
-    nameEn: 'KRAFTON',
-    logo: 'https://via.placeholder.com/100',
-    industry: 'Gaming',
-    location: '경기도 성남시',
-    employeeCount: '1,000-3,000',
-    description: 'Global gaming powerhouse (PUBG)',
-    rating: 4.5,
-    reviewCount: 450,
-    openPositions: 16,
-    benefits: ['4대보험', '퇴직금', '스톡옵션', '자율출퇴근', '게임 지원금'],
-    techStack: ['Unreal Engine', 'C++', 'Python', 'AWS'],
-    established: '2018'
-  },
-  {
-    id: '10',
-    name: '당근마켓',
-    nameEn: 'Karrot',
-    logo: 'https://via.placeholder.com/100',
-    industry: 'E-commerce',
-    location: '서울 강남구',
-    employeeCount: '300-1,000',
-    description: 'Local community marketplace',
-    rating: 4.7,
-    reviewCount: 320,
-    openPositions: 11,
-    benefits: ['4대보험', '퇴직금', '스톡옵션', '무제한휴가', '재택근무'],
-    techStack: ['Ruby on Rails', 'React Native', 'Go', 'AWS'],
-    established: '2015'
-  }
-];
-
 export default function CompaniesPage() {
+  const [companies, setCompanies] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedIndustry, setSelectedIndustry] = useState('all');
   const [selectedSize, setSelectedSize] = useState('all');
   const [selectedLocation, setSelectedLocation] = useState('all');
   const [sortBy, setSortBy] = useState('rating');
 
-  const locations = Array.from(new Set(extendedCompanies.map(c => c.location.split(' ')[0])));
+  // Firebase에서 기업 데이터 가져오기
+  useEffect(() => {
+    const fetchCompanies = async () => {
+      try {
+        setLoading(true);
+        const data = await getAllCompanies();
+        setCompanies(data);
+      } catch (error) {
+        console.error('기업 데이터 로딩 실패:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCompanies();
+  }, []);
+
+  const locations = companies.length > 0 
+    ? Array.from(new Set(companies.map(c => c.location?.split(' ')[0]).filter(Boolean)))
+    : [];
   
-  const filteredCompanies = extendedCompanies.filter((company) => {
+  const filteredCompanies = companies.filter((company) => {
     const matchesSearch = 
-      company.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      company.nameEn.toLowerCase().includes(searchTerm.toLowerCase());
+      company.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      company.nameEn?.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesIndustry = 
       selectedIndustry === 'all' || 
@@ -123,15 +77,15 @@ export default function CompaniesPage() {
 
     const matchesLocation = 
       selectedLocation === 'all' || 
-      company.location.includes(selectedLocation);
+      company.location?.includes(selectedLocation);
 
     const matchesSize = 
       selectedSize === 'all' ||
       (selectedSize === 'startup' && parseInt(company.employeeCount) < 100) ||
-      (selectedSize === 'small' && company.employeeCount.includes('100-300')) ||
-      (selectedSize === 'medium' && company.employeeCount.includes('300-1,000')) ||
-      (selectedSize === 'large' && company.employeeCount.includes('1,000-3,000')) ||
-      (selectedSize === 'enterprise' && company.employeeCount.includes('10,000+'));
+      (selectedSize === 'small' && company.employeeCount?.includes('100-300')) ||
+      (selectedSize === 'medium' && company.employeeCount?.includes('300-1,000')) ||
+      (selectedSize === 'large' && company.employeeCount?.includes('1,000-3,000')) ||
+      (selectedSize === 'enterprise' && company.employeeCount?.includes('10,000+'));
 
     return matchesSearch && matchesIndustry && matchesLocation && matchesSize;
   });
@@ -139,17 +93,33 @@ export default function CompaniesPage() {
   const sortedCompanies = [...filteredCompanies].sort((a, b) => {
     switch (sortBy) {
       case 'rating':
-        return b.rating - a.rating;
+        return (b.rating || 0) - (a.rating || 0);
       case 'openPositions':
-        return b.openPositions - a.openPositions;
+        return (b.openPositions || 0) - (a.openPositions || 0);
       case 'reviewCount':
-        return b.reviewCount - a.reviewCount;
+        return (b.reviewCount || 0) - (a.reviewCount || 0);
       case 'name':
-        return a.name.localeCompare(b.name);
+        return (a.name || '').localeCompare(b.name || '');
       default:
         return 0;
     }
   });
+
+  // 산업별 통계 계산
+  const industryCounts = industries.reduce((acc, industry) => {
+    acc[industry] = companies.filter(c => c.industry === industry).length;
+    return acc;
+  }, {} as Record<string, number>);
+
+  // 통계 계산
+  const stats = {
+    totalCompanies: companies.length,
+    avgRating: companies.length > 0 
+      ? (companies.reduce((sum, c) => sum + (c.rating || 0), 0) / companies.length).toFixed(1)
+      : '0',
+    totalPositions: companies.reduce((sum, c) => sum + (c.openPositions || 0), 0),
+    totalReviews: companies.reduce((sum, c) => sum + (c.reviewCount || 0), 0)
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -162,7 +132,7 @@ export default function CompaniesPage() {
             한국의 혁신 기업들
           </h1>
           <p className="text-lg text-gray-600 mb-8">
-            당신의 커리어를 성장시킬 {extendedCompanies.length}개의 기업을 만나보세요
+            {loading ? '로딩 중...' : `당신의 커리어를 성장시킬 ${stats.totalCompanies}개의 기업을 만나보세요`}
           </p>
           
           {/* Search Bar */}
@@ -185,10 +155,10 @@ export default function CompaniesPage() {
           {/* Quick Stats */}
           <div className="flex flex-wrap gap-6 mt-8">
             {[
-              { icon: Building2, label: '등록 기업', value: extendedCompanies.length },
-              { icon: Star, label: '평균 평점', value: '4.4' },
-              { icon: Briefcase, label: '활성 채용', value: extendedCompanies.reduce((sum, c) => sum + c.openPositions, 0) },
-              { icon: Users, label: '총 리뷰', value: extendedCompanies.reduce((sum, c) => sum + c.reviewCount, 0).toLocaleString() }
+              { icon: Building2, label: '등록 기업', value: loading ? '-' : stats.totalCompanies },
+              { icon: Star, label: '평균 평점', value: loading ? '-' : stats.avgRating },
+              { icon: Briefcase, label: '활성 채용', value: loading ? '-' : stats.totalPositions },
+              { icon: Users, label: '총 리뷰', value: loading ? '-' : stats.totalReviews.toLocaleString() }
             ].map((stat) => (
               <div key={stat.label} className="flex items-center gap-2">
                 <stat.icon className="w-5 h-5 text-primary-600" />
@@ -277,47 +247,71 @@ export default function CompaniesPage() {
       {/* Main Content */}
       <section className="py-12">
         <div className="container mx-auto px-4 lg:px-8">
-          {/* Popular Industries */}
-          <div className="mb-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">인기 산업군</h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-              {[
-                { name: 'Technology', icon: Code, count: 5, color: 'bg-blue-50 text-blue-600' },
-                { name: 'Fintech', icon: DollarSign, count: 3, color: 'bg-green-50 text-green-600' },
-                { name: 'E-commerce', icon: Building2, count: 4, color: 'bg-purple-50 text-purple-600' },
-                { name: 'Gaming', icon: Award, count: 2, color: 'bg-red-50 text-red-600' },
-                { name: 'Healthcare', icon: Users, count: 1, color: 'bg-yellow-50 text-yellow-600' },
-                { name: 'Education', icon: Globe, count: 1, color: 'bg-indigo-50 text-indigo-600' }
-              ].map((industry) => (
-                <button
-                  key={industry.name}
-                  onClick={() => setSelectedIndustry(industry.name)}
-                  className={`p-4 rounded-xl border transition-all ${
-                    selectedIndustry === industry.name 
-                      ? 'border-primary-500 bg-primary-50' 
-                      : 'border-gray-200 bg-white hover:border-gray-300'
-                  }`}
-                >
-                  <div className={`w-10 h-10 rounded-lg ${industry.color} flex items-center justify-center mx-auto mb-2`}>
-                    <industry.icon className="w-5 h-5" />
-                  </div>
-                  <p className="text-sm font-medium text-gray-900">{industry.name}</p>
-                  <p className="text-xs text-gray-500">{industry.count}개 기업</p>
-                </button>
-              ))}
+          {/* Loading State */}
+          {loading && (
+            <div className="flex flex-col items-center justify-center py-20">
+              <Loader2 className="w-12 h-12 text-primary-600 animate-spin mb-4" />
+              <p className="text-lg text-gray-600">기업 정보를 불러오는 중...</p>
             </div>
-          </div>
+          )}
+
+          {/* Popular Industries */}
+          {!loading && (
+            <div className="mb-8">
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">인기 산업군</h2>
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                {[
+                  { name: 'Technology', icon: Code, color: 'bg-blue-50 text-blue-600' },
+                  { name: 'Fintech', icon: DollarSign, color: 'bg-green-50 text-green-600' },
+                  { name: 'E-commerce', icon: Building2, color: 'bg-purple-50 text-purple-600' },
+                  { name: 'Gaming', icon: Award, color: 'bg-red-50 text-red-600' },
+                  { name: 'Healthcare', icon: Users, color: 'bg-yellow-50 text-yellow-600' },
+                  { name: 'Education', icon: Globe, color: 'bg-indigo-50 text-indigo-600' }
+                ].map((industry) => (
+                  <button
+                    key={industry.name}
+                    onClick={() => setSelectedIndustry(industry.name)}
+                    className={`p-4 rounded-xl border transition-all ${
+                      selectedIndustry === industry.name 
+                        ? 'border-primary-500 bg-primary-50' 
+                        : 'border-gray-200 bg-white hover:border-gray-300'
+                    }`}
+                  >
+                    <div className={`w-10 h-10 rounded-lg ${industry.color} flex items-center justify-center mx-auto mb-2`}>
+                      <industry.icon className="w-5 h-5" />
+                    </div>
+                    <p className="text-sm font-medium text-gray-900">{industry.name}</p>
+                    <p className="text-xs text-gray-500">
+                      {industryCounts[industry.name] || 0}개 기업
+                    </p>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Company Grid */}
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {sortedCompanies.length > 0 ? (
-              sortedCompanies.map((company) => (
+          {!loading && (
+            <>
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {sortedCompanies.length > 0 ? (
+                  sortedCompanies.map((company) => (
                 <div key={company.id} className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow">
                   <div className="p-6">
                     {/* Company Header */}
                     <div className="flex items-start gap-4 mb-4">
-                      <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center shrink-0">
-                        <Building2 className="w-8 h-8 text-gray-500" />
+                      <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center shrink-0 overflow-hidden">
+                        {company.logo ? (
+                          <OptimizedImage
+                            src={company.logo}
+                            alt={company.name}
+                            width={64}
+                            height={64}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <Building2 className="w-8 h-8 text-gray-500" />
+                        )}
                       </div>
                       <div className="flex-1">
                         <h3 className="text-lg font-semibold text-gray-900">
@@ -328,11 +322,11 @@ export default function CompaniesPage() {
                           <div className="flex items-center">
                             <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
                             <span className="text-sm font-medium text-gray-900 ml-1">
-                              {company.rating}
+                              {company.rating || 'N/A'}
                             </span>
                           </div>
                           <span className="text-sm text-gray-500">
-                            ({company.reviewCount} 리뷰)
+                            ({company.reviewCount || 0} 리뷰)
                           </span>
                         </div>
                       </div>
@@ -364,7 +358,7 @@ export default function CompaniesPage() {
                       <div className="mb-4">
                         <p className="text-xs font-medium text-gray-700 mb-2">기술 스택</p>
                         <div className="flex flex-wrap gap-1">
-                          {company.techStack.slice(0, 4).map(tech => (
+                          {company.techStack.slice(0, 4).map((tech: string) => (
                             <span 
                               key={tech} 
                               className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded"
@@ -386,7 +380,7 @@ export default function CompaniesPage() {
                       <div className="mb-4">
                         <p className="text-xs font-medium text-gray-700 mb-2">복지</p>
                         <div className="flex flex-wrap gap-1">
-                          {company.benefits.slice(0, 3).map(benefit => (
+                          {company.benefits.slice(0, 3).map((benefit: string) => (
                             <span 
                               key={benefit} 
                               className="px-2 py-1 bg-primary-50 text-primary-700 text-xs rounded"
@@ -423,44 +417,48 @@ export default function CompaniesPage() {
                 </div>
               ))
             ) : (
-              <div className="col-span-full bg-white rounded-xl shadow-sm p-12 text-center">
-                <Building2 className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  검색 결과가 없습니다
-                </h3>
-                <p className="text-gray-600">
-                  다른 검색어나 필터를 사용해보세요
-                </p>
+                  <div className="col-span-full bg-white rounded-xl shadow-sm p-12 text-center">
+                    <Building2 className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">
+                      검색 결과가 없습니다
+                    </h3>
+                    <p className="text-gray-600">
+                      다른 검색어나 필터를 사용해보세요
+                    </p>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
 
-          {/* Load More Button */}
-          {sortedCompanies.length > 0 && (
-            <div className="mt-12 text-center">
-              <button className="px-6 py-3 bg-white border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition-colors inline-flex items-center gap-2">
-                더 많은 기업 보기
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
+              {/* Load More Button */}
+              {sortedCompanies.length > 0 && (
+                <div className="mt-12 text-center">
+                  <button className="px-6 py-3 bg-white border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition-colors inline-flex items-center gap-2">
+                    더 많은 기업 보기
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+            </>
           )}
 
           {/* CTA Section */}
-          <div className="mt-16 bg-gradient-to-r from-primary-500 to-primary-600 rounded-2xl p-8 text-center">
-            <h3 className="text-2xl font-bold text-white mb-3">
-              우리 회사도 등록하고 싶으신가요?
-            </h3>
-            <p className="text-white/90 mb-6">
-              글로벌 인재들과 만날 수 있는 기회를 놓치지 마세요
-            </p>
-            <Link 
-              href="/company/register"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-white text-primary-600 font-medium rounded-xl hover:bg-gray-50 transition-colors"
-            >
-              기업 등록하기
-              <ChevronRight className="w-4 h-4" />
-            </Link>
-          </div>
+          {!loading && (
+            <div className="mt-16 bg-gradient-to-r from-primary-500 to-primary-600 rounded-2xl p-8 text-center">
+              <h3 className="text-2xl font-bold text-white mb-3">
+                우리 회사도 등록하고 싶으신가요?
+              </h3>
+              <p className="text-white/90 mb-6">
+                글로벌 인재들과 만날 수 있는 기회를 놓치지 마세요
+              </p>
+              <Link 
+                href="/signup/company"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-white text-primary-600 font-medium rounded-xl hover:bg-gray-50 transition-colors"
+              >
+                기업 등록하기
+                <ChevronRight className="w-4 h-4" />
+              </Link>
+            </div>
+          )}
         </div>
       </section>
     </div>

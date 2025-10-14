@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { auth } from '@/lib/firebase/config';
 import { onAuthStateChanged } from 'firebase/auth';
 import { 
@@ -22,6 +22,7 @@ import Step2Location from '@/app/company-auth/onboarding/Step2Location';
 import Step3Introduction from '@/app/company-auth/onboarding/Step3Introduction';
 import Step4Benefits from '@/app/company-auth/onboarding/Step4Benefits';
 import Step5Recruiters from '@/app/company-auth/onboarding/Step5Recruiters';
+import CustomCloudinaryUpload from '@/components/CustomCloudinaryUpload';
 import { 
   ArrowLeft, 
   Save, 
@@ -31,12 +32,18 @@ import {
   Gift, 
   Users,
   Check,
-  AlertCircle
+  AlertCircle,
+  Image as ImageIcon,
+  Code,
+  Heart,
+  X
 } from 'lucide-react';
 import Link from 'next/link';
 
-export default function EditCompanyProfile() {
+// Next.js 15 요구사항: searchParams를 사용하는 컴포넌트
+function EditCompanyProfileContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [activeSection, setActiveSection] = useState<string>('basic');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -53,12 +60,39 @@ export default function EditCompanyProfile() {
   const [step5Data, setStep5Data] = useState<OnboardingStep5 | null>(null);
 
   const sections = [
-    { id: 'basic', title: '기본 정보', icon: Building2, component: 'step1' },
-    { id: 'location', title: '위치 정보', icon: MapPin, component: 'step2' },
-    { id: 'introduction', title: '회사 소개', icon: FileText, component: 'step3' },
-    { id: 'benefits', title: '복지 & 기술', icon: Gift, component: 'step4' },
-    { id: 'recruiters', title: '담당자 & 로고', icon: Users, component: 'step5' }
+    { id: 'basic', title: '기본 정보', icon: Building2 },
+    { id: 'location', title: '위치 정보', icon: MapPin },
+    { id: 'images', title: '로고 & 배너', icon: ImageIcon },
+    { id: 'introduction', title: '회사 소개', icon: FileText },
+    { id: 'techstack', title: '기술 스택', icon: Code },
+    { id: 'benefits', title: '복지 혜택', icon: Heart },
+    { id: 'recruiters', title: '담당자 정보', icon: Users }
   ];
+
+  // URL 파라미터 매핑 (체크리스트에서 클릭 시)
+  const sectionMapping: Record<string, string> = {
+    'logo': 'images',
+    'banner': 'images',
+    'images': 'images',
+    'description': 'introduction',
+    'vision': 'introduction',
+    'mission': 'introduction',
+    'slogan': 'introduction',
+    'vision-mission': 'introduction',
+    'techStack': 'techstack',
+    'website': 'basic',
+    'address': 'location'
+  };
+
+  // URL 파라미터에서 섹션 읽기
+  useEffect(() => {
+    const sectionParam = searchParams.get('section');
+    if (sectionParam) {
+      // 매핑된 섹션이 있으면 사용, 없으면 파라미터 그대로 사용
+      const mappedSection = sectionMapping[sectionParam] || sectionParam;
+      setActiveSection(mappedSection);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -100,7 +134,11 @@ export default function EditCompanyProfile() {
               growth: [],
               healthWelfare: [],
               compensation: []
-            }
+            },
+            revenue: profile.revenue,
+            funding: profile.funding,
+            avgSalary: profile.stats?.avgSalary,
+            avgTenure: profile.stats?.avgTenure
           });
           
           setStep5Data({
@@ -249,6 +287,7 @@ export default function EditCompanyProfile() {
               transition={{ duration: 0.3 }}
               className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100"
             >
+              {/* 기본 정보 */}
               {activeSection === 'basic' && step1Data && (
                 <Step1BasicInfo
                   data={step1Data}
@@ -260,6 +299,7 @@ export default function EditCompanyProfile() {
                 />
               )}
               
+              {/* 위치 정보 */}
               {activeSection === 'location' && step2Data && (
                 <Step2Location
                   data={step2Data}
@@ -272,38 +312,286 @@ export default function EditCompanyProfile() {
                 />
               )}
               
-              {activeSection === 'introduction' && step3Data && (
-                <Step3Introduction
-                  data={step3Data}
-                  onSave={(data) => {
-                    setStep3Data(data);
-                    handleSaveSection('introduction', data);
-                  }}
-                  onBack={() => setActiveSection('location')}
-                  uid={uid}
-                />
+              {/* 로고 & 배너 */}
+              {activeSection === 'images' && step3Data && (
+                <div className="space-y-6">
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900 mb-2">로고 & 배너 이미지</h2>
+                    <p className="text-gray-600">기업의 로고와 배너 이미지를 업로드하세요</p>
+                  </div>
+
+                  <div className="space-y-8">
+                    {/* 로고 업로드 */}
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-4">
+                        <ImageIcon className="inline w-4 h-4 mr-2" />
+                        기업 로고
+                      </label>
+                      <CustomCloudinaryUpload
+                        type="logo"
+                        currentImageUrl={step3Data.logo}
+                        onUploadSuccess={(url) => {
+                          const updatedData = { ...step3Data, logo: url };
+                          setStep3Data(updatedData);
+                        }}
+                        userId={uid}
+                      />
+                      <p className="text-xs text-gray-500 mt-2">
+                        권장: 정사각형 (500x500px), PNG 또는 JPG
+                      </p>
+                    </div>
+
+                    {/* 배너 업로드 */}
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-4">
+                        <ImageIcon className="inline w-4 h-4 mr-2" />
+                        배너 이미지
+                      </label>
+                      <CustomCloudinaryUpload
+                        type="banner"
+                        currentImageUrl={step3Data.bannerImage}
+                        onUploadSuccess={(url) => {
+                          const updatedData = { ...step3Data, bannerImage: url };
+                          setStep3Data(updatedData);
+                        }}
+                        userId={uid}
+                      />
+                      <p className="text-xs text-gray-500 mt-2">
+                        권장: 가로형 (1200x400px), PNG 또는 JPG
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end pt-4">
+                    <button
+                      onClick={() => {
+                        handleSaveSection('images', {
+                          logo: step3Data.logo,
+                          bannerImage: step3Data.bannerImage
+                        });
+                      }}
+                      disabled={saving}
+                      className="px-8 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+                    >
+                      <Save className="w-5 h-5" />
+                      {saving ? '저장 중...' : '저장하기'}
+                    </button>
+                  </div>
+                </div>
               )}
               
+              {/* 회사 소개 */}
+              {activeSection === 'introduction' && step3Data && (
+                <div className="space-y-6">
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900 mb-2">회사 소개</h2>
+                    <p className="text-gray-600">기업의 비전과 미션을 입력하세요</p>
+                  </div>
+
+                  <div className="space-y-6">
+                    {/* 슬로건 */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        슬로건
+                      </label>
+                      <input
+                        type="text"
+                        value={step3Data.slogan || ''}
+                        onChange={(e) => setStep3Data({ ...step3Data, slogan: e.target.value })}
+                        placeholder="예: 혁신과 도전으로 더 나은 세상을"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                      />
+                    </div>
+
+                    {/* 회사 소개 */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        회사 소개 <span className="text-red-500">*</span>
+                      </label>
+                      <textarea
+                        value={step3Data.description || ''}
+                        onChange={(e) => setStep3Data({ ...step3Data, description: e.target.value })}
+                        placeholder="회사에 대해 상세히 소개해주세요 (최소 50자)"
+                        rows={6}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        {(step3Data.description || '').length} / 50자 이상
+                      </p>
+                    </div>
+
+                    {/* 비전 */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        비전 (Vision)
+                      </label>
+                      <textarea
+                        value={step3Data.vision || ''}
+                        onChange={(e) => setStep3Data({ ...step3Data, vision: e.target.value })}
+                        placeholder="기업이 추구하는 미래의 모습"
+                        rows={3}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
+                      />
+                    </div>
+
+                    {/* 미션 */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        미션 (Mission)
+                      </label>
+                      <textarea
+                        value={step3Data.mission || ''}
+                        onChange={(e) => setStep3Data({ ...step3Data, mission: e.target.value })}
+                        placeholder="기업의 핵심 목표와 가치"
+                        rows={3}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end pt-4">
+                    <button
+                      onClick={() => {
+                        if (!step3Data.description || step3Data.description.length < 50) {
+                          alert('회사 소개를 최소 50자 이상 입력해주세요.');
+                          return;
+                        }
+                        handleSaveSection('introduction', {
+                          description: step3Data.description,
+                          slogan: step3Data.slogan,
+                          vision: step3Data.vision,
+                          mission: step3Data.mission
+                        });
+                      }}
+                      disabled={saving}
+                      className="px-8 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+                    >
+                      <Save className="w-5 h-5" />
+                      {saving ? '저장 중...' : '저장하기'}
+                    </button>
+                  </div>
+                </div>
+              )}
+              
+              {/* 기술 스택 */}
+              {activeSection === 'techstack' && step4Data && (
+                <div className="space-y-6">
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900 mb-2">기술 스택</h2>
+                    <p className="text-gray-600">회사에서 사용하는 기술을 추가하세요</p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-3">
+                      <Code className="inline w-4 h-4 mr-2" />
+                      사용 기술
+                    </label>
+                    
+                    {/* 기술 스택 입력 */}
+                    <div className="space-y-3">
+                      <div className="flex flex-wrap gap-2">
+                        {step4Data.techStack.map((tech, index) => (
+                          <span
+                            key={index}
+                            className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg text-sm"
+                          >
+                            {tech}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const newTechStack = step4Data.techStack.filter((_, i) => i !== index);
+                                setStep4Data({ ...step4Data, techStack: newTechStack });
+                              }}
+                              className="hover:bg-blue-100 rounded p-0.5"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                      
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          id="tech-input"
+                          placeholder="기술 이름 입력 후 Enter"
+                          onKeyPress={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              const input = e.currentTarget;
+                              const value = input.value.trim();
+                              if (value && !step4Data.techStack.includes(value)) {
+                                setStep4Data({
+                                  ...step4Data,
+                                  techStack: [...step4Data.techStack, value]
+                                });
+                                input.value = '';
+                              }
+                            }
+                          }}
+                          className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const input = document.getElementById('tech-input') as HTMLInputElement;
+                            const value = input.value.trim();
+                            if (value && !step4Data.techStack.includes(value)) {
+                              setStep4Data({
+                                ...step4Data,
+                                techStack: [...step4Data.techStack, value]
+                              });
+                              input.value = '';
+                            }
+                          }}
+                          className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+                        >
+                          추가
+                        </button>
+                      </div>
+                      <p className="text-xs text-gray-500">
+                        예: React, Node.js, Python, AWS 등
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end pt-4">
+                    <button
+                      onClick={() => {
+                        handleSaveSection('techstack', {
+                          techStack: step4Data.techStack
+                        });
+                      }}
+                      disabled={saving}
+                      className="px-8 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+                    >
+                      <Save className="w-5 h-5" />
+                      {saving ? '저장 중...' : '저장하기'}
+                    </button>
+                  </div>
+                </div>
+              )}
+              
+              {/* 복지 혜택 */}
               {activeSection === 'benefits' && step4Data && (
                 <Step4Benefits
                   data={step4Data}
                   onSave={(data) => {
                     setStep4Data(data);
-                    handleSaveSection('benefits', data);
+                    handleSaveSection('benefits', { benefits: data.benefits });
                   }}
-                  onBack={() => setActiveSection('introduction')}
+                  onBack={() => setActiveSection('techstack')}
                   uid={uid}
                 />
               )}
               
+              {/* 담당자 정보 */}
               {activeSection === 'recruiters' && step5Data && (
                 <Step5Recruiters
                   data={step5Data}
                   onSave={(data) => {
                     setStep5Data(data);
                     handleSaveSection('recruiters', data);
-                    // 마지막 섹션 저장 후 대시보드로 이동
-                    setTimeout(() => handleCompleteEdit(), 1500);
                   }}
                   onBack={() => setActiveSection('benefits')}
                   uid={uid}
@@ -343,5 +631,21 @@ export default function EditCompanyProfile() {
         </div>
       </div>
     </div>
+  );
+}
+
+// Suspense로 감싼 export default 컴포넌트
+export default function EditCompanyProfile() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-primary-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">로딩중...</p>
+        </div>
+      </div>
+    }>
+      <EditCompanyProfileContent />
+    </Suspense>
   );
 }

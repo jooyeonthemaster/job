@@ -1,11 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import Link from 'next/link';
 import Image from 'next/image';
 import JobCard from '@/components/JobCard';
+import OptimizedImage from '@/components/OptimizedImage';
+import { getCompanyById, getCompanyJobs } from '@/lib/firebase/company-service';
 import { 
   Building2, 
   MapPin, 
@@ -48,180 +50,275 @@ import {
   Filter,
   Info,
   Quote,
-  CheckCircle
+  CheckCircle,
+  Loader2
 } from 'lucide-react';
-import { companies, jobs } from '@/lib/data';
 
 export default function CompanyDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState('overview');
   const [isFollowing, setIsFollowing] = useState(false);
   const [expandedReview, setExpandedReview] = useState<number | null>(null);
   const [reviewFilter, setReviewFilter] = useState('all');
   const [reviewSort, setReviewSort] = useState('recent');
   
-  // 실제로는 API에서 데이터를 가져와야 하지만, 여기서는 목업 데이터 사용
+  // Firebase 데이터 상태
+  const [company, setCompany] = useState<any>(null);
+  const [companyJobs, setCompanyJobs] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
   const companyId = params.id as string;
-  const company = companies.find(c => c.id === companyId) || companies[0];
-  const companyJobs = jobs.filter(j => j.company.id === company.id);
 
-  // 기업 상세 정보 목업
+  // Firebase에서 기업 데이터 가져오기
+  useEffect(() => {
+    const fetchCompanyData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        const [companyData, jobsData] = await Promise.all([
+          getCompanyById(companyId),
+          getCompanyJobs(companyId)
+        ]);
+        
+        if (!companyData) {
+          setError('기업 정보를 찾을 수 없습니다.');
+          return;
+        }
+        
+        setCompany(companyData);
+        setCompanyJobs(jobsData);
+      } catch (err) {
+        console.error('기업 데이터 로딩 실패:', err);
+        setError('기업 정보를 불러오는데 실패했습니다.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (companyId) {
+      fetchCompanyData();
+    }
+  }, [companyId]);
+
+  // 로딩 상태
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <div className="flex flex-col items-center justify-center py-20">
+          <Loader2 className="w-12 h-12 text-primary-600 animate-spin mb-4" />
+          <p className="text-lg text-gray-600">기업 정보를 불러오는 중...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // 에러 상태
+  if (error || !company) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <div className="flex flex-col items-center justify-center py-20">
+          <Building2 className="w-16 h-16 text-gray-300 mb-4" />
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">기업을 찾을 수 없습니다</h2>
+          <p className="text-gray-600 mb-6">{error || '존재하지 않는 기업입니다.'}</p>
+          <Link href="/companies" className="btn-primary">
+            기업 목록으로 돌아가기
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  // benefits 타입 확인 헬퍼 함수
+  const isBenefitsObject = (benefits: any): boolean => {
+    return benefits && typeof benefits === 'object' && !Array.isArray(benefits);
+  };
+
+  const isBenefitsArray = (benefits: any): boolean => {
+    return Array.isArray(benefits);
+  };
+
+  // 복지 정보를 배열로 변환
+  const getBenefitsAsArray = () => {
+    if (!company.benefits) return [];
+    
+    // 이미 배열인 경우
+    if (isBenefitsArray(company.benefits)) {
+      return company.benefits as string[];
+    }
+    
+    // CompanyBenefits 객체인 경우
+    if (isBenefitsObject(company.benefits)) {
+      const benefitsObj = company.benefits as any;
+      const allBenefits: string[] = [];
+      
+      // 모든 카테고리의 benefits를 하나의 배열로 합침
+      Object.values(benefitsObj).forEach((categoryBenefits: any) => {
+        if (Array.isArray(categoryBenefits)) {
+          categoryBenefits.forEach((item: any) => {
+            if (typeof item === 'string') {
+              allBenefits.push(item);
+            } else if (item.title) {
+              allBenefits.push(item.title);
+            }
+          });
+        }
+      });
+      
+      return allBenefits;
+    }
+    
+    return [];
+  };
+
+  // 복지 상세 정보 생성
+  const getBenefitsDetail = () => {
+    if (!company.benefits) return [];
+
+    // CompanyBenefits 객체 형태인 경우
+    if (isBenefitsObject(company.benefits)) {
+      const benefitsObj = company.benefits as any;
+      const categories = [];
+
+      if (benefitsObj.workEnvironment?.length > 0) {
+        categories.push({
+          category: '근무 환경',
+          items: benefitsObj.workEnvironment.map((b: any) => ({
+            icon: Clock,
+            title: b.title || b,
+            desc: b.description || '제공'
+          }))
+        });
+      }
+
+      if (benefitsObj.growth?.length > 0) {
+        categories.push({
+          category: '성장 지원',
+          items: benefitsObj.growth.map((b: any) => ({
+            icon: GraduationCap,
+            title: b.title || b,
+            desc: b.description || '지원'
+          }))
+        });
+      }
+
+      if (benefitsObj.healthWelfare?.length > 0) {
+        categories.push({
+          category: '건강/복지',
+          items: benefitsObj.healthWelfare.map((b: any) => ({
+            icon: Heart,
+            title: b.title || b,
+            desc: b.description || '제공'
+          }))
+        });
+      }
+
+      if (benefitsObj.compensation?.length > 0) {
+        categories.push({
+          category: '보상',
+          items: benefitsObj.compensation.map((b: any) => ({
+            icon: TrendingUp,
+            title: b.title || b,
+            desc: b.description || '제공'
+          }))
+        });
+      }
+
+      if (benefitsObj.additional?.length > 0) {
+        categories.push({
+          category: '기타 복지',
+          items: benefitsObj.additional.map((b: any) => ({
+            icon: Award,
+            title: b.title || b,
+            desc: b.description || '제공'
+          }))
+        });
+      }
+
+      return categories;
+    }
+
+    // string[] 배열 형태인 경우 (하위 호환성)
+    if (isBenefitsArray(company.benefits)) {
+      const benefitsArray = company.benefits as string[];
+      return [
+        { 
+          category: '근무 환경',
+          items: benefitsArray
+            .filter((b: string) => ['유연근무', '재택근무', '자율출퇴근', '무제한휴가'].some(k => b.includes(k)))
+            .map((b: string) => ({ icon: Clock, title: b, desc: '상세 정보 준비중' }))
+        },
+        {
+          category: '복지 혜택',
+          items: benefitsArray
+            .filter((b: string) => ['4대보험', '퇴직금', '건강검진', '식사지원'].some(k => b.includes(k)))
+            .map((b: string) => ({ icon: Heart, title: b, desc: '제공' }))
+        },
+        {
+          category: '성장 지원',
+          items: benefitsArray
+            .filter((b: string) => ['자기계발', '교육지원', '스톡옵션'].some(k => b.includes(k)))
+            .map((b: string) => ({ icon: GraduationCap, title: b, desc: '지원' }))
+        }
+      ].filter(category => category.items.length > 0);
+    }
+
+    return [];
+  };
+
+  // 기업 상세 정보 (Firebase 데이터 + 기본값)
   const companyDetail = {
     ...company,
-    slogan: "혁신과 도전으로 더 나은 세상을 만들어갑니다",
-    vision: "글로벌 시장을 선도하는 혁신 기업",
-    mission: "기술과 창의성으로 고객의 삶을 풍요롭게",
-    ceo: "김철수",
-    founded: company.established || "2015",
-    website: "https://company.com",
-    revenue: "1,200억원",
-    funding: "Series C (500억원)",
-    growthRate: 45,
-    turnoverRate: 8,
-    recommendRate: 92,
-    interviewDifficulty: 3.8,
+    slogan: company.slogan || "혁신과 도전으로 더 나은 세상을 만들어갑니다",
+    vision: company.vision || "글로벌 시장을 선도하는 혁신 기업",
+    mission: company.mission || "기술과 창의성으로 고객의 삶을 풍요롭게",
+    ceo: company.ceo || company.ceoName || company.representativeName || "대표자",
+    founded: company.established || company.foundedYear || "2015",
+    website: company.website || company.homepage || "#",
+    revenue: company.revenue || "비공개",
+    funding: company.funding || "비공개",
+    growthRate: company.stats?.growthRate || company.growthRate || 0,
+    turnoverRate: company.stats?.turnoverRate || company.turnoverRate || 0,
+    recommendRate: company.stats?.recommendRate || company.recommendRate || 0,
+    interviewDifficulty: company.stats?.interviewDifficulty || company.interviewDifficulty || 0,
     
     stats: {
-      currentEmployees: 324,
-      lastYearEmployees: 223,
-      avgSalary: 6800,
-      avgTenure: 2.8,
-      femaleRatio: 42,
-      foreignerRatio: 15
+      currentEmployees: company.stats?.currentEmployees || company.currentEmployees || 0,
+      lastYearEmployees: company.stats?.lastYearEmployees || company.lastYearEmployees || 0,
+      avgSalary: company.stats?.avgSalary || company.avgSalary || 0,
+      avgTenure: company.stats?.avgTenure || company.avgTenure || 0,
+      femaleRatio: company.stats?.femaleRatio || company.femaleRatio || 0,
+      foreignerRatio: company.stats?.foreignerRatio || company.foreignerRatio || 0
     },
 
-    benefits: [
-      { 
-        category: '근무 환경',
-        items: [
-          { icon: Clock, title: '자율 출퇴근제', desc: '코어타임 10-16시' },
-          { icon: Home, title: '재택근무', desc: '주 2-3회 가능' },
-          { icon: Coffee, title: '사내 카페', desc: '바리스타 커피 무료' },
-          { icon: Laptop, title: '최신 장비', desc: '맥북프로 최신형 지급' }
-        ]
-      },
-      {
-        category: '성장 지원',
-        items: [
-          { icon: GraduationCap, title: '교육비 지원', desc: '연 300만원' },
-          { icon: Globe, title: '컨퍼런스', desc: '국내외 컨퍼런스 참가' },
-          { icon: Award, title: '자격증 지원', desc: '취득 비용 전액' },
-          { icon: Target, title: '멘토링', desc: '1:1 커리어 멘토링' }
-        ]
-      },
-      {
-        category: '건강/복지',
-        items: [
-          { icon: Heart, title: '건강검진', desc: '종합검진 연 1회' },
-          { icon: Shield, title: '단체보험', desc: '가족 포함 지원' },
-          { icon: Activity, title: '헬스케어', desc: '피트니스 멤버십' },
-          { icon: Coffee, title: '식사 지원', desc: '중식/석식 제공' }
-        ]
-      },
-      {
-        category: '보상',
-        items: [
-          { icon: TrendingUp, title: '성과급', desc: '연 200-500%' },
-          { icon: Award, title: '스톡옵션', desc: '전 직원 부여' },
-          { icon: DollarSign, title: '경조사비', desc: '각종 경조사 지원' },
-          { icon: Calendar, title: '연차', desc: '15일 + 근속 추가' }
-        ]
-      }
-    ],
+    benefits: getBenefitsAsArray(),
+    benefitsDetail: getBenefitsDetail(),
 
-    reviews: [
-      {
-        id: 1,
-        rating: 4.5,
-        position: '프론트엔드 개발자',
-        tenure: '2년 3개월',
-        status: '현직원',
-        date: '2025-09-15',
-        pros: '자율적인 문화와 수평적인 조직 구조가 장점입니다. 새로운 기술 도입에 적극적이고, 개발자의 의견을 존중해줍니다. 워라밸도 좋고 재택근무도 자유롭게 가능합니다.',
-        cons: '빠르게 성장하는 만큼 업무 프로세스가 자주 바뀝니다. 때로는 일이 몰릴 때가 있어서 야근을 하기도 합니다.',
-        helpful: 42,
-        tags: ['워라밸 좋음', '성장 가능', '수평적 문화']
-      },
-      {
-        id: 2,
-        rating: 4.0,
-        position: '백엔드 개발자',
-        tenure: '1년 6개월',
-        status: '현직원',
-        date: '2025-09-10',
-        pros: '기술 스택이 최신이고 도전적인 프로젝트가 많습니다. 동료들이 우수하고 서로 배우는 문화가 잘 형성되어 있습니다.',
-        cons: '스타트업 특성상 복지가 대기업에 비해 부족합니다. 주니어 개발자를 위한 체계적인 교육 프로그램이 부족합니다.',
-        helpful: 28,
-        tags: ['기술력 높음', '좋은 동료', '스타트업']
-      },
-      {
-        id: 3,
-        rating: 3.5,
-        position: '데이터 분석가',
-        tenure: '3년',
-        status: '전직원',
-        date: '2025-08-20',
-        pros: '데이터 기반 의사결정 문화가 잘 정착되어 있습니다. 다양한 데이터를 다룰 수 있어 성장에 도움이 됩니다.',
-        cons: '부서간 협업이 원활하지 않을 때가 있습니다. 연봉 인상률이 기대에 미치지 못합니다.',
-        helpful: 15,
-        tags: ['데이터 중심', '성장 기회', '연봉 아쉬움']
-      }
-    ],
+    reviews: company.reviews || [],
 
-    news: [
-      {
-        id: 1,
-        title: 'Series C 투자 유치 성공, 500억원 규모',
-        date: '2025-09-01',
-        source: '테크크런치',
-        url: '#'
-      },
-      {
-        id: 2,
-        title: '글로벌 진출 본격화, 일본 법인 설립',
-        date: '2025-08-15',
-        source: '매일경제',
-        url: '#'
-      },
-      {
-        id: 3,
-        title: 'AI 기반 신규 서비스 출시 예정',
-        date: '2025-07-20',
-        source: '조선일보',
-        url: '#'
-      }
-    ],
+    news: company.news || [],
 
-    locations: [
+    locations: company.locations || [
       {
         name: '본사',
-        address: company.location,
+        address: company.location || '주소 정보 없음',
         type: 'HQ',
-        employees: 250
-      },
-      {
-        name: '강남 오피스',
-        address: '서울 강남구 테헤란로 123',
-        type: 'Branch',
-        employees: 74
+        employees: company.currentEmployees || 0
       }
     ],
 
-    culture: {
-      values: [
+    culture: company.culture || {
+      values: company.coreValues || [
         { title: '혁신', desc: '새로운 시도를 두려워하지 않습니다' },
         { title: '협업', desc: '함께 성장하고 발전합니다' },
         { title: '고객중심', desc: '고객의 목소리에 귀 기울입니다' },
         { title: '투명성', desc: '열린 소통과 정보 공유' }
       ],
-      perks: [
-        '자율 좌석제',
-        '무제한 휴가',
-        '펫 프렌들리',
-        '사내 동호회',
-        '금요일 조기 퇴근',
-        '생일 반차'
-      ]
+      perks: company.benefits || []
     }
   };
 
@@ -257,8 +354,18 @@ export default function CompanyDetailPage() {
 
             {/* Company Info */}
             <div className="flex items-start gap-6">
-              <div className="w-32 h-32 rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center shrink-0 shadow-sm">
-                <Building2 className="w-16 h-16 text-gray-500" />
+              <div className="w-32 h-32 rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center shrink-0 shadow-sm overflow-hidden">
+                {company.logo ? (
+                  <OptimizedImage
+                    src={company.logo}
+                    alt={company.name}
+                    width={128}
+                    height={128}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <Building2 className="w-16 h-16 text-gray-500" />
+                )}
               </div>
               
               <div className="flex-1">
@@ -321,49 +428,6 @@ export default function CompanyDetailPage() {
                     </button>
                   </div>
                 </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-      {/* Key Metrics Bar */}
-      <section className="bg-gradient-to-r from-primary-50 to-secondary-50 py-6 border-b">
-        <div className="container mx-auto px-4 lg:px-8">
-          <div className="max-w-6xl mx-auto">
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-gray-900">{companyDetail.stats.currentEmployees}</div>
-                <div className="text-sm text-gray-600 flex items-center justify-center gap-1 mt-1">
-                  현재 직원수
-                  <span className={`text-xs ${companyDetail.growthRate > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    +{companyDetail.growthRate}%
-                  </span>
-                </div>
-              </div>
-              
-              <div className="text-center">
-                <div className="text-2xl font-bold text-gray-900">{companyDetail.recommendRate}%</div>
-                <div className="text-sm text-gray-600">추천율</div>
-              </div>
-              
-              <div className="text-center">
-                <div className="text-2xl font-bold text-gray-900">{companyDetail.stats.avgSalary}만원</div>
-                <div className="text-sm text-gray-600">평균 연봉</div>
-              </div>
-              
-              <div className="text-center">
-                <div className="text-2xl font-bold text-gray-900">{companyDetail.stats.avgTenure}년</div>
-                <div className="text-sm text-gray-600">평균 근속</div>
-              </div>
-              
-              <div className="text-center">
-                <div className="text-2xl font-bold text-gray-900">{company.openPositions}개</div>
-                <div className="text-sm text-gray-600">채용중</div>
-              </div>
-              
-              <div className="text-center">
-                <div className="text-2xl font-bold text-gray-900">{companyDetail.interviewDifficulty}</div>
-                <div className="text-sm text-gray-600">면접 난이도</div>
               </div>
             </div>
           </div>
@@ -438,7 +502,7 @@ export default function CompanyDetailPage() {
                     <div className="bg-white rounded-xl shadow-sm p-6">
                       <h2 className="text-xl font-bold text-gray-900 mb-4">기술 스택</h2>
                       <div className="flex flex-wrap gap-3">
-                        {company.techStack.map(tech => (
+                        {company.techStack.map((tech: string) => (
                           <span 
                             key={tech}
                             className="px-4 py-2 bg-primary-50 text-primary-700 rounded-lg font-medium"
@@ -450,58 +514,6 @@ export default function CompanyDetailPage() {
                     </div>
                   )}
 
-                  {/* Growth Chart */}
-                  <div className="bg-white rounded-xl shadow-sm p-6">
-                    <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-                      <BarChart3 className="w-5 h-5 text-primary-600" />
-                      성장 지표
-                    </h2>
-                    <div className="grid grid-cols-2 gap-6">
-                      <div>
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-gray-600">직원 수 증가율</span>
-                          <span className="flex items-center gap-1 font-bold text-green-600">
-                            <ArrowUpRight className="w-4 h-4" />
-                            {companyDetail.growthRate}%
-                          </span>
-                        </div>
-                        <div className="w-full bg-gray-200 rounded-full h-2">
-                          <div 
-                            className="bg-green-600 h-2 rounded-full"
-                            style={{ width: `${companyDetail.growthRate}%` }}
-                          />
-                        </div>
-                      </div>
-                      
-                      <div>
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-gray-600">이직률</span>
-                          <span className="flex items-center gap-1 font-bold text-blue-600">
-                            <ArrowDownRight className="w-4 h-4" />
-                            {companyDetail.turnoverRate}%
-                          </span>
-                        </div>
-                        <div className="w-full bg-gray-200 rounded-full h-2">
-                          <div 
-                            className="bg-blue-600 h-2 rounded-full"
-                            style={{ width: `${companyDetail.turnoverRate}%` }}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-4 mt-6 pt-6 border-t">
-                      <div className="text-center">
-                        <div className="text-sm text-gray-600">여성 비율</div>
-                        <div className="text-2xl font-bold text-gray-900">{companyDetail.stats.femaleRatio}%</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-sm text-gray-600">외국인 비율</div>
-                        <div className="text-2xl font-bold text-gray-900">{companyDetail.stats.foreignerRatio}%</div>
-                      </div>
-                    </div>
-                  </div>
-
                   {/* Office Gallery */}
                   {company.bannerImage && (
                     <div className="bg-white rounded-xl shadow-sm overflow-hidden">
@@ -509,11 +521,12 @@ export default function CompanyDetailPage() {
                         <h2 className="text-xl font-bold text-gray-900">오피스 갤러리</h2>
                       </div>
                       <div className="relative h-64">
-                        <Image
+                        <OptimizedImage
                           src={company.bannerImage}
                           alt={`${company.name} 오피스`}
-                          fill
-                          className="object-cover"
+                          width={800}
+                          height={300}
+                          className="w-full h-full object-cover"
                         />
                       </div>
                       <div className="p-6 pt-4">
@@ -567,7 +580,7 @@ export default function CompanyDetailPage() {
                   <div className="bg-white rounded-xl shadow-sm p-6">
                     <h3 className="font-bold text-gray-900 mb-4">위치</h3>
                     <div className="space-y-3">
-                      {companyDetail.locations.map((location, index) => (
+                      {companyDetail.locations.map((location: any, index: number) => (
                         <div key={index} className="pb-3 border-b last:border-0">
                           <div className="flex items-start justify-between">
                             <div>
@@ -599,7 +612,7 @@ export default function CompanyDetailPage() {
                   <div className="bg-white rounded-xl shadow-sm p-6">
                     <h2 className="text-xl font-bold text-gray-900 mb-6">핵심 가치</h2>
                     <div className="grid sm:grid-cols-2 gap-6">
-                      {companyDetail.culture.values.map((value, index) => (
+                      {companyDetail.culture.values.map((value: any, index: number) => (
                         <div key={index} className="flex gap-4">
                           <div className="w-12 h-12 rounded-lg bg-primary-100 flex items-center justify-center shrink-0">
                             <Zap className="w-6 h-6 text-primary-600" />
@@ -622,7 +635,7 @@ export default function CompanyDetailPage() {
                         누구나 자유롭게 의견을 제시하고, 더 나은 방향을 함께 찾아갑니다.
                       </p>
                       <div className="grid sm:grid-cols-2 gap-4 mt-6">
-                        {companyDetail.culture.perks.map((perk, index) => (
+                        {companyDetail.culture.perks.map((perk: string, index: number) => (
                           <div key={index} className="flex items-center gap-3">
                             <CheckCircle className="w-5 h-5 text-green-500 shrink-0" />
                             <span className="text-gray-700">{perk}</span>
@@ -675,22 +688,36 @@ export default function CompanyDetailPage() {
             {/* Benefits Tab */}
             {activeTab === 'benefits' && (
               <div className="space-y-8">
-                {companyDetail.benefits.map((category, categoryIndex) => (
-                  <div key={categoryIndex} className="bg-white rounded-xl shadow-sm p-6">
-                    <h2 className="text-xl font-bold text-gray-900 mb-6">{category.category}</h2>
-                    <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                      {category.items.map((benefit, index) => (
-                        <div key={index} className="text-center">
-                          <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-primary-100 to-primary-200 flex items-center justify-center mx-auto mb-3">
-                            <benefit.icon className="w-8 h-8 text-primary-600" />
-                          </div>
-                          <h4 className="font-bold text-gray-900 mb-1">{benefit.title}</h4>
-                          <p className="text-sm text-gray-600">{benefit.desc}</p>
+                {companyDetail.benefitsDetail.length > 0 ? (
+                  companyDetail.benefitsDetail
+                    .filter((category: any) => category.items?.length > 0)
+                    .map((category: any, categoryIndex: number) => (
+                      <div key={categoryIndex} className="bg-white rounded-xl shadow-sm p-6">
+                        <h2 className="text-xl font-bold text-gray-900 mb-6">{category.category}</h2>
+                        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                          {category.items.map((benefit: any, index: number) => (
+                            <div key={index} className="text-center">
+                              <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-primary-100 to-primary-200 flex items-center justify-center mx-auto mb-3">
+                                <benefit.icon className="w-8 h-8 text-primary-600" />
+                              </div>
+                              <h4 className="font-bold text-gray-900 mb-1">{benefit.title}</h4>
+                              <p className="text-sm text-gray-600">{benefit.desc}</p>
+                            </div>
+                          ))}
                         </div>
-                      ))}
-                    </div>
+                      </div>
+                    ))
+                ) : (
+                  <div className="bg-white rounded-xl shadow-sm p-12 text-center">
+                    <Heart className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">
+                      복지 정보 준비중
+                    </h3>
+                    <p className="text-gray-600">
+                      복지 및 혜택 정보가 곧 업데이트됩니다.
+                    </p>
                   </div>
-                ))}
+                )}
               </div>
             )}
 
@@ -728,8 +755,9 @@ export default function CompanyDetailPage() {
                   </div>
 
                   {/* Review List */}
-                  {companyDetail.reviews.map((review) => (
-                    <div key={review.id} className="bg-white rounded-xl shadow-sm p-6">
+                  {companyDetail.reviews.length > 0 ? (
+                    companyDetail.reviews.map((review: any) => (
+                      <div key={review.id} className="bg-white rounded-xl shadow-sm p-6">
                       <div className="flex items-start justify-between mb-4">
                         <div>
                           <div className="flex items-center gap-3 mb-2">
@@ -763,7 +791,7 @@ export default function CompanyDetailPage() {
 
                       <div className="flex items-center justify-between pt-4 border-t">
                         <div className="flex flex-wrap gap-2">
-                          {review.tags.map(tag => (
+                          {review.tags.map((tag: string) => (
                             <span key={tag} className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">
                               {tag}
                             </span>
@@ -775,7 +803,18 @@ export default function CompanyDetailPage() {
                         </button>
                       </div>
                     </div>
-                  ))}
+                    ))
+                  ) : (
+                    <div className="bg-white rounded-xl shadow-sm p-12 text-center">
+                      <MessageSquare className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                      <h3 className="text-lg font-medium text-gray-900 mb-2">
+                        리뷰가 없습니다
+                      </h3>
+                      <p className="text-gray-600">
+                        첫 번째 리뷰를 작성해보세요!
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 {/* Review Summary */}
@@ -892,7 +931,7 @@ export default function CompanyDetailPage() {
                       </div>
 
                       <div className="flex flex-wrap gap-2 mb-4">
-                        {job.tags.slice(0, 3).map(tag => (
+                        {job.tags.slice(0, 3).map((tag: string) => (
                           <span key={tag} className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">
                             {tag}
                           </span>
@@ -924,7 +963,7 @@ export default function CompanyDetailPage() {
             {activeTab === 'news' && (
               <div className="grid lg:grid-cols-3 gap-8">
                 <div className="lg:col-span-2 space-y-6">
-                  {companyDetail.news.map(article => (
+                  {companyDetail.news.map((article: any) => (
                     <a
                       key={article.id}
                       href={article.url}
