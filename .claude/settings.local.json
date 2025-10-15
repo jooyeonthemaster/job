@@ -27,7 +27,11 @@
       "Read(//c/Users/jooye/.claude/logs/**)",
       "Read(//c/Users/jooye/.claude/**)",
       "Bash(npm run build)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nfeat: Supabase 마이그레이션 및 빌드 수정 완료\n\n- 기업 로그인 Firebase → Supabase 전환\n- 개인/기업 회원가입/로그인 완전히 Supabase로 전환\n- 온보딩 페이지 타입 에러 수정\n- Firebase 의존성 파일 임시 비활성화 (*.disabled)\n- 빌드 성공 (36개 페이지 정적 생성)\n\n변경 파일:\n- app/login/company/page.tsx (Supabase)\n- app/login/page.tsx (단순화)\n- app/signup/page.tsx (useSearchParams 제거)\n- lib/utils.ts (타입 정의 추가)\n- types/jobseeker-onboarding.types.ts (타입 수정)\n\n비활성화:\n- Firebase 관련 페이지들 (*.disabled)\n- 관리자, 채용공고, 기업 대시보드 일부\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git push:*)",
+      "Bash(vercel:*)",
+      "Bash(git commit:*)"
     ],
     "deny": [],
     "ask": []
