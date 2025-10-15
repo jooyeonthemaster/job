@@ -2,9 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { auth } from '@/lib/firebase/config';
-import { onAuthStateChanged } from 'firebase/auth';
-import { getCompanyProfile, updateCompanyProfile } from '@/lib/firebase/company-service';
+import { supabase } from '@/lib/supabase/config';
 import { ArrowLeft, Save } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
@@ -23,20 +21,28 @@ export default function IntroductionEditPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (!user) {
-        router.push('/company-auth');
-        return;
-      }
-
-      setUid(user.uid);
+    const loadProfile = async () => {
       try {
-        const profile = await getCompanyProfile(user.uid);
-        if (!profile) {
-          router.push('/company-auth/onboarding');
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+        if (authError || !user) {
+          router.push('/login/company');
           return;
         }
-        
+
+        setUid(user.id);
+
+        const { data: profile, error } = await supabase
+          .from('companies')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+
+        if (error || !profile) {
+          router.push('/signup/company');
+          return;
+        }
+
         setFormData({
           description: profile.description || '',
           slogan: profile.slogan || '',
@@ -48,9 +54,9 @@ export default function IntroductionEditPage() {
       } finally {
         setLoading(false);
       }
-    });
+    };
 
-    return () => unsubscribe();
+    loadProfile();
   }, [router]);
 
   const handleSave = async () => {
@@ -67,7 +73,18 @@ export default function IntroductionEditPage() {
 
     setSaving(true);
     try {
-      await updateCompanyProfile(uid, formData);
+      const { error } = await supabase
+        .from('companies')
+        .update({
+          description: formData.description,
+          slogan: formData.slogan,
+          vision: formData.vision,
+          mission: formData.mission
+        })
+        .eq('id', uid);
+
+      if (error) throw error;
+
       alert('회사 소개가 성공적으로 업데이트되었습니다!');
       router.push('/company-dashboard');
     } catch (error: any) {
@@ -198,6 +215,13 @@ export default function IntroductionEditPage() {
     </div>
   );
 }
+
+
+
+
+
+
+
 
 
 

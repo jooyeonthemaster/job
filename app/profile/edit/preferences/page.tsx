@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/contexts/AuthContext';
-import { getJobseekerProfile, updateJobseekerProfile } from '@/lib/firebase/jobseeker-service';
+import { useAuth } from '@/contexts/AuthContext_Supabase';
+import { getUserProfile, updateUserProfile } from '@/lib/supabase/jobseeker-service';
 import Step4_Preferences from '@/components/onboarding/job-seeker/Step4_Preferences';
 import { ArrowLeft } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -23,7 +23,7 @@ export default function PreferencesEditPage() {
       }
 
       try {
-        const profile = await getJobseekerProfile(user.uid);
+        const profile = await getUserProfile(user.id);
         if (!profile) {
           router.push('/onboarding/job-seeker/quick');
           return;
@@ -43,7 +43,7 @@ export default function PreferencesEditPage() {
     if (!user) return;
 
     try {
-      await updateJobseekerProfile(user.uid, {
+      await updateUserProfile(user.id, {
         ...data,
         updatedAt: new Date().toISOString()
       });

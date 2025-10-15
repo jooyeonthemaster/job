@@ -2,9 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { auth } from '@/lib/firebase/config';
-import { onAuthStateChanged } from 'firebase/auth';
-import { getCompanyProfile, updateCompanyProfile } from '@/lib/firebase/company-service';
+import { supabase } from '@/lib/supabase/config';
 import CustomCloudinaryUpload from '@/components/CustomCloudinaryUpload';
 import { ArrowLeft, Save, Image as ImageIcon } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -19,39 +17,53 @@ export default function ImagesEditPage() {
   const [bannerImage, setBannerImage] = useState('');
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (!user) {
-        router.push('/company-auth');
-        return;
-      }
-
-      setUid(user.uid);
+    const loadProfile = async () => {
       try {
-        const profile = await getCompanyProfile(user.uid);
-        if (!profile) {
-          router.push('/company-auth/onboarding');
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+        if (authError || !user) {
+          router.push('/login/company');
           return;
         }
-        
+
+        setUid(user.id);
+
+        const { data: profile, error } = await supabase
+          .from('companies')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+
+        if (error || !profile) {
+          router.push('/signup/company');
+          return;
+        }
+
         setLogo(profile.logo || '');
-        setBannerImage(profile.bannerImage || '');
+        setBannerImage(profile.banner_image || '');
       } catch (error) {
         console.error('Failed to load profile:', error);
       } finally {
         setLoading(false);
       }
-    });
+    };
 
-    return () => unsubscribe();
+    loadProfile();
   }, [router]);
 
   const handleSave = async () => {
     setSaving(true);
     try {
-      await updateCompanyProfile(uid, {
-        logo,
-        bannerImage
-      });
+      const { error } = await supabase
+        .from('companies')
+        .update({
+          logo,
+          banner_image: bannerImage
+        })
+        .eq('id', uid);
+
+      if (error) throw error;
+
       alert('로고 및 배너 이미지가 성공적으로 업데이트되었습니다!');
       router.push('/company-dashboard');
     } catch (error: any) {
@@ -156,6 +168,13 @@ export default function ImagesEditPage() {
     </div>
   );
 }
+
+
+
+
+
+
+
 
 
 

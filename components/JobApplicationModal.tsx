@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { X, Send, AlertCircle } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/AuthContext_Supabase';
 
 interface JobApplicationModalProps {
   isOpen: boolean;
@@ -91,7 +91,7 @@ export default function JobApplicationModal({
           <div className="bg-gray-50 rounded-xl p-4 space-y-2">
             <h3 className="font-medium text-gray-900">지원자 정보</h3>
             <div className="text-sm text-gray-700">
-              <p><span className="font-medium">이름:</span> {userProfile?.fullName || user?.displayName || '이름 없음'}</p>
+              <p><span className="font-medium">이름:</span> {userProfile?.fullName || '이름 없음'}</p>
               <p><span className="font-medium">이메일:</span> {user?.email}</p>
             </div>
           </div>

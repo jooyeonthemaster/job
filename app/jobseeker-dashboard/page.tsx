@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/contexts/AuthContext';
-import { getJobseekerProfile, calculateProfileCompletion, JobseekerProfile } from '@/lib/firebase/jobseeker-service';
+import { useAuth } from '@/contexts/AuthContext_Supabase';
+import { getUserProfileWithCompletion } from '@/lib/supabase/jobseeker-service';
 import Header from '@/components/Header';
 import OptimizedImage from '@/components/OptimizedImage';
 import {
@@ -47,7 +47,7 @@ export default function JobSeekerDashboard() {
   const { user } = useAuth();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
-  const [profileData, setProfileData] = useState<JobseekerProfile | null>(null);
+  const [profileData, setProfileData] = useState<any>(null);
   const [recommendedJobs, setRecommendedJobs] = useState<typeof jobs>([]);
   const [showResumePreview, setShowResumePreview] = useState(false);
 
@@ -59,27 +59,76 @@ export default function JobSeekerDashboard() {
       }
 
       try {
-        const profile = await getJobseekerProfile(user.uid);
-        console.log('📊 Loaded Profile Data:', profile);
-        console.log('📍 Preferred Locations:', profile?.preferredLocations);
-        console.log('💰 Salary Range:', profile?.salaryRange);
-        console.log('🎯 Desired Positions:', profile?.desiredPositions);
-        console.log('💻 Skills:', profile?.skills);
-        
-        if (!profile) {
+        // Supabase에서 프로필 완성도와 함께 프로필 조회
+        const profileWithCompletion = await getUserProfileWithCompletion(user.id);
+        console.log('📊 Loaded Profile Data:', profileWithCompletion);
+
+        if (!profileWithCompletion) {
           // 프로필이 없으면 온보딩으로 리다이렉트
-          router.push('/onboarding/job-seeker?step=1');
+          router.push('/onboarding/job-seeker/quick');
           return;
         }
-        setProfileData(profile);
-        
+
+        // Supabase 데이터를 기존 형식으로 변환
+        const transformedProfile = {
+          fullName: profileWithCompletion.full_name,
+          email: profileWithCompletion.email,
+          phone: profileWithCompletion.phone,
+          headline: profileWithCompletion.headline,
+          profileImageUrl: profileWithCompletion.profile_image_url,
+          resumeFileUrl: profileWithCompletion.resume_file_url,
+          resumeFileName: profileWithCompletion.resume_file_name,
+          resumeUploadedAt: profileWithCompletion.resume_uploaded_at,
+          introduction: profileWithCompletion.introduction,
+          workType: profileWithCompletion.work_type,
+          companySize: profileWithCompletion.company_size,
+          visaSponsorship: profileWithCompletion.visa_sponsorship,
+          remoteWork: profileWithCompletion.remote_work,
+          skills: profileWithCompletion.skills?.map((s: any) => s.skill_name) || [],
+          languages: profileWithCompletion.languages?.map((l: any) => l.language_name) || [],
+          experiences: profileWithCompletion.experiences?.map((exp: any) => ({
+            id: exp.id,
+            company: exp.company,
+            position: exp.position,
+            startDate: exp.start_date,
+            endDate: exp.end_date,
+            current: exp.is_current,
+            description: exp.description
+          })) || [],
+          educations: profileWithCompletion.educations?.map((edu: any) => ({
+            id: edu.id,
+            school: edu.school,
+            degree: edu.degree,
+            field: edu.field,
+            startYear: edu.start_year,
+            endYear: edu.end_year,
+            current: edu.is_current
+          })) || [],
+          desiredPositions: profileWithCompletion.desired_positions?.map((p: any) => p.position_name) || [],
+          preferredLocations: profileWithCompletion.preferred_locations?.map((l: any) => l.location_name) || [],
+          salaryRange: profileWithCompletion.salary_range ? {
+            min: profileWithCompletion.salary_range.min_salary,
+            max: profileWithCompletion.salary_range.max_salary,
+            currency: profileWithCompletion.salary_range.currency,
+            negotiable: profileWithCompletion.salary_range.negotiable
+          } : null,
+          profileCompletion: profileWithCompletion.profileCompletion
+        };
+
+        console.log('📍 Preferred Locations:', transformedProfile.preferredLocations);
+        console.log('💰 Salary Range:', transformedProfile.salaryRange);
+        console.log('🎯 Desired Positions:', transformedProfile.desiredPositions);
+        console.log('💻 Skills:', transformedProfile.skills);
+
+        setProfileData(transformedProfile);
+
         // 프로필 기반 추천 채용공고 계산
-        const recommended = getRecommendedJobs(profile, jobs, 3);
-        console.log('✨ Recommended Jobs:', recommended.map(j => ({ 
-          title: j.title, 
+        const recommended = getRecommendedJobs(transformedProfile, jobs, 3);
+        console.log('✨ Recommended Jobs:', recommended.map(j => ({
+          title: j.title,
           company: j.company.name,
           tags: j.tags,
-          location: j.location 
+          location: j.location
         })));
         setRecommendedJobs(recommended);
       } catch (error) {
@@ -100,7 +149,8 @@ export default function JobSeekerDashboard() {
     );
   }
 
-  const profileCompletion = calculateProfileCompletion(profileData);
+  // 프로필 완성도는 이미 profileData에 포함되어 있음
+  const profileCompletion = profileData?.profileCompletion || 0;
 
   // 프로필 완성도 체크리스트 계산
   const getProfileChecklist = () => {

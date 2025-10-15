@@ -1,3 +1,6 @@
 {
-    "claudeCodeChat.permissions.yoloMode": true
+    "claudeCodeChat.permissions.yoloMode": true,
+    "terminal.integrated.env.windows": {
+        "MAX_THINKING_TOKENS": "10000"
+    }
 }

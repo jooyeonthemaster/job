@@ -12,9 +12,25 @@
       "Bash(Sort-Object FullName)",
       "Read(//c/Users/jooye/Desktop/git2/hiseoul-job-platform/**)",
       "Bash(dir:*)",
-      "Bash(findstr:*)"
+      "Bash(findstr:*)",
+      "Bash(npm install:*)",
+      "Bash(find:*)",
+      "Bash(ls:*)",
+      "Bash(npm run dev)",
+      "Bash(if exist .next rmdir /s /q .next)",
+      "Bash(superclaude install)",
+      "Bash(npm config:*)",
+      "Bash(C:UsersjooyeAppDataRoamingnpmsuperclaude.cmd install)",
+      "Bash(node:*)",
+      "Read(//c/Users/jooye/AppData/Roaming/Claude/**)",
+      "Bash(chcp:*)",
+      "Read(//c/Users/jooye/.claude/logs/**)",
+      "Read(//c/Users/jooye/.claude/**)",
+      "Bash(npm run build)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []
-  }
+  },
+  "alwaysThinkingEnabled": true
 }

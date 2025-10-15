@@ -1,0 +1,664 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext_Supabase';
+import { motion } from 'framer-motion';
+import {
+  User,
+  Mail,
+  Lock,
+  MapPin,
+  Globe,
+  Calendar,
+  CreditCard,
+  GraduationCap,
+  Check,
+  AlertCircle,
+  ChevronDown,
+} from 'lucide-react';
+import PhoneInput from '@/components/jobseeker-onboarding/PhoneInput';
+import ForeignerNumberInput from '@/components/jobseeker-onboarding/ForeignerNumberInput';
+import {
+  type JobseekerOnboardingFormData,
+  validateJobseekerOnboardingForm,
+  transformJobseekerFormData,
+  VISA_TYPES,
+  KOREAN_LEVELS,
+  NATIONALITIES,
+} from '@/types/jobseeker-onboarding.types';
+import { completeOnboarding } from '@/lib/supabase/jobseeker-service';
+
+export default function JobseekerOnboardingPage() {
+  const router = useRouter();
+  const { user } = useAuth();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isEmailSignup, setIsEmailSignup] = useState(true);
+
+  const [formData, setFormData] = useState<JobseekerOnboardingFormData>({
+    // 1. 회원 정보
+    fullName: '',
+    phone: '',
+    phoneVerified: false,
+    foreignerNumber: '',
+    foreignerNumberVerified: false,
+
+    // 2. 계정 정보
+    email: '',
+    password: '',
+    passwordConfirm: '',
+
+    // 3. 주소
+    address: '',
+    addressDetail: '',
+
+    // 4. 개인 정보
+    nationality: '',
+    birthYear: '',
+    gender: '',
+
+    // 5. 비자 정보
+    visaType: [],
+
+    // 6. 한국어 능력
+    koreanLevel: '',
+
+    // 7. 동의
+    agreeEmailReceive: false,
+    agreePrivacyCollection: false,
+
+    // 선택
+    headline: '',
+    resumeFile: undefined,
+  });
+
+  // 사용자 인증 정보 확인
+  useEffect(() => {
+    if (user) {
+      console.log('[Jobseeker Onboarding] 사용자 정보:', {
+        id: user.id,
+        email: user.email,
+        provider: user.app_metadata?.provider,
+      });
+
+      const provider = user.app_metadata?.provider;
+      setIsEmailSignup(provider === 'email');
+
+      setFormData((prev) => ({
+        ...prev,
+        email: user.email || '',
+      }));
+    }
+  }, [user]);
+
+  const handleChange = (field: keyof JobseekerOnboardingFormData, value: any) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+    setErrors((prev) => ({ ...prev, [field]: '' }));
+  };
+
+  // 다음 API 주소 검색
+  const handleAddressSearch = () => {
+    if (typeof window === 'undefined') return;
+
+    new (window as any).daum.Postcode({
+      oncomplete: function (data: any) {
+        let addr = '';
+        if (data.userSelectedType === 'R') {
+          addr = data.roadAddress;
+        } else {
+          addr = data.jibunAddress;
+        }
+        handleChange('address', addr);
+      },
+    }).open();
+  };
+
+  // 본인인증 (임시 - 실제로는 본인인증 서비스 연동 필요)
+  const handlePhoneVerification = () => {
+    // TODO: 실제 본인인증 API 연동
+    if (formData.phone.replace(/-/g, '').length === 11) {
+      handleChange('phoneVerified', true);
+      alert('본인인증이 완료되었습니다. (개발 모드)');
+    } else {
+      alert('휴대폰 번호를 올바르게 입력해주세요.');
+    }
+  };
+
+  // 외국인 실명인증 (임시)
+  const handleForeignerVerification = () => {
+    // TODO: 실제 외국인 실명인증 API 연동
+    if (formData.foreignerNumber && formData.foreignerNumber.length === 14) {
+      handleChange('foreignerNumberVerified', true);
+      alert('외국인 실명인증이 완료되었습니다. (개발 모드)');
+    } else {
+      alert('외국인등록번호를 올바르게 입력해주세요.');
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // 유효성 검증
+    const validation = validateJobseekerOnboardingForm(formData, isEmailSignup);
+    if (!validation.isValid) {
+      setErrors(validation.errors);
+      // 첫 번째 에러 필드로 스크롤
+      const firstErrorField = Object.keys(validation.errors)[0];
+      const element = document.getElementById(firstErrorField);
+      element?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+
+    if (!user) {
+      alert('로그인이 필요합니다.');
+      router.push('/login/jobseeker');
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      console.log('[Jobseeker Onboarding] 온보딩 시작:', user.id);
+
+      // 데이터 변환
+      const insertData = transformJobseekerFormData(formData);
+
+      // Supabase users 테이블 업데이트
+      await completeOnboarding(user.id, {
+        fullName: insertData.full_name,
+        phone: insertData.phone,
+        headline: insertData.headline || '',
+        resumeFileUrl: null,
+        resumeFileName: null,
+        // 추가 데이터는 별도로 처리
+        ...insertData,
+      });
+
+      console.log('[Jobseeker Onboarding] 온보딩 완료');
+
+      // 대시보드로 이동
+      router.push('/jobseeker-dashboard');
+    } catch (error: any) {
+      console.error('[Jobseeker Onboarding] 에러:', error);
+      alert(error.message || '온보딩 처리 중 오류가 발생했습니다.');
+      setIsSubmitting(false);
+    }
+  };
+
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 py-8">
+      <div className="container mx-auto px-4 max-w-4xl">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center mb-8"
+        >
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">개인 회원가입</h1>
+          <p className="text-gray-600">K-Work 플랫폼 회원가입을 위한 정보를 입력해주세요</p>
+          <p className="text-sm text-red-600 mt-2">* 표시는 필수 항목입니다</p>
+        </motion.div>
+
+        {/* Form */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white rounded-2xl shadow-xl p-8"
+        >
+          <form onSubmit={handleSubmit} className="space-y-8">
+            {/* Section 1: 회원 정보 입력 (필수) */}
+            <div className="border-b pb-6">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">회원 정보 입력 (필수)</h2>
+
+              <div className="space-y-6">
+                {/* 이름 */}
+                <div id="fullName">
+                  <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                    <User className="w-4 h-4" />
+                    이름 <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.fullName}
+                    onChange={(e) => handleChange('fullName', e.target.value)}
+                    placeholder="홍길동"
+                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary-500 ${
+                      errors.fullName ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                  />
+                  {errors.fullName && (
+                    <p className="mt-1 text-sm text-red-500 flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3" />
+                      {errors.fullName}
+                    </p>
+                  )}
+                </div>
+
+                {/* 휴대폰 번호 */}
+                <div id="phone">
+                  <PhoneInput
+                    value={formData.phone}
+                    onChange={(value) => handleChange('phone', value)}
+                    verified={formData.phoneVerified}
+                    onVerify={handlePhoneVerification}
+                    error={errors.phone || errors.phoneVerified}
+                  />
+                </div>
+
+                {/* 외국인등록번호 */}
+                <div id="foreignerNumber">
+                  <ForeignerNumberInput
+                    value={formData.foreignerNumber}
+                    onChange={(value) => handleChange('foreignerNumber', value)}
+                    verified={formData.foreignerNumberVerified}
+                    onVerify={handleForeignerVerification}
+                    error={errors.foreignerNumber || errors.foreignerNumberVerified}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Section 2: 계정 정보 */}
+            <div className="border-b pb-6">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">계정 정보</h2>
+
+              <div className="space-y-6">
+                {/* 이메일 */}
+                <div id="email">
+                  <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                    <Mail className="w-4 h-4" />
+                    이메일 (아이디) <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => handleChange('email', e.target.value)}
+                    disabled={!!user.email}
+                    placeholder="example@email.com"
+                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary-500 disabled:bg-gray-100 ${
+                      errors.email ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                  />
+                  {errors.email && (
+                    <p className="mt-1 text-sm text-red-500">{errors.email}</p>
+                  )}
+                </div>
+
+                {/* 비밀번호 - 이메일 가입이거나 소셜 로그인에서 비밀번호 설정 필요 시 */}
+                {(!isEmailSignup || true) && (
+                  <>
+                    <div id="password">
+                      <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                        <Lock className="w-4 h-4" />
+                        비밀번호 <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="password"
+                        value={formData.password}
+                        onChange={(e) => handleChange('password', e.target.value)}
+                        placeholder="비밀번호를 입력하세요"
+                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary-500 ${
+                          errors.password ? 'border-red-500' : 'border-gray-300'
+                        }`}
+                      />
+                      {errors.password && (
+                        <p className="mt-1 text-sm text-red-500">{errors.password}</p>
+                      )}
+                      <p className="mt-1 text-xs text-gray-500">
+                        비밀번호는 8~20자로, 문자와 숫자 또는 특수문자(!, @, #, $, ^, *, +, =, -)를 포함해야 합니다.
+                      </p>
+                    </div>
+
+                    <div id="passwordConfirm">
+                      <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                        <Lock className="w-4 h-4" />
+                        비밀번호 확인 <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="password"
+                        value={formData.passwordConfirm}
+                        onChange={(e) => handleChange('passwordConfirm', e.target.value)}
+                        placeholder="비밀번호를 다시 입력하세요"
+                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary-500 ${
+                          errors.passwordConfirm ? 'border-red-500' : 'border-gray-300'
+                        }`}
+                      />
+                      {errors.passwordConfirm && (
+                        <p className="mt-1 text-sm text-red-500">{errors.passwordConfirm}</p>
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Section 3: 주소 */}
+            <div className="border-b pb-6">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">주소</h2>
+
+              <div className="space-y-4">
+                <div id="address">
+                  <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                    <MapPin className="w-4 h-4" />
+                    주소 <span className="text-red-500">*</span>
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={formData.address}
+                      readOnly
+                      placeholder="주소를 검색하세요"
+                      className={`flex-1 px-4 py-3 border rounded-lg bg-gray-50 ${
+                        errors.address ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAddressSearch}
+                      className="px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium whitespace-nowrap"
+                    >
+                      주소검색
+                    </button>
+                  </div>
+                  {errors.address && (
+                    <p className="mt-1 text-sm text-red-500">{errors.address}</p>
+                  )}
+                </div>
+
+                <div>
+                  <input
+                    type="text"
+                    value={formData.addressDetail}
+                    onChange={(e) => handleChange('addressDetail', e.target.value)}
+                    placeholder="나머지 주소를 입력하세요"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Section 4: 개인 정보 */}
+            <div className="border-b pb-6">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">개인 정보</h2>
+
+              <div className="grid md:grid-cols-2 gap-6">
+                {/* 국적 */}
+                <div id="nationality">
+                  <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                    <Globe className="w-4 h-4" />
+                    국적 <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    value={formData.nationality}
+                    onChange={(e) => handleChange('nationality', e.target.value)}
+                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary-500 ${
+                      errors.nationality ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                  >
+                    <option value="">선택하세요</option>
+                    {NATIONALITIES.map((nat) => (
+                      <option key={nat.value} value={nat.value}>
+                        {nat.label}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.nationality && (
+                    <p className="mt-1 text-sm text-red-500">{errors.nationality}</p>
+                  )}
+                </div>
+
+                {/* 출생년도 */}
+                <div id="birthYear">
+                  <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                    <Calendar className="w-4 h-4" />
+                    출생년도 <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={formData.birthYear}
+                    onChange={(e) => handleChange('birthYear', e.target.value.replace(/\D/g, '').substring(0, 4))}
+                    placeholder="YYYY (예: 1990)"
+                    maxLength={4}
+                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary-500 ${
+                      errors.birthYear ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                  />
+                  {errors.birthYear && (
+                    <p className="mt-1 text-sm text-red-500">{errors.birthYear}</p>
+                  )}
+                </div>
+
+                {/* 성별 */}
+                <div id="gender">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    성별 <span className="text-red-500">*</span>
+                  </label>
+                  <div className="flex gap-4">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="gender"
+                        value="male"
+                        checked={formData.gender === 'male'}
+                        onChange={(e) => handleChange('gender', e.target.value)}
+                        className="w-4 h-4 text-primary-600 focus:ring-primary-500"
+                      />
+                      <span className="text-gray-700">남성</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="gender"
+                        value="female"
+                        checked={formData.gender === 'female'}
+                        onChange={(e) => handleChange('gender', e.target.value)}
+                        className="w-4 h-4 text-primary-600 focus:ring-primary-500"
+                      />
+                      <span className="text-gray-700">여성</span>
+                    </label>
+                  </div>
+                  {errors.gender && (
+                    <p className="mt-1 text-sm text-red-500">{errors.gender}</p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Section 5: 비자 정보 */}
+            <div className="border-b pb-6">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">비자 정보</h2>
+
+              <div id="visaType">
+                <label className="block text-sm font-medium text-gray-700 mb-3">
+                  비자 유형 (복수 선택 가능) <span className="text-red-500">*</span>
+                </label>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  {VISA_TYPES.map((visa) => (
+                    <label
+                      key={visa.value}
+                      className="flex items-center gap-2 p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50"
+                    >
+                      <input
+                        type="checkbox"
+                        value={visa.value}
+                        checked={formData.visaType.includes(visa.value)}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          if (e.target.checked) {
+                            handleChange('visaType', [...formData.visaType, value]);
+                          } else {
+                            handleChange(
+                              'visaType',
+                              formData.visaType.filter((v) => v !== value)
+                            );
+                          }
+                        }}
+                        className="w-4 h-4 text-primary-600 focus:ring-primary-500"
+                      />
+                      <span className="text-sm text-gray-700">{visa.label}</span>
+                    </label>
+                  ))}
+                </div>
+                {errors.visaType && (
+                  <p className="mt-2 text-sm text-red-500">{errors.visaType}</p>
+                )}
+              </div>
+            </div>
+
+            {/* Section 6: 한국어 능력 */}
+            <div className="border-b pb-6">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">한국어 능력</h2>
+
+              <div id="koreanLevel">
+                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                  <GraduationCap className="w-4 h-4" />
+                  한국어 능력 <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={formData.koreanLevel}
+                  onChange={(e) => handleChange('koreanLevel', e.target.value)}
+                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary-500 ${
+                    errors.koreanLevel ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                >
+                  <option value="">선택하세요</option>
+                  {KOREAN_LEVELS.map((level) => (
+                    <option key={level.value} value={level.value}>
+                      {level.label}
+                    </option>
+                  ))}
+                </select>
+                {errors.koreanLevel && (
+                  <p className="mt-1 text-sm text-red-500">{errors.koreanLevel}</p>
+                )}
+              </div>
+            </div>
+
+            {/* Section 7: 정보 수신 동의 */}
+            <div className="border-b pb-6">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">정보 수신 동의 (필수)</h2>
+
+              <div id="agreeEmailReceive">
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formData.agreeEmailReceive}
+                    onChange={(e) => handleChange('agreeEmailReceive', e.target.checked)}
+                    className="w-5 h-5 text-primary-600 focus:ring-primary-500 mt-0.5"
+                  />
+                  <div className="flex-1">
+                    <span className="font-medium text-gray-900">
+                      이메일 수신 동의 <span className="text-red-500">*</span>
+                    </span>
+                    <p className="text-sm text-gray-600 mt-1">
+                      취업 연계 및 사업추진 관련 정보를 이메일로 받아보시겠습니까?
+                    </p>
+                  </div>
+                </label>
+                {errors.agreeEmailReceive && (
+                  <p className="mt-2 text-sm text-red-500">{errors.agreeEmailReceive}</p>
+                )}
+              </div>
+            </div>
+
+            {/* Section 8: 개인정보 수집·이용 동의 */}
+            <div className="pb-6">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">
+                개인정보 수집·이용 동의 (필수)
+              </h2>
+
+              <div className="bg-gray-50 border border-gray-300 rounded-lg p-6 mb-4">
+                <h3 className="font-semibold text-gray-900 mb-3">
+                  [필수] 개인정보의 수집·이용에 관한 사항
+                </h3>
+
+                <div className="space-y-3 text-sm text-gray-700">
+                  <div>
+                    <p className="font-medium">1. 수집·이용 목적</p>
+                    <p className="ml-4">취업 연계 및 사업추진 관련 정보의 제공</p>
+                  </div>
+
+                  <div>
+                    <p className="font-medium">2. 수집·이용할 항목</p>
+                    <p className="ml-4">
+                      성명, 이메일, 아이디, 휴대전화, 한국주소, 외국인등록번호, 국적, 출생년도, 성별, 비자 유형, 한국어 능력
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="font-medium">3. 보유·이용 기간</p>
+                    <p className="ml-4">회원탈퇴 시까지</p>
+                  </div>
+
+                  <div>
+                    <p className="font-medium">
+                      4. 동의를 거부할 권리 및 동의를 거부할 경우 불이익
+                    </p>
+                    <p className="ml-4">
+                      위의 개인정보 수집·이용에 대한 동의를 거부할 권리가 있습니다. 동의를
+                      거부한 경우에는 서비스 대상자 본인확인 불가 및 일자리매칭 정보 부족으로
+                      인해 K-Work 플랫폼 회원가입 및 중소기업 외국전문인력 활용 지원사업
+                      서비스 제공이 불가합니다.
+                    </p>
+                  </div>
+
+                  <p className="mt-4 font-medium">
+                    본인은 위와 같이 본인의 개인정보를 수집·이용하는 것에 동의합니다.
+                  </p>
+                </div>
+              </div>
+
+              <div id="agreePrivacyCollection">
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formData.agreePrivacyCollection}
+                    onChange={(e) => handleChange('agreePrivacyCollection', e.target.checked)}
+                    className="w-5 h-5 text-primary-600 focus:ring-primary-500 mt-0.5"
+                  />
+                  <span className="font-medium text-gray-900">
+                    개인정보 수집·이용에 동의합니다 <span className="text-red-500">*</span>
+                  </span>
+                </label>
+                {errors.agreePrivacyCollection && (
+                  <p className="mt-2 text-sm text-red-500">{errors.agreePrivacyCollection}</p>
+                )}
+              </div>
+            </div>
+
+            {/* 제출 버튼 */}
+            <div className="pt-6">
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full px-6 py-4 bg-primary-600 text-white font-semibold rounded-xl hover:bg-primary-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-lg"
+              >
+                {isSubmitting ? (
+                  <>
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
+                    <span>회원가입 처리 중...</span>
+                  </>
+                ) : (
+                  <>
+                    <Check className="w-6 h-6" />
+                    <span>회원가입 완료</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </form>
+        </motion.div>
+      </div>
+    </div>
+  );
+}

@@ -15,10 +15,7 @@ import {
   ChevronLeft,
   AlertCircle
 } from 'lucide-react';
-import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
-import { auth, db } from '@/lib/firebase/config';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { signInWithGoogleRedirect } from '@/lib/firebase/auth-service'; // 수정된 함수 import
+import { signInWithEmail, signInWithGoogle, signOut } from '@/lib/supabase/jobseeker-service';
 
 export default function JobseekerLoginPage() {
   const router = useRouter();
@@ -33,32 +30,36 @@ export default function JobseekerLoginPage() {
     e.preventDefault();
     setError('');
     setIsLoading(true);
+
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
-      
-      // Firestore에서 구직자 정보 확인
-      const jobseekerDoc = await getDoc(doc(db, 'jobseekers', user.uid));
-      
-      if (jobseekerDoc.exists()) {
-        // 구직자 회원인 경우
+      console.log('[Jobseeker Login] 로그인 시작:', email);
+
+      // Supabase 이메일 로그인
+      const result = await signInWithEmail(email, password);
+
+      console.log('[Jobseeker Login] 로그인 성공:', result.user.id);
+
+      // 사용자 타입 확인 (메타데이터에서)
+      const userType = result.user.user_metadata?.user_type;
+
+      if (userType === 'jobseeker') {
+        // 개인 회원인 경우
         router.push('/jobseeker-dashboard');
       } else {
-        // 구직자 회원이 아닌 경우
-        setError('개인 회원 계정이 아닙니다. 개인 회원가입을 진행해주세요.');
-        await auth.signOut();
+        // 기업 회원이 로그인 시도한 경우
+        setError('개인 회원 계정이 아닙니다. 기업 회원은 기업 로그인을 이용해주세요.');
+        await signOut();
       }
     } catch (error: any) {
-      if (error.code === 'auth/user-not-found') {
-        setError('등록되지 않은 이메일입니다.');
-      } else if (error.code === 'auth/wrong-password') {
-        setError('비밀번호가 올바르지 않습니다.');
-      } else if (error.code === 'auth/invalid-email') {
-        setError('유효하지 않은 이메일 형식입니다.');
+      console.error('[Jobseeker Login] 에러:', error);
+
+      if (error?.message?.includes('Invalid login credentials')) {
+        setError('이메일 또는 비밀번호가 올바르지 않습니다.');
+      } else if (error?.message?.includes('Email not confirmed')) {
+        setError('이메일 인증이 필요합니다. 이메일을 확인해주세요.');
       } else {
-        setError('로그인 중 오류가 발생했습니다. 다시 시도해주세요.');
+        setError(error?.message || '로그인 중 오류가 발생했습니다. 다시 시도해주세요.');
       }
-      console.error('Login error:', error);
     } finally {
       setIsLoading(false);
     }
@@ -67,15 +68,19 @@ export default function JobseekerLoginPage() {
   // 구글 로그인
   const handleGoogleLogin = async () => {
     setError('');
-    setIsLoading(true); // 리디렉션 전 로딩 상태 표시
+    setIsLoading(true);
+
     try {
-      await signInWithGoogleRedirect();
-      // 이 함수는 리디렉션을 시작할 뿐, 반환값이 없습니다.
-      // 실제 사용자 상태 처리는 AuthContext에서 이루어집니다.
-    } catch (err) {
+      console.log('[Jobseeker Login] 구글 로그인 시작');
+
+      // Supabase OAuth 로그인 (리디렉션)
+      await signInWithGoogle();
+
+      // 리디렉션되므로 여기는 실행되지 않음
+    } catch (err: any) {
+      console.error('[Jobseeker Login] 구글 로그인 에러:', err);
       setError('구글 로그인에 실패했습니다. 잠시 후 다시 시도해주세요.');
-      console.error(err);
-      setIsLoading(false); // 오류 발생 시 로딩 상태 해제
+      setIsLoading(false);
     }
   };
 
@@ -224,7 +229,7 @@ export default function JobseekerLoginPage() {
           <div className="text-center mt-8 space-y-2">
             <p className="text-gray-600">
               아직 회원이 아니신가요?{' '}
-              <Link href="/signup/jobseeker" className="text-secondary-600 hover:text-secondary-700 font-medium">
+              <Link href="/signup" className="text-secondary-600 hover:text-secondary-700 font-medium">
                 개인 회원가입
               </Link>
             </p>

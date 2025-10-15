@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/contexts/AuthContext';
-import { getJobseekerProfile, updateJobseekerProfile } from '@/lib/firebase/jobseeker-service';
+import { useAuth } from '@/contexts/AuthContext_Supabase';
+import { getUserProfile, updateUserProfile } from '@/lib/supabase/jobseeker-service';
 import { Upload, Check, AlertCircle, ArrowLeft, Save, Eye, Download, FileText } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
@@ -28,10 +28,10 @@ export default function ResumeEditPage() {
       }
 
       try {
-        const profile = await getJobseekerProfile(user.uid);
-        if (profile?.resumeFileUrl) {
-          setCurrentResumeUrl(profile.resumeFileUrl);
-          setCurrentFileName(profile.resumeFileName || 'Resume.pdf');
+        const profile = await getUserProfile(user.id);
+        if (profile?.resume_file_url) {
+          setCurrentResumeUrl(profile.resume_file_url);
+          setCurrentFileName(profile.resume_file_name || 'Resume.pdf');
         }
       } catch (error) {
         console.error('Failed to load profile:', error);
@@ -97,13 +97,19 @@ export default function ResumeEditPage() {
         resumeFileUrl = await uploadResumeToCloudinary(resumeFile);
       }
 
-      // Firestore 업데이트
-      await updateJobseekerProfile(user.uid, {
-        resumeFileUrl,
-        resumeFileName: resumeFile?.name || currentFileName,
-        resumeUploadedAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      });
+      // Supabase users 테이블 직접 업데이트 (resume 필드용)
+      const { supabase } = await import('@/lib/supabase/config');
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({
+          resume_file_url: resumeFileUrl,
+          resume_file_name: resumeFile?.name || currentFileName,
+          resume_uploaded_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', user.id);
+
+      if (updateError) throw updateError;
 
       alert('이력서가 성공적으로 업데이트되었습니다!');
       router.push('/jobseeker-dashboard');

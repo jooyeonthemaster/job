@@ -4,9 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Mail, Lock, Eye, EyeOff, ArrowRight, Globe, ChevronLeft, AlertCircle, UserPlus } from 'lucide-react';
-import { signUpWithEmail } from '@/lib/firebase/auth-service';
-import { db } from '@/lib/firebase/config';
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { signUpJobseeker } from '@/lib/supabase/jobseeker-service';
 
 export default function JobseekerSignupPage() {
   const router = useRouter();
@@ -20,38 +18,55 @@ export default function JobseekerSignupPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
     if (password !== confirmPassword) {
       setError('비밀번호가 일치하지 않습니다.');
       return;
     }
+
+    if (password.length < 8) {
+      setError('비밀번호는 최소 8자 이상이어야 합니다.');
+      return;
+    }
+
     setIsLoading(true);
+
     try {
-      const user = await signUpWithEmail(email, password, 'jobseeker');
+      console.log('[Jobseeker Signup] 회원가입 시작:', email);
 
-      // Google 회원가입과 동일하게 users 컬렉션 초기 문서 생성 (온보딩 유도)
-      await setDoc(doc(db, 'users', user.uid), {
-        uid: user.uid,
-        email: user.email,
-        displayName: user.displayName || '',
-        photoURL: user.photoURL || '',
-        createdAt: serverTimestamp(),
-        onboardingCompleted: false,
-        role: 'jobseeker'
-      }, { merge: true });
+      // Supabase 회원가입 (Auth + users 테이블)
+      const result = await signUpJobseeker({
+        email,
+        password
+      });
 
-      // 간소화된 온보딩으로 이동
+      console.log('[Jobseeker Signup] 회원가입 성공:', {
+        userId: result.user.id,
+        profile: result.profile
+      });
+
+      // 온보딩 페이지로 이동
+      console.log('[Jobseeker Signup] 온보딩 페이지로 이동');
       router.push('/onboarding/job-seeker/quick');
     } catch (err: any) {
-      if (err?.code === 'auth/email-already-in-use') {
+      console.error('[Jobseeker Signup] 에러 상세:', {
+        message: err?.message,
+        code: err?.code,
+        details: err?.details,
+        hint: err?.hint,
+        fullError: err
+      });
+
+      // Supabase 에러 메시지 처리
+      if (err?.message?.includes('already registered') || err?.code === '23505') {
         setError('이미 사용 중인 이메일입니다.');
-      } else if (err?.code === 'auth/invalid-email') {
+      } else if (err?.message?.includes('Invalid email')) {
         setError('유효하지 않은 이메일 형식입니다.');
-      } else if (err?.code === 'auth/weak-password') {
-        setError('비밀번호는 최소 6자 이상이어야 합니다.');
+      } else if (err?.message?.includes('Password')) {
+        setError('비밀번호는 최소 8자 이상이어야 합니다.');
       } else {
-        setError('회원가입 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+        setError(err?.message || '회원가입 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
       }
-      console.error('Jobseeker signup error:', err);
     } finally {
       setIsLoading(false);
     }

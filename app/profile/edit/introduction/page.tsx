@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/contexts/AuthContext';
-import { getJobseekerProfile, updateJobseekerProfile } from '@/lib/firebase/jobseeker-service';
+import { useAuth } from '@/contexts/AuthContext_Supabase';
+import { getUserProfile, updateUserProfile } from '@/lib/supabase/jobseeker-service';
 import { ArrowLeft, Save } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
@@ -23,7 +23,7 @@ export default function IntroductionEditPage() {
       }
 
       try {
-        const profile = await getJobseekerProfile(user.uid);
+        const profile = await getUserProfile(user.id);
         if (!profile) {
           router.push('/onboarding/job-seeker/quick');
           return;
@@ -45,9 +45,8 @@ export default function IntroductionEditPage() {
     setSaving(true);
 
     try {
-      await updateJobseekerProfile(user.uid, {
-        introduction,
-        updatedAt: new Date().toISOString()
+      await updateUserProfile(user.id, {
+        introduction
       });
 
       alert('자기소개가 성공적으로 업데이트되었습니다!');

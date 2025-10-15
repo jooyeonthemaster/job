@@ -2,9 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { auth } from '@/lib/firebase/config';
-import { onAuthStateChanged } from 'firebase/auth';
-import { getCompanyProfile, updateCompanyProfile } from '@/lib/firebase/company-service';
+import { supabase } from '@/lib/supabase/config';
 import { ArrowLeft, Save } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
@@ -21,20 +19,28 @@ export default function LocationEditPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (!user) {
-        router.push('/company-auth');
-        return;
-      }
-
-      setUid(user.uid);
+    const loadProfile = async () => {
       try {
-        const profile = await getCompanyProfile(user.uid);
-        if (!profile) {
-          router.push('/company-auth/onboarding');
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+        if (authError || !user) {
+          router.push('/login/company');
           return;
         }
-        
+
+        setUid(user.id);
+
+        const { data: profile, error } = await supabase
+          .from('companies')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+
+        if (error || !profile) {
+          router.push('/signup/company');
+          return;
+        }
+
         setFormData({
           location: profile.location || '',
           address: profile.address || ''
@@ -44,9 +50,9 @@ export default function LocationEditPage() {
       } finally {
         setLoading(false);
       }
-    });
+    };
 
-    return () => unsubscribe();
+    loadProfile();
   }, [router]);
 
   const handleSave = async () => {
@@ -62,7 +68,16 @@ export default function LocationEditPage() {
 
     setSaving(true);
     try {
-      await updateCompanyProfile(uid, formData);
+      const { error } = await supabase
+        .from('companies')
+        .update({
+          location: formData.location,
+          address: formData.address
+        })
+        .eq('id', uid);
+
+      if (error) throw error;
+
       alert('위치 정보가 성공적으로 업데이트되었습니다!');
       router.push('/company-dashboard');
     } catch (error: any) {
@@ -161,6 +176,13 @@ export default function LocationEditPage() {
     </div>
   );
 }
+
+
+
+
+
+
+
 
 
 

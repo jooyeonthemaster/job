@@ -4,8 +4,8 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { 
-  Building2, 
+import {
+  Building2,
   Mail,
   Lock,
   Eye,
@@ -15,9 +15,7 @@ import {
   ChevronLeft,
   AlertCircle
 } from 'lucide-react';
-import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
-import { auth, db } from '@/lib/firebase/config';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { supabase } from '@/lib/supabase/config';
 
 export default function CompanyLoginPage() {
   const router = useRouter();
@@ -32,32 +30,52 @@ export default function CompanyLoginPage() {
     e.preventDefault();
     setError('');
     setIsLoading(true);
+
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
-      
-      // Firestore에서 기업 정보 확인
-      const companyDoc = await getDoc(doc(db, 'companies', user.uid));
-      
-      if (companyDoc.exists()) {
+      console.log('[Company Login] 로그인 시작:', email);
+
+      // Supabase 이메일 로그인
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (authError) throw authError;
+
+      console.log('[Company Login] 로그인 성공:', authData.user.id);
+
+      // Companies 테이블에서 기업 정보 확인
+      const { data: companyData, error: companyError } = await supabase
+        .from('companies')
+        .select('id, name, email')
+        .eq('id', authData.user.id)
+        .maybeSingle();
+
+      if (companyError) {
+        console.error('[Company Login] 기업 정보 조회 에러:', companyError);
+        throw new Error('기업 정보를 확인할 수 없습니다.');
+      }
+
+      if (companyData) {
         // 기업 회원인 경우
+        console.log('[Company Login] 기업 회원 확인:', companyData.name);
         router.push('/company-dashboard');
       } else {
         // 기업 회원이 아닌 경우
+        console.log('[Company Login] 기업 회원이 아님');
         setError('기업 회원 계정이 아닙니다. 기업 회원가입을 진행해주세요.');
-        await auth.signOut();
+        await supabase.auth.signOut();
       }
     } catch (error: any) {
-      if (error.code === 'auth/user-not-found') {
-        setError('등록되지 않은 이메일입니다.');
-      } else if (error.code === 'auth/wrong-password') {
-        setError('비밀번호가 올바르지 않습니다.');
-      } else if (error.code === 'auth/invalid-email') {
-        setError('유효하지 않은 이메일 형식입니다.');
+      console.error('[Company Login] 에러:', error);
+
+      if (error?.message?.includes('Invalid login credentials')) {
+        setError('이메일 또는 비밀번호가 올바르지 않습니다.');
+      } else if (error?.message?.includes('Email not confirmed')) {
+        setError('이메일 인증이 필요합니다. 이메일을 확인해주세요.');
       } else {
-        setError('로그인 중 오류가 발생했습니다. 다시 시도해주세요.');
+        setError(error?.message || '로그인 중 오류가 발생했습니다. 다시 시도해주세요.');
       }
-      console.error('Login error:', error);
     } finally {
       setIsLoading(false);
     }
@@ -69,35 +87,23 @@ export default function CompanyLoginPage() {
     setIsLoading(true);
 
     try {
-      const provider = new GoogleAuthProvider();
-      const result = await signInWithPopup(auth, provider);
-      const user = result.user;
+      console.log('[Company Login] 구글 로그인 시작');
 
-      // Firestore에서 기업 정보 확인
-      const companyDoc = await getDoc(doc(db, 'companies', user.uid));
-      
-      if (companyDoc.exists()) {
-        // 기존 기업 회원
-        router.push('/company-dashboard');
-      } else {
-        // 신규 기업 회원 - 온보딩으로 이동
-        await setDoc(doc(db, 'companies', user.uid), {
-          email: user.email,
-          createdAt: new Date().toISOString(),
-          isNewUser: true,
-          userType: 'company'
-        }, { merge: true });
-        
-        router.push('/company-auth/onboarding');
-      }
-    } catch (error: any) {
-      if (error.code === 'auth/popup-closed-by-user') {
-        setError('로그인이 취소되었습니다.');
-      } else {
-        setError('구글 로그인 중 오류가 발생했습니다.');
-      }
-      console.error('Google login error:', error);
-    } finally {
+      // Supabase OAuth 로그인 (리디렉션)
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback?type=company`,
+        },
+      });
+
+      if (error) throw error;
+
+      // 리디렉션되므로 여기는 실행되지 않음
+      console.log('[Company Login] 구글 로그인 리디렉션:', data);
+    } catch (err: any) {
+      console.error('[Company Login] 구글 로그인 에러:', err);
+      setError('구글 로그인에 실패했습니다. 잠시 후 다시 시도해주세요.');
       setIsLoading(false);
     }
   };
@@ -105,7 +111,7 @@ export default function CompanyLoginPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-secondary-50">
       <div className="container mx-auto px-4 py-8">
-        <Link 
+        <Link
           href="/login"
           className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-8"
         >
@@ -206,7 +212,8 @@ export default function CompanyLoginPage() {
                     placeholder="비밀번호 입력"
                     className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-colors"
                     required
-                  />                  <button
+                  />
+                  <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
@@ -247,7 +254,7 @@ export default function CompanyLoginPage() {
           <div className="text-center mt-8 space-y-2">
             <p className="text-gray-600">
               아직 기업 회원이 아니신가요?{' '}
-              <Link href="/signup/company" className="text-primary-600 hover:text-primary-700 font-medium">
+              <Link href="/signup" className="text-primary-600 hover:text-primary-700 font-medium">
                 기업 회원가입
               </Link>
             </p>

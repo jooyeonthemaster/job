@@ -1,7 +1,22 @@
 import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
 import { Job } from "@/types"
-import { JobseekerProfile } from "./firebase/jobseeker-service"
+
+// Supabase 타입 정의
+interface JobseekerProfile {
+  fullName?: string;
+  skills?: string[];
+  desiredPositions?: string[];
+  preferredLocations?: string[];
+  salaryRange?: {
+    min?: string | number;
+    max?: string | number;
+    currency?: string;
+    negotiable?: boolean;
+  } | null;
+  workType?: string;
+  visaSponsorship?: boolean;
+}
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))

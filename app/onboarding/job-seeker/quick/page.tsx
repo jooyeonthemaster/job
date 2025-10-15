@@ -1,418 +1,925 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/AuthContext_Supabase';
 import { motion } from 'framer-motion';
-import { Upload, User, Mail, Phone, FileText, Check, AlertCircle, Eye } from 'lucide-react';
-import { updateUserProfile } from '@/lib/firebase/userActions';
-import PDFImageViewer from '@/components/PDFImageViewer';
+import {
+  User,
+  Mail,
+  Lock,
+  MapPin,
+  Globe,
+  CreditCard,
+  GraduationCap,
+  Languages,
+  ArrowRight,
+  Plus,
+  X,
+} from 'lucide-react';
+import {
+  type JobseekerOnboardingFormData,
+  validateJobseekerOnboardingForm,
+  VISA_TYPES,
+  KOREAN_LEVELS,
+  NATIONALITIES,
+  KOREA_NATIONALITY_CODE,
+  LANGUAGE_OPTIONS,
+  LANGUAGE_PROFICIENCY,
+} from '@/types/jobseeker-onboarding.types';
+import { completeOnboarding } from '@/lib/supabase/jobseeker-service';
+import { JOBSEEKER_TERMS, JOBSEEKER_REQUIRED_TERMS, JOBSEEKER_OPTIONAL_TERMS } from '@/constants/jobseeker-terms';
+import { CheckCircle2, ChevronDown, ChevronUp } from 'lucide-react';
+import * as Dialog from '@radix-ui/react-dialog';
 
-export default function QuickOnboardingPage() {
+export default function JobseekerOnboardingPage() {
   const router = useRouter();
   const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [showPreview, setShowPreview] = useState(false);
-  const [uploadedResumeUrl, setUploadedResumeUrl] = useState('');
+  const [isEmailSignup, setIsEmailSignup] = useState(true);
+  const [expandedTerm, setExpandedTerm] = useState<string | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalContent, setModalContent] = useState<{
+    title: string;
+    content: string;
+  } | null>(null);
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<JobseekerOnboardingFormData>({
     fullName: '',
-    email: user?.email || '',
     phone: '',
+    phoneVerified: false,
+    foreignerNumber: '',
+    foreignerNumberVerified: false,
+    email: '',
+    password: '',
+    passwordConfirm: '',
+    address: '',
+    addressDetail: '',
+    nationality: '',
+    gender: '',
+    birthYear: '',
+    visaType: [],
+    koreanLevel: '',
+    otherLanguages: [{ language: '', proficiency: '' }],
+    agreeAll: false,
+    agreeServiceTerms: false,
+    agreePrivacyTerms: false,
+    agreeEmailReceive: false,
     headline: '',
-    resumeFile: null as File | null
   });
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
+  // 사용자 인증 정보 확인
+  useEffect(() => {
+    if (user) {
+      const provider = user.app_metadata?.provider;
+      setIsEmailSignup(provider === 'email');
 
-      // 파일 크기 검증 (10MB 제한)
-      if (file.size > 10 * 1024 * 1024) {
-        setErrors({ ...errors, resumeFile: '파일 크기는 10MB 이하여야 합니다.' });
-        return;
-      }
-
-      // 파일 형식 검증
-      const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
-      if (!allowedTypes.includes(file.type)) {
-        setErrors({ ...errors, resumeFile: 'PDF 또는 Word 문서만 업로드 가능합니다.' });
-        return;
-      }
-
-      setFormData({ ...formData, resumeFile: file });
-      setErrors({ ...errors, resumeFile: '' });
+      setFormData((prev) => ({
+        ...prev,
+        email: user.email || '',
+      }));
     }
+  }, [user]);
+
+  const handleChange = (field: keyof JobseekerOnboardingFormData, value: any) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+    setErrors((prev) => ({ ...prev, [field]: '' }));
   };
 
-  const handleChange = (field: string, value: string) => {
-    setFormData({ ...formData, [field]: value });
-    setErrors({ ...errors, [field]: '' });
+  // 다음 API 주소 검색
+  const handleAddressSearch = () => {
+    if (typeof window === 'undefined') return;
+
+    new (window as any).daum.Postcode({
+      oncomplete: function (data: any) {
+        let addr = '';
+        if (data.userSelectedType === 'R') {
+          addr = data.roadAddress;
+        } else {
+          addr = data.jibunAddress;
+        }
+        handleChange('address', addr);
+      },
+    }).open();
   };
 
-  const validateForm = () => {
-    const newErrors: Record<string, string> = {};
-
-    if (!formData.fullName.trim()) {
-      newErrors.fullName = '이름을 입력해주세요';
-    }
-    if (!formData.email.trim()) {
-      newErrors.email = '이메일을 입력해주세요';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = '올바른 이메일 형식을 입력해주세요';
-    }
-    if (!formData.phone.trim()) {
-      newErrors.phone = '전화번호를 입력해주세요';
-    } else if (!/^[0-9-+().\s]+$/.test(formData.phone)) {
-      newErrors.phone = '올바른 전화번호 형식을 입력해주세요';
-    }
-    if (!formData.resumeFile) {
-      newErrors.resumeFile = '이력서 파일을 업로드해주세요';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+  // 어학 능력 추가
+  const addLanguage = () => {
+    setFormData((prev) => ({
+      ...prev,
+      otherLanguages: [...prev.otherLanguages, { language: '', proficiency: '' }],
+    }));
   };
 
-  const uploadResumeToCloudinary = async (file: File): Promise<string> => {
-    const formData = new FormData();
-    formData.append('file', file);
+  // 어학 능력 제거
+  const removeLanguage = (index: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      otherLanguages: prev.otherLanguages.filter((_, i) => i !== index),
+    }));
+  };
 
-    try {
-      const response = await fetch('/api/upload-resume', {
-        method: 'POST',
-        body: formData
+  // 어학 능력 변경
+  const updateLanguage = (index: number, field: 'language' | 'proficiency', value: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      otherLanguages: prev.otherLanguages.map((lang, i) =>
+        i === index ? { ...lang, [field]: value } : lang
+      ),
+    }));
+  };
+
+  // 약관 전체 동의
+  const handleAgreeAll = (checked: boolean) => {
+    setFormData((prev) => ({
+      ...prev,
+      agreeAll: checked,
+      agreeServiceTerms: checked,
+      agreePrivacyTerms: checked,
+      agreeEmailReceive: checked,
+    }));
+  };
+
+  // 개별 약관 동의
+  const handleIndividualAgree = (field: keyof JobseekerOnboardingFormData, checked: boolean) => {
+    // 약관 ID를 필드명으로 매핑
+    const termFieldMap: Record<string, keyof JobseekerOnboardingFormData> = {
+      privacy: 'agreePrivacyTerms',
+      service: 'agreeServiceTerms',
+      emailReceive: 'agreeEmailReceive',
+    };
+
+    setFormData((prev) => {
+      const newFormData = { ...prev, [field]: checked };
+
+      // 전체 동의 체크박스 상태 업데이트
+      const allRequired = JOBSEEKER_REQUIRED_TERMS.every((termId) => {
+        const fieldName = termFieldMap[termId];
+        return newFormData[fieldName] as boolean;
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || '파일 업로드 실패');
-      }
+      const allOptional = JOBSEEKER_OPTIONAL_TERMS.every((termId) => {
+        const fieldName = termFieldMap[termId];
+        return newFormData[fieldName] as boolean;
+      });
 
-      const data = await response.json();
-      return data.url;
-    } catch (error: any) {
-      console.error('Resume upload error:', error);
-      throw new Error(error.message || '이력서 업로드에 실패했습니다.');
-    }
+      newFormData.agreeAll = allRequired && allOptional;
+
+      return newFormData;
+    });
+  };
+
+  // 약관 모달 열기
+  const openTermModal = (termId: string) => {
+    const term = JOBSEEKER_TERMS[termId];
+    setModalContent({
+      title: term.title,
+      content: term.content,
+    });
+    setModalOpen(true);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!validateForm()) return;
+    console.log('🔵 [Submit] 폼 제출 시작');
+    console.log('📝 [Submit] 폼 데이터:', formData);
+
+    // 유효성 검증
+    const validation = validateJobseekerOnboardingForm(formData, isEmailSignup);
+    console.log('✅ [Submit] 유효성 검증 결과:', validation);
+
+    if (!validation.isValid) {
+      console.error('❌ [Submit] 유효성 검증 실패:', validation.errors);
+      setErrors(validation.errors);
+      const firstErrorField = Object.keys(validation.errors)[0];
+      console.log('📍 [Submit] 첫 번째 에러 필드:', firstErrorField);
+      const element = document.getElementById(firstErrorField);
+      element?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
 
     if (!user) {
       alert('로그인이 필요합니다.');
-      router.push('/login');
+      router.push('/login/jobseeker');
       return;
     }
 
     setIsSubmitting(true);
 
     try {
-      // 1. 이력서 파일 업로드
-      let resumeFileUrl = '';
-      if (formData.resumeFile) {
-        resumeFileUrl = await uploadResumeToCloudinary(formData.resumeFile);
-        setUploadedResumeUrl(resumeFileUrl); // 미리보기용 URL 저장
-      }
+      console.log('[Jobseeker Onboarding] 온보딩 시작:', user.id);
 
-      // 2. Firestore에 프로필 저장
-      const profileData = {
+      const isKorean = formData.nationality === KOREA_NATIONALITY_CODE;
+
+      // Supabase users 테이블 업데이트
+      await completeOnboarding(user.id, {
         fullName: formData.fullName,
-        email: formData.email,
-        phone: formData.phone,
+        phone: isKorean ? formData.phone.replace(/-/g, '') : '',
         headline: formData.headline || '',
-        resumeFileUrl,
-        resumeFileName: formData.resumeFile?.name || '',
-        resumeUploadedAt: new Date().toISOString(),
-        onboardingCompleted: true,
-        onboardingType: 'quick',
-        userType: 'jobseeker',
-        createdAt: new Date().toISOString(),
+        resumeFileUrl: undefined,
+        resumeFileName: undefined,
+        foreigner_number: !isKorean ? formData.foreignerNumber : undefined,
+        address: formData.address,
+        address_detail: formData.addressDetail,
+        nationality: formData.nationality,
+        gender: formData.gender,
+        visa_types: formData.visaType,
+        korean_level: formData.koreanLevel,
+        otherLanguages: formData.otherLanguages,  // ✅ 언어 능력 저장 추가
+        agree_email_receive: formData.agreeEmailReceive,
+        agree_privacy_collection: formData.agreePrivacyTerms,
+      });
 
-        // 프로필 완성도 초기값
-        profileCompleteness: {
-          basicInfo: true,        // 기본 정보 완성
-          contactInfo: true,      // 연락처 완성
-          resume: true,           // 이력서 업로드 완성
-          experience: false,      // 경력 미완성
-          education: false,       // 학력 미완성
-          skills: false,          // 스킬 미완성
-          preferences: false,     // 선호조건 미완성
-          completionPercentage: 30  // 30% 완성 (7개 중 3개)
-        }
-      };
+      console.log('[Jobseeker Onboarding] 온보딩 완료');
 
-      const result = await updateUserProfile(user.uid, profileData);
-
-      if (result?.success) {
-        // 성공 시 대시보드로 이동
-        router.push('/jobseeker-dashboard');
-      } else {
-        throw new Error('프로필 생성에 실패했습니다.');
-      }
+      // 대시보드로 이동
+      router.push('/jobseeker-dashboard');
     } catch (error: any) {
-      console.error('Quick onboarding error:', error);
-      alert(error.message || '프로필 생성 중 오류가 발생했습니다. 다시 시도해주세요.');
+      console.error('[Jobseeker Onboarding] 에러:', error);
+      alert(error.message || '온보딩 처리 중 오류가 발생했습니다.');
       setIsSubmitting(false);
     }
   };
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
-      {/* Background Decorations */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-96 h-96 bg-primary-200 rounded-full blur-3xl opacity-20" />
-        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-secondary-200 rounded-full blur-3xl opacity-20" />
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
       </div>
+    );
+  }
 
-      <div className="container mx-auto px-4 py-8 max-w-2xl relative z-10">
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 py-8">
+      <div className="container mx-auto px-4 max-w-5xl">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
           className="text-center mb-8"
         >
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-primary-50 to-primary-100 rounded-full text-primary-600 font-medium mb-4">
-            <span className="text-sm">빠른 회원가입</span>
-          </div>
-          <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-3">
-            환영합니다!
-          </h1>
-          <p className="text-lg text-gray-600 max-w-xl mx-auto">
-            기본 정보와 이력서만 업로드하면 바로 시작할 수 있어요.<br />
-            나머지는 나중에 프로필에서 완성하실 수 있습니다.
-          </p>
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">개인 회원 정보 입력</h1>
+          <p className="text-gray-600">더 나은 매칭을 위해 정확한 정보를 입력해주세요</p>
+          <p className="text-sm text-red-600 mt-2">* 표시는 필수 항목입니다</p>
         </motion.div>
 
         {/* Form */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
           className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-8 border border-gray-100"
         >
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* 이름 */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                <User className="w-4 h-4" />
-                이름 <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                value={formData.fullName}
-                onChange={(e) => handleChange('fullName', e.target.value)}
-                placeholder="홍길동"
-                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary-500 ${
-                  errors.fullName ? 'border-red-500' : 'border-gray-300'
-                }`}
-              />
-              {errors.fullName && (
-                <p className="mt-1 text-sm text-red-500 flex items-center gap-1">
-                  <AlertCircle className="w-3 h-3" />
-                  {errors.fullName}
-                </p>
-              )}
-            </div>
+          <form onSubmit={handleSubmit} className="space-y-8">
+            {/* Section 1: 기본 정보 */}
+            <div className="border-b pb-8">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">기본 정보</h2>
+              <div className="space-y-6">
+                {/* 국적 - 제일 먼저! */}
+                <div id="nationality">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    국적 <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    value={formData.nationality}
+                    onChange={(e) => handleChange('nationality', e.target.value)}
+                    className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-colors ${
+                      errors.nationality ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                  >
+                    <option value="">국적을 선택해주세요</option>
+                    {NATIONALITIES.map((nat) => (
+                      <option key={nat.value} value={nat.value}>
+                        {nat.label}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.nationality && <p className="mt-1 text-sm text-red-500">{errors.nationality}</p>}
+                  <p className="mt-1 text-xs text-gray-500">
+                    국적에 따라 입력해야 할 정보가 달라집니다
+                  </p>
+                </div>
 
-            {/* 이메일 */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                <Mail className="w-4 h-4" />
-                이메일 <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="email"
-                value={formData.email}
-                onChange={(e) => handleChange('email', e.target.value)}
-                placeholder="hong@example.com"
-                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary-500 ${
-                  errors.email ? 'border-red-500' : 'border-gray-300'
-                }`}
-              />
-              {errors.email && (
-                <p className="mt-1 text-sm text-red-500 flex items-center gap-1">
-                  <AlertCircle className="w-3 h-3" />
-                  {errors.email}
-                </p>
-              )}
-            </div>
+                <div className="grid lg:grid-cols-2 gap-6">
+                  {/* 이름 */}
+                  <div id="fullName">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      이름 <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.fullName}
+                      onChange={(e) => handleChange('fullName', e.target.value)}
+                      placeholder="홍길동"
+                      className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-colors ${
+                        errors.fullName ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                    />
+                    {errors.fullName && <p className="mt-1 text-sm text-red-500">{errors.fullName}</p>}
+                  </div>
 
-            {/* 전화번호 */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                <Phone className="w-4 h-4" />
-                전화번호 <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="tel"
-                value={formData.phone}
-                onChange={(e) => handleChange('phone', e.target.value)}
-                placeholder="010-1234-5678"
-                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary-500 ${
-                  errors.phone ? 'border-red-500' : 'border-gray-300'
-                }`}
-              />
-              {errors.phone && (
-                <p className="mt-1 text-sm text-red-500 flex items-center gap-1">
-                  <AlertCircle className="w-3 h-3" />
-                  {errors.phone}
-                </p>
-              )}
-            </div>
-
-            {/* 한 줄 소개 (선택) */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                <FileText className="w-4 h-4" />
-                한 줄 소개 <span className="text-gray-400 text-xs">(선택)</span>
-              </label>
-              <input
-                type="text"
-                value={formData.headline}
-                onChange={(e) => handleChange('headline', e.target.value)}
-                placeholder="예: 3년차 프론트엔드 개발자"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
-              />
-            </div>
-
-            {/* 이력서 업로드 */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                <Upload className="w-4 h-4" />
-                이력서 업로드 <span className="text-red-500">*</span>
-              </label>
-              <div className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-                errors.resumeFile ? 'border-red-300 bg-red-50' :
-                formData.resumeFile ? 'border-green-300 bg-green-50' :
-                'border-gray-300 hover:border-primary-400 hover:bg-primary-50'
-              }`}>
-                <input
-                  type="file"
-                  id="resume-upload"
-                  accept=".pdf,.doc,.docx"
-                  onChange={handleFileChange}
-                  className="hidden"
-                />
-                <label
-                  htmlFor="resume-upload"
-                  className="cursor-pointer"
-                >
-                  {formData.resumeFile ? (
-                    <div className="flex flex-col items-center justify-center gap-3">
-                      <div className="flex items-center gap-3">
-                        <Check className="w-8 h-8 text-green-600" />
-                        <div>
-                          <p className="font-medium text-gray-900">{formData.resumeFile.name}</p>
-                          <p className="text-sm text-gray-600">
-                            {(formData.resumeFile.size / 1024 / 1024).toFixed(2)} MB
-                          </p>
-                          <p className="text-xs text-primary-600 mt-2">클릭하여 다른 파일 선택</p>
+                  {/* 한국인/외국인 구분 입력 */}
+                  {formData.nationality === KOREA_NATIONALITY_CODE ? (
+                    // 한국인: 휴대폰 번호만 (3-4-4 형식)
+                    <div id="phone">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        휴대폰 번호 <span className="text-red-500">*</span>
+                      </label>
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1">
+                          <input
+                            type="tel"
+                            inputMode="numeric"
+                            value={formData.phone.slice(0, 3)}
+                            onChange={(e) => {
+                              const numbersOnly = e.target.value.replace(/[^0-9]/g, '');
+                              if (numbersOnly.length <= 3) {
+                                const newPhone = numbersOnly + formData.phone.slice(3);
+                                handleChange('phone', newPhone);
+                              }
+                            }}
+                            placeholder="010"
+                            maxLength={3}
+                            className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-colors ${
+                              errors.phone ? 'border-red-500' : 'border-gray-300'
+                            }`}
+                          />
+                        </div>
+                        <span className="text-gray-400 font-bold">-</span>
+                        <div className="flex-1">
+                          <input
+                            type="tel"
+                            inputMode="numeric"
+                            value={formData.phone.slice(3, 7)}
+                            onChange={(e) => {
+                              const numbersOnly = e.target.value.replace(/[^0-9]/g, '');
+                              if (numbersOnly.length <= 4) {
+                                const newPhone = formData.phone.slice(0, 3) + numbersOnly + formData.phone.slice(7);
+                                handleChange('phone', newPhone);
+                              }
+                            }}
+                            placeholder="1234"
+                            maxLength={4}
+                            className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-colors ${
+                              errors.phone ? 'border-red-500' : 'border-gray-300'
+                            }`}
+                          />
+                        </div>
+                        <span className="text-gray-400 font-bold">-</span>
+                        <div className="flex-1">
+                          <input
+                            type="tel"
+                            inputMode="numeric"
+                            value={formData.phone.slice(7, 11)}
+                            onChange={(e) => {
+                              const numbersOnly = e.target.value.replace(/[^0-9]/g, '');
+                              if (numbersOnly.length <= 4) {
+                                const newPhone = formData.phone.slice(0, 7) + numbersOnly;
+                                handleChange('phone', newPhone);
+                              }
+                            }}
+                            placeholder="5678"
+                            maxLength={4}
+                            className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-colors ${
+                              errors.phone ? 'border-red-500' : 'border-gray-300'
+                            }`}
+                          />
                         </div>
                       </div>
-                      {uploadedResumeUrl && formData.resumeFile.type === 'application/pdf' && (
+                      {errors.phone && <p className="mt-1 text-sm text-red-500">{errors.phone}</p>}
+                      <p className="mt-1 text-xs text-gray-500">
+                        나중에 휴대폰 본인인증을 진행합니다
+                      </p>
+                    </div>
+                  ) : (
+                    // 외국인: 외국인등록번호만
+                    <div id="foreignerNumber">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        외국인등록번호 <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.foreignerNumber}
+                        onChange={(e) => handleChange('foreignerNumber', e.target.value)}
+                        placeholder="123456-1234567"
+                        className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-colors ${
+                          errors.foreignerNumber ? 'border-red-500' : 'border-gray-300'
+                        }`}
+                      />
+                      {errors.foreignerNumber && <p className="mt-1 text-sm text-red-500">{errors.foreignerNumber}</p>}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Section 2: 계정 정보 */}
+            <div className="border-b pb-8">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">계정 정보</h2>
+              <div className="grid lg:grid-cols-2 gap-6">
+                {/* 이메일 */}
+                <div id="email" className="lg:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    이메일 (아이디) <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => handleChange('email', e.target.value)}
+                    disabled={!!user.email}
+                    placeholder="example@email.com"
+                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 disabled:bg-gray-100 ${
+                      errors.email ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                  />
+                  {errors.email && <p className="mt-1 text-sm text-red-500">{errors.email}</p>}
+                </div>
+
+                {/* 비밀번호 */}
+                {isEmailSignup ? (
+                  // 이메일 가입자 - 비밀번호 이미 설정됨
+                  <div id="password" className="lg:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      비밀번호 <span className="text-gray-500">(설정됨)</span>
+                    </label>
+                    <input
+                      type="password"
+                      value="••••••••"
+                      disabled
+                      className="w-full px-4 py-3 border rounded-xl bg-gray-50 cursor-not-allowed border-gray-300"
+                    />
+                    <p className="mt-1 text-xs text-gray-500">
+                      회원가입 시 설정한 비밀번호입니다
+                    </p>
+                  </div>
+                ) : (
+                  // 소셜 로그인 사용자 - 비밀번호 설정 필요
+                  <>
+                    <div id="password">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        비밀번호 <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="password"
+                        value={formData.password}
+                        onChange={(e) => handleChange('password', e.target.value)}
+                        placeholder="8자 이상, 영문+숫자 조합"
+                        className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-colors ${
+                          errors.password ? 'border-red-500' : 'border-gray-300'
+                        }`}
+                      />
+                      {errors.password && <p className="mt-1 text-sm text-red-500">{errors.password}</p>}
+                      <p className="mt-1 text-xs text-gray-500">
+                        8~20자, 문자와 숫자 또는 특수문자(!, @, #, $, ^, *, +, =, -) 포함
+                      </p>
+                    </div>
+
+                    <div id="passwordConfirm">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        비밀번호 확인 <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="password"
+                        value={formData.passwordConfirm}
+                        onChange={(e) => handleChange('passwordConfirm', e.target.value)}
+                        placeholder="비밀번호 재입력"
+                        className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-colors ${
+                          errors.passwordConfirm ? 'border-red-500' : 'border-gray-300'
+                        }`}
+                      />
+                      {errors.passwordConfirm && <p className="mt-1 text-sm text-red-500">{errors.passwordConfirm}</p>}
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Section 3: 주소 */}
+            <div className="border-b pb-8">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">주소</h2>
+              <div className="space-y-4">
+                <div id="address">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    주소 <span className="text-red-500">*</span>
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={formData.address}
+                      readOnly
+                      placeholder="주소를 검색하세요"
+                      className={`flex-1 px-4 py-2 border rounded-lg bg-gray-50 ${
+                        errors.address ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAddressSearch}
+                      className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium whitespace-nowrap"
+                    >
+                      주소검색
+                    </button>
+                  </div>
+                  {errors.address && <p className="mt-1 text-sm text-red-500">{errors.address}</p>}
+                </div>
+
+                <div>
+                  <input
+                    type="text"
+                    value={formData.addressDetail}
+                    onChange={(e) => handleChange('addressDetail', e.target.value)}
+                    placeholder="나머지 주소를 입력하세요"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Section 4: 개인 정보 */}
+            <div className="border-b pb-8">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">개인 정보</h2>
+              <div>
+                {/* 성별 */}
+                <div id="gender">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    성별 <span className="text-red-500">*</span>
+                  </label>
+                  <div className="flex gap-4 mt-3">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="gender"
+                        value="male"
+                        checked={formData.gender === 'male'}
+                        onChange={(e) => handleChange('gender', e.target.value)}
+                        className="w-4 h-4 text-primary-600"
+                      />
+                      <span className="text-gray-700">남성</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="gender"
+                        value="female"
+                        checked={formData.gender === 'female'}
+                        onChange={(e) => handleChange('gender', e.target.value)}
+                        className="w-4 h-4 text-primary-600"
+                      />
+                      <span className="text-gray-700">여성</span>
+                    </label>
+                  </div>
+                  {errors.gender && <p className="mt-1 text-sm text-red-500">{errors.gender}</p>}
+                </div>
+              </div>
+            </div>
+
+            {/* Section 5: 비자 정보 (외국인만 표시) */}
+            {formData.nationality && formData.nationality !== KOREA_NATIONALITY_CODE && (
+              <div className="border-b pb-8">
+                <h2 className="text-2xl font-bold text-gray-900 mb-6">비자 정보</h2>
+                <div id="visaType">
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    비자 유형 (복수 선택 가능) <span className="text-red-500">*</span>
+                  </label>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  {VISA_TYPES.map((visa) => (
+                    <label
+                      key={visa.value}
+                      className="flex items-center gap-2 p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50"
+                    >
+                      <input
+                        type="checkbox"
+                        value={visa.value}
+                        checked={formData.visaType.includes(visa.value)}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          if (e.target.checked) {
+                            handleChange('visaType', [...formData.visaType, value]);
+                          } else {
+                            handleChange(
+                              'visaType',
+                              formData.visaType.filter((v) => v !== value)
+                            );
+                          }
+                        }}
+                        className="w-4 h-4 text-primary-600"
+                      />
+                      <span className="text-sm text-gray-700">{visa.label}</span>
+                    </label>
+                  ))}
+                </div>
+                  {errors.visaType && <p className="mt-2 text-sm text-red-500">{errors.visaType}</p>}
+                </div>
+              </div>
+            )}
+
+            {/* Section 6: 언어 능력 */}
+            <div className="border-b pb-8">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">언어 능력</h2>
+
+              {/* 한국어 */}
+              <div id="koreanLevel" className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  한국어 능력 <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={formData.koreanLevel}
+                  onChange={(e) => handleChange('koreanLevel', e.target.value)}
+                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 ${
+                    errors.koreanLevel ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                >
+                  <option value="">선택하세요</option>
+                  {KOREAN_LEVELS.map((level) => (
+                    <option key={level.value} value={level.value}>
+                      {level.label}
+                    </option>
+                  ))}
+                </select>
+                {errors.koreanLevel && <p className="mt-1 text-sm text-red-500">{errors.koreanLevel}</p>}
+              </div>
+
+              {/* 한국어 외 어학 능력 */}
+              <div id="otherLanguages">
+                <label className="block text-sm font-medium text-gray-700 mb-3">
+                  한국어 외 구사 가능 언어 <span className="text-red-500">*</span>
+                </label>
+                <div className="space-y-3">
+                  {formData.otherLanguages.map((lang, index) => (
+                    <div key={index} className="flex gap-3">
+                      <select
+                        value={lang.language}
+                        onChange={(e) => updateLanguage(index, 'language', e.target.value)}
+                        className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                      >
+                        <option value="">언어 선택</option>
+                        {LANGUAGE_OPTIONS.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                      <select
+                        value={lang.proficiency}
+                        onChange={(e) => updateLanguage(index, 'proficiency', e.target.value)}
+                        className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                      >
+                        <option value="">숙련도 선택</option>
+                        {LANGUAGE_PROFICIENCY.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                      {formData.otherLanguages.length > 1 && (
                         <button
                           type="button"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            setShowPreview(true);
-                          }}
-                          className="mt-2 inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 text-sm font-medium"
+                          onClick={() => removeLanguage(index)}
+                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
                         >
-                          <Eye className="w-4 h-4" />
-                          이력서 미리보기
+                          <X className="w-5 h-5" />
                         </button>
                       )}
                     </div>
-                  ) : (
-                    <>
-                      <Upload className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                      <p className="text-gray-700 font-medium mb-1">
-                        클릭하여 이력서 업로드
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        PDF 또는 Word 문서 (최대 10MB)
-                      </p>
-                    </>
-                  )}
-                </label>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={addLanguage}
+                    className="flex items-center gap-2 px-4 py-2 text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
+                  >
+                    <Plus className="w-4 h-4" />
+                    언어 추가
+                  </button>
+                </div>
+                {errors.otherLanguages && <p className="mt-2 text-sm text-red-500">{errors.otherLanguages}</p>}
               </div>
-              {errors.resumeFile && (
-                <p className="mt-2 text-sm text-red-500 flex items-center gap-1">
-                  <AlertCircle className="w-3 h-3" />
-                  {errors.resumeFile}
-                </p>
-              )}
             </div>
 
-            {/* 안내 메시지 */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <h4 className="font-semibold text-blue-900 mb-2 flex items-center gap-2">
-                <FileText className="w-4 h-4" />
-                💡 가입 후 안내
-              </h4>
-              <ul className="text-sm text-blue-700 space-y-1">
-                <li>• 가입 완료 후 마이페이지에서 프로필을 더 상세하게 작성할 수 있습니다</li>
-                <li>• 경력, 학력, 스킬, 희망 조건 등을 추가하면 더 나은 매칭을 받을 수 있어요</li>
-                <li>• 프로필 완성도가 높을수록 기업의 관심도 높아집니다</li>
-              </ul>
+            {/* Section 7: 약관 동의 */}
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-2xl font-bold text-gray-900">약관 동의</h2>
+                {errors.terms && (
+                  <span className="text-sm text-red-600 flex items-center gap-1">
+                    <X className="w-4 h-4" />
+                    {errors.terms}
+                  </span>
+                )}
+              </div>
+
+              {/* 전체 동의 */}
+              <label className="flex items-center gap-3 p-4 border-2 border-primary-600 rounded-xl bg-primary-50 cursor-pointer hover:bg-primary-100 transition-colors mb-4">
+                <input
+                  type="checkbox"
+                  checked={formData.agreeAll}
+                  onChange={(e) => handleAgreeAll(e.target.checked)}
+                  className="w-5 h-5 accent-primary-600"
+                />
+                <div className="flex items-center gap-2 flex-1">
+                  <CheckCircle2 className="w-5 h-5 text-primary-600" />
+                  <span className="font-semibold text-gray-900">
+                    전체 동의 (필수 약관 및 선택 약관 모두 동의)
+                  </span>
+                </div>
+              </label>
+
+              {/* 필수 약관 */}
+              <div className="space-y-3 mb-4">
+                <p className="text-sm font-medium text-gray-700 px-1">필수 약관</p>
+                {JOBSEEKER_REQUIRED_TERMS.map(termId => {
+                  const term = JOBSEEKER_TERMS[termId];
+                  // 약관 ID를 필드명으로 매핑
+                  const termFieldMap: Record<string, keyof JobseekerOnboardingFormData> = {
+                    privacy: 'agreePrivacyTerms',
+                    service: 'agreeServiceTerms',
+                  };
+                  const fieldName = termFieldMap[termId];
+                  const isExpanded = expandedTerm === termId;
+
+                  return (
+                    <div key={termId} className="border border-gray-300 rounded-lg overflow-hidden">
+                      <div className="flex items-start gap-3 p-4 bg-white">
+                        <input
+                          type="checkbox"
+                          checked={formData[fieldName] as boolean}
+                          onChange={(e) => handleIndividualAgree(fieldName, e.target.checked)}
+                          className="w-5 h-5 mt-0.5 accent-primary-600"
+                        />
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between">
+                            <span className="font-medium text-gray-900">
+                              <span className="text-red-500">(필수)</span> {term.title}
+                            </span>
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => openTermModal(termId)}
+                                className="text-sm text-primary-600 hover:text-primary-700 underline"
+                              >
+                                전문보기
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setExpandedTerm(isExpanded ? null : termId)}
+                                className="text-gray-500 hover:text-gray-700"
+                              >
+                                {isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                              </button>
+                            </div>
+                          </div>
+                          {term.summary && (
+                            <p className="text-sm text-gray-600 mt-1">{term.summary}</p>
+                          )}
+                        </div>
+                      </div>
+
+                      {isExpanded && (
+                        <div className="p-4 bg-gray-50 border-t border-gray-200">
+                          <div className="text-sm text-gray-700 whitespace-pre-line max-h-60 overflow-y-auto">
+                            {term.content.substring(0, 500)}...
+                            <button
+                              type="button"
+                              onClick={() => openTermModal(termId)}
+                              className="text-primary-600 hover:text-primary-700 underline ml-2"
+                            >
+                              전체 보기
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* 선택 약관 */}
+              <div className="space-y-3">
+                <p className="text-sm font-medium text-gray-700 px-1">선택 약관</p>
+                {JOBSEEKER_OPTIONAL_TERMS.map(termId => {
+                  const term = JOBSEEKER_TERMS[termId];
+                  // 약관 ID를 필드명으로 매핑
+                  const termFieldMap: Record<string, keyof JobseekerOnboardingFormData> = {
+                    emailReceive: 'agreeEmailReceive',
+                  };
+                  const fieldName = termFieldMap[termId];
+                  const isExpanded = expandedTerm === termId;
+
+                  return (
+                    <div key={termId} className="border border-gray-300 rounded-lg overflow-hidden">
+                      <div className="flex items-start gap-3 p-4 bg-white">
+                        <input
+                          type="checkbox"
+                          checked={formData[fieldName] as boolean}
+                          onChange={(e) => handleIndividualAgree(fieldName, e.target.checked)}
+                          className="w-5 h-5 mt-0.5 accent-primary-600"
+                        />
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between">
+                            <span className="font-medium text-gray-900">
+                              <span className="text-gray-500">(선택)</span> {term.title}
+                            </span>
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => openTermModal(termId)}
+                                className="text-sm text-primary-600 hover:text-primary-700 underline"
+                              >
+                                전문보기
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setExpandedTerm(isExpanded ? null : termId)}
+                                className="text-gray-500 hover:text-gray-700"
+                              >
+                                {isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                              </button>
+                            </div>
+                          </div>
+                          {term.summary && (
+                            <p className="text-sm text-gray-600 mt-1">{term.summary}</p>
+                          )}
+                        </div>
+                      </div>
+
+                      {isExpanded && (
+                        <div className="p-4 bg-gray-50 border-t border-gray-200">
+                          <div className="text-sm text-gray-700 whitespace-pre-line max-h-60 overflow-y-auto">
+                            {term.content.substring(0, 500)}...
+                            <button
+                              type="button"
+                              onClick={() => openTermModal(termId)}
+                              className="text-primary-600 hover:text-primary-700 underline ml-2"
+                            >
+                              전체 보기
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
 
             {/* 제출 버튼 */}
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="w-full px-6 py-4 bg-primary-600 text-white font-semibold rounded-xl hover:bg-primary-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-            >
-              {isSubmitting ? (
-                <>
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                  <span>프로필 생성 중...</span>
-                </>
-              ) : (
-                <>
-                  <Check className="w-5 h-5" />
-                  <span>가입 완료하기</span>
-                </>
-              )}
-            </button>
+            <div className="pt-6">
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full px-6 py-4 bg-primary-600 text-white font-semibold rounded-xl hover:bg-primary-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-lg"
+              >
+                {isSubmitting ? (
+                  <>
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
+                    <span>회원가입 처리 중...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>회원가입 완료</span>
+                    <ArrowRight className="w-6 h-6" />
+                  </>
+                )}
+              </button>
+            </div>
           </form>
         </motion.div>
+      </div>
 
-        {/* PDF 미리보기 모달 */}
-        {showPreview && uploadedResumeUrl && (
-          <div
-            className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
-            onClick={() => setShowPreview(false)}
-          >
-            <div
-              className="bg-white rounded-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex items-center justify-between p-4 border-b">
-                <h3 className="text-lg font-semibold">이력서 미리보기</h3>
-                <button
-                  onClick={() => setShowPreview(false)}
-                  className="p-2 hover:bg-gray-100 rounded-full"
-                >
-                  <span className="text-2xl">&times;</span>
+      {/* 약관 전문 보기 모달 */}
+      <Dialog.Root open={modalOpen} onOpenChange={setModalOpen}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 bg-black/50 z-50" />
+          <Dialog.Content className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-2xl shadow-2xl w-[90vw] max-w-3xl max-h-[85vh] z-50 flex flex-col">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200 flex-shrink-0">
+              <Dialog.Title className="text-xl font-bold text-gray-900">
+                {modalContent?.title}
+              </Dialog.Title>
+              <Dialog.Close asChild>
+                <button className="text-gray-400 hover:text-gray-600">
+                  <X className="w-6 h-6" />
                 </button>
-              </div>
-              <div className="overflow-auto max-h-[calc(90vh-80px)]">
-                <PDFImageViewer
-                  pdfUrl={uploadedResumeUrl}
-                  fileName={formData.resumeFile?.name || 'Resume'}
-                />
+              </Dialog.Close>
+            </div>
+
+            <div className="p-6 overflow-y-auto flex-1">
+              <div className="prose prose-sm max-w-none">
+                <pre className="whitespace-pre-wrap text-sm text-gray-700 font-sans">
+                  {modalContent?.content}
+                </pre>
               </div>
             </div>
-          </div>
-        )}
-      </div>
+
+            <div className="p-6 border-t border-gray-200 flex-shrink-0">
+              <Dialog.Close asChild>
+                <button className="w-full py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium">
+                  확인
+                </button>
+              </Dialog.Close>
+            </div>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
     </div>
   );
 }
