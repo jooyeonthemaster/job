@@ -1,7 +1,7 @@
 // 채용공고 비자 및 언어 요구사항 섹션 컴포넌트
 
+import LanguageLevelSelect from '@/components/ui/form/LanguageLevelSelect';
 import { JobFormData, LanguageLevel } from '@/types/job-form.types';
-import { LANGUAGE_LEVEL_LABELS } from '@/constants/job-posting';
 
 interface LanguageSectionProps {
   formData: JobFormData;
@@ -25,35 +25,26 @@ export default function LanguageSection({ formData, onUpdate }: LanguageSectionP
         </label>
 
         <div className="grid md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">한국어 수준</label>
-            <select
-              value={formData.koreanLevel}
-              onChange={(e) => onUpdate('koreanLevel', e.target.value as LanguageLevel)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-            >
-              {Object.entries(LANGUAGE_LEVEL_LABELS).map(([value, label]) => (
-                <option key={value} value={value}>{label}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">영어 수준</label>
-            <select
-              value={formData.englishLevel}
-              onChange={(e) => onUpdate('englishLevel', e.target.value as LanguageLevel)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-            >
-              {Object.entries(LANGUAGE_LEVEL_LABELS).map(([value, label]) => (
-                <option key={value} value={value}>{label}</option>
-              ))}
-            </select>
-          </div>
+          <LanguageLevelSelect
+            language="korean"
+            level={formData.koreanLevel as any}
+            onLevelChange={(level) => onUpdate('koreanLevel', level as LanguageLevel)}
+            label="한국어 수준"
+          />
+
+          <LanguageLevelSelect
+            language="english"
+            level={formData.englishLevel as any}
+            onLevelChange={(level) => onUpdate('englishLevel', level as LanguageLevel)}
+            label="영어 수준"
+          />
         </div>
       </div>
     </div>
   );
 }
+
+
 
 
 
