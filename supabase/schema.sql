@@ -22,6 +22,7 @@ CREATE TABLE users (
   
   -- ===== 온보딩 Step 1: 기본 정보 =====
   full_name TEXT NOT NULL,             -- 이름 (필수)
+  desired_job_category TEXT,           -- 희망 근무 직군 (필수, 온보딩에서 수집)
   headline TEXT,                       -- 헤드라인/간단 소개 (선택)
   profile_image_url TEXT,              -- 프로필 사진 URL
   
@@ -279,6 +280,27 @@ CREATE TABLE company_basic_benefits (
 
 CREATE INDEX idx_company_basic_benefits_company_id ON company_basic_benefits(company_id);
 
+-- 기업 인증 정보
+CREATE TABLE company_verifications (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  company_id UUID REFERENCES companies(id) ON DELETE CASCADE UNIQUE,
+  status TEXT NOT NULL DEFAULT 'not_submitted', -- not_submitted | pending | approved | rejected
+  document_url TEXT,                   -- 사업자등록증명원 URL (Cloudinary)
+  document_name TEXT,                  -- 사업자등록증명원 파일명
+  additional_doc1_url TEXT,            -- 추가 서류 1 URL (직업소개사업증/파견허가증)
+  additional_doc1_name TEXT,           -- 추가 서류 1 파일명
+  additional_doc2_url TEXT,            -- 추가 서류 2 URL
+  additional_doc2_name TEXT,           -- 추가 서류 2 파일명
+  rejection_reason TEXT,               -- 반려 사유
+  submitted_at TIMESTAMPTZ,            -- 제출 일시
+  reviewed_at TIMESTAMPTZ,             -- 검토 완료 일시
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_company_verifications_company_id ON company_verifications(company_id);
+CREATE INDEX idx_company_verifications_status ON company_verifications(status);
+
 -- 기업 기술 스택 (대시보드에서 추가)
 CREATE TABLE company_tech_stack (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -379,6 +401,7 @@ CREATE TABLE jobs (
   location TEXT NOT NULL,
   employment_type TEXT NOT NULL,      -- FULL_TIME | PART_TIME | CONTRACT | INTERNSHIP
   experience_level TEXT NOT NULL,     -- ENTRY | JUNIOR | MID | SENIOR | EXECUTIVE
+  education TEXT DEFAULT '학력무관',   -- 학력무관 | 고졸 | 초대졸 | 대졸 | 석사 | 박사
   
   -- 급여 정보
   salary_min INTEGER,
@@ -510,6 +533,67 @@ CREATE TABLE job_work_conditions (
 );
 
 CREATE INDEX idx_job_work_conditions_job_id ON job_work_conditions(job_id);
+
+-- 채용공고 상세 컨텐츠 블록 (WYSIWYG 에디터)
+CREATE TABLE job_content_blocks (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  job_id UUID REFERENCES jobs(id) ON DELETE CASCADE,
+
+  -- 블록 타입
+  type TEXT NOT NULL,                     -- heading | paragraph | image | list | divider | table | video
+
+  -- 순서 (드래그앤드롭으로 변경 가능)
+  order_index INTEGER NOT NULL,
+
+  -- 컨텐츠 (JSONB로 유연하게 저장)
+  content JSONB NOT NULL,
+  /*
+  타입별 content 구조:
+
+  heading:
+    { "level": 1|2|3, "text": "제목 텍스트" }
+
+  paragraph:
+    { "html": "<p>HTML 형식 텍스트...</p>" }
+
+  image:
+    {
+      "url": "https://res.cloudinary.com/...",
+      "caption": "이미지 설명 (선택)",
+      "alignment": "left"|"center"|"right"|"full",
+      "width": 800,
+      "height": 600
+    }
+
+  list:
+    {
+      "items": ["항목1", "항목2", "항목3"],
+      "ordered": true|false
+    }
+
+  divider:
+    { "style": "solid"|"dashed"|"dotted" }
+
+  table:
+    {
+      "headers": ["컬럼1", "컬럼2"],
+      "rows": [["값1", "값2"], ["값3", "값4"]]
+    }
+
+  video:
+    {
+      "url": "https://youtube.com/...",
+      "thumbnail": "https://...",
+      "provider": "youtube"|"vimeo"
+    }
+  */
+
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_job_content_blocks_job_id ON job_content_blocks(job_id);
+CREATE INDEX idx_job_content_blocks_order ON job_content_blocks(job_id, order_index);
 
 -- =====================================================
 -- 7. APPLICATIONS (지원/신청)
