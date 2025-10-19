@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { Editor } from '@tiptap/react';
 import {
   Bold,
@@ -17,12 +18,15 @@ import {
   Undo,
   Redo,
 } from 'lucide-react';
+import ImageUploader from './ImageUploader';
 
 interface EditorToolbarProps {
   editor: Editor;
 }
 
 export default function EditorToolbar({ editor }: EditorToolbarProps) {
+  const [showImageUploader, setShowImageUploader] = useState(false);
+
   const ToolbarButton = ({
     onClick,
     isActive = false,
@@ -51,11 +55,9 @@ export default function EditorToolbar({ editor }: EditorToolbarProps) {
     </button>
   );
 
-  const addImage = () => {
-    const url = window.prompt('이미지 URL을 입력하세요:');
-    if (url) {
-      editor.chain().focus().setImage({ src: url }).run();
-    }
+  const handleImageUpload = (url: string) => {
+    editor.chain().focus().setImage({ src: url }).run();
+    setShowImageUploader(false);
   };
 
   const addLink = () => {
@@ -159,7 +161,7 @@ export default function EditorToolbar({ editor }: EditorToolbarProps) {
 
       {/* Insert Elements */}
       <div className="flex items-center gap-1">
-        <ToolbarButton onClick={addImage} title="이미지 삽입">
+        <ToolbarButton onClick={() => setShowImageUploader(true)} title="이미지 업로드">
           <ImageIcon className="w-4 h-4" />
         </ToolbarButton>
         <ToolbarButton onClick={addLink} title="링크 삽입">
@@ -175,6 +177,27 @@ export default function EditorToolbar({ editor }: EditorToolbarProps) {
           <Minus className="w-4 h-4" />
         </ToolbarButton>
       </div>
+
+      {/* Image Upload Modal */}
+      {showImageUploader && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 max-w-md w-full mx-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-gray-900">이미지 업로드</h3>
+              <button
+                onClick={() => setShowImageUploader(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                ✕
+              </button>
+            </div>
+            <ImageUploader
+              onImageUpload={handleImageUpload}
+              onCancel={() => setShowImageUploader(false)}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

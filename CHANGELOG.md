@@ -10,6 +10,64 @@
 
 ### 2025-10-20
 
+#### Cloudinary Upload Preset 수정 (23:30)
+**[FIX]** 잘못된 upload preset으로 인한 이미지 업로드 실패 해결
+
+**변경 파일**:
+- `components/job-create/editor/ImageUploader.tsx` (141줄 → 142줄)
+
+**변경 내용**:
+- Upload preset 이름 수정
+  - ❌ Before: `job_postings` (존재하지 않는 preset)
+  - ✅ After: `jobmatch_unsigned` (프로젝트 공통 unsigned preset)
+- Cloudinary folder 경로 추가: `jobmatch/job_postings`
+
+**이유**:
+- 기존 작동하는 코드(`CustomCloudinaryUpload.tsx`) 참고
+- 프로필 이미지, 회사 로고 등은 `jobmatch_unsigned` preset 사용 중
+- 채용공고 에디터에서만 다른 preset 사용하려다 에러 발생
+
+**시도했지만 실패한 방법**:
+- ❌ 환경변수 `NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET` 사용 시도
+  - `job_postings` 값이 Cloudinary에 등록되지 않은 preset이었음
+  - "Upload preset not found" 에러 발생
+
+**Impact**:
+- 채용공고 에디터에서 이미지 업로드 정상 작동 ✅
+- 프로젝트 전체 이미지 업로드 일관성 유지
+- 업로드된 이미지는 `jobmatch/job_postings` 폴더에 저장
+
+**참고**:
+- 기존 작동 코드: `components/CustomCloudinaryUpload.tsx:103`
+- 온보딩, 프로필 수정 등 다른 페이지와 동일한 설정 사용
+
+---
+
+#### TipTap SSR 에러 수정 및 이미지 업로드 개선 (23:15)
+**[FIX]** SSR hydration mismatch 해결 및 파일 업로드 방식으로 개선
+
+**변경 파일**:
+- `components/job-create/editor/JobContentEditor.tsx` (90줄 → 91줄)
+- `components/job-create/editor/EditorToolbar.tsx` (181줄 → 201줄)
+
+**변경 내용**:
+- TipTap 에디터에 `immediatelyRender: false` 옵션 추가
+  - Next.js SSR 환경에서 hydration mismatch 방지
+- 이미지 삽입 방식 개선
+  - ❌ Before: URL 입력 방식 (prompt)
+  - ✅ After: 파일 선택 → Cloudinary 업로드 방식
+  - ImageUploader 모달 팝업 추가 (진행률 표시)
+
+**이유**:
+- TipTap은 브라우저 전용 라이브러리로 SSR 중 렌더링 불가
+- URL 입력은 사용자 경험이 불편함 (파일 업로드가 직관적)
+
+**Impact**:
+- 빌드 에러 해결 ✅
+- 사용자가 직접 이미지 파일을 선택하여 업로드 가능
+
+---
+
 #### 채용공고 작성 시스템 WYSIWYG 에디터 구현 (22:30)
 **[ADD]** 블로그/게시판 에디터 방식의 채용공고 작성 시스템 완성
 

@@ -23,6 +23,7 @@ export default function JobContentEditor({
   placeholder = '채용공고 상세 내용을 작성하세요...'
 }: JobContentEditorProps) {
   const editor = useEditor({
+    immediatelyRender: false, // SSR 환경에서 hydration mismatch 방지
     extensions: [
       StarterKit.configure({
         heading: {

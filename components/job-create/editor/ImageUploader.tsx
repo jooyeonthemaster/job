@@ -24,7 +24,7 @@ export default function ImageUploader({
 
   const uploadToCloudinary = async (file: File): Promise<string> => {
     const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
-    const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || 'job_postings';
+    const uploadPreset = 'jobmatch_unsigned'; // 프로젝트 공통 unsigned preset
 
     if (!cloudName) {
       throw new Error('Cloudinary 설정이 올바르지 않습니다.');
@@ -33,6 +33,7 @@ export default function ImageUploader({
     const formData = new FormData();
     formData.append('file', file);
     formData.append('upload_preset', uploadPreset);
+    formData.append('folder', 'jobmatch/job_postings'); // 채용공고 이미지 폴더
 
     const xhr = new XMLHttpRequest();
 
