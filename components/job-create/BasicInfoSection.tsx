@@ -2,6 +2,10 @@
 
 import { JobFormData, EmploymentType, ExperienceLevel } from '@/types/job-form.types';
 import { EMPLOYMENT_TYPE_LABELS, EXPERIENCE_LEVEL_LABELS } from '@/constants/job-posting';
+import AddressSearchInput from '@/components/ui/form/AddressSearchInput';
+import FormInput from '@/components/ui/form/FormInput';
+import FormSelect from '@/components/ui/form/FormSelect';
+import FormDatePicker from '@/components/ui/form/FormDatePicker';
 
 interface BasicInfoSectionProps {
   formData: JobFormData;
@@ -15,102 +19,76 @@ export default function BasicInfoSection({ formData, onUpdate }: BasicInfoSectio
 
       <div className="space-y-4">
         <div className="grid md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              포지션명 (한글) <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              value={formData.title}
-              onChange={(e) => onUpdate('title', e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-              placeholder="예: 프론트엔드 개발자"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              포지션명 (영문) <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              value={formData.titleEn}
-              onChange={(e) => onUpdate('titleEn', e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-              placeholder="예: Frontend Developer"
-            />
-          </div>
-        </div>
-
-        <div className="grid md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              부서/팀 <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              value={formData.department}
-              onChange={(e) => onUpdate('department', e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-              placeholder="예: Engineering"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              근무지 <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              value={formData.location}
-              onChange={(e) => onUpdate('location', e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-              placeholder="예: 서울 강남구"
-            />
-          </div>
-        </div>
-
-        <div className="grid md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">고용 형태</label>
-            <select
-              value={formData.employmentType}
-              onChange={(e) => onUpdate('employmentType', e.target.value as EmploymentType)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-            >
-              {Object.entries(EMPLOYMENT_TYPE_LABELS).map(([value, label]) => (
-                <option key={value} value={value}>{label}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">경력 수준</label>
-            <select
-              value={formData.experienceLevel}
-              onChange={(e) => onUpdate('experienceLevel', e.target.value as ExperienceLevel)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-            >
-              {Object.entries(EXPERIENCE_LEVEL_LABELS).map(([value, label]) => (
-                <option key={value} value={value}>{label}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            마감일 <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="date"
-            value={formData.deadline}
-            onChange={(e) => onUpdate('deadline', e.target.value)}
-            min={new Date().toISOString().split('T')[0]}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+          <FormInput
+            label="포지션명 (한글)"
+            value={formData.title}
+            onChange={(value) => onUpdate('title', value)}
+            placeholder="예: 프론트엔드 개발자"
+            required
+          />
+          <FormInput
+            label="포지션명 (영문)"
+            value={formData.titleEn}
+            onChange={(value) => onUpdate('titleEn', value)}
+            placeholder="예: Frontend Developer"
+            required
           />
         </div>
+
+        <div className="grid md:grid-cols-2 gap-4">
+          <FormInput
+            label="부서/팀"
+            value={formData.department}
+            onChange={(value) => onUpdate('department', value)}
+            placeholder="예: Engineering"
+            required
+          />
+        </div>
+
+        {/* 주소 검색 컴포넌트 */}
+        <AddressSearchInput
+          label="근무지"
+          value={formData.location}
+          onChange={(value) => onUpdate('location', value)}
+          required
+          showDetailInput={false}
+          showPreview={false}
+        />
+
+        <div className="grid md:grid-cols-2 gap-4">
+          <FormSelect
+            label="고용 형태"
+            value={formData.employmentType}
+            onChange={(value) => onUpdate('employmentType', value as EmploymentType)}
+            options={Object.entries(EMPLOYMENT_TYPE_LABELS).map(([value, label]) => ({
+              value,
+              label,
+            }))}
+          />
+          <FormSelect
+            label="경력 수준"
+            value={formData.experienceLevel}
+            onChange={(value) => onUpdate('experienceLevel', value as ExperienceLevel)}
+            options={Object.entries(EXPERIENCE_LEVEL_LABELS).map(([value, label]) => ({
+              value,
+              label,
+            }))}
+          />
+        </div>
+
+        <FormDatePicker
+          label="마감일"
+          value={formData.deadline}
+          onChange={(value) => onUpdate('deadline', value)}
+          minDate={new Date()}
+          required
+        />
       </div>
     </div>
   );
 }
+
+
 
 
 
