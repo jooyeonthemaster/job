@@ -66,12 +66,19 @@ export default function JobGridLayoutEditor({
 
       const activeJobs = (allJobs || []) as JobWithCompany[];
 
+      // 페이지 기반 priority 계산
+      // 페이지 1: Top 1-20, Middle 1-25, Bottom 1-30
+      // 페이지 2: Top 21-40, Middle 26-50, Bottom 31-60
+      const topStart = (currentPage - 1) * 20 + 1;
+      const middleStart = (currentPage - 1) * 25 + 1;
+      const bottomStart = (currentPage - 1) * 30 + 1;
+
       // Top 슬롯 초기화 (20개: 4열 x 5행)
       const initialTopSlots: GridSlot[] = [];
       for (let i = 0; i < 20; i++) {
         initialTopSlots.push({
           position: 'top',
-          priority: i + 1,
+          priority: topStart + i,
           job: null
         });
       }
@@ -81,7 +88,7 @@ export default function JobGridLayoutEditor({
       for (let i = 0; i < 25; i++) {
         initialMiddleSlots.push({
           position: 'middle',
-          priority: i + 1,
+          priority: middleStart + i,
           job: null
         });
       }
@@ -91,7 +98,7 @@ export default function JobGridLayoutEditor({
       for (let i = 0; i < 30; i++) {
         initialBottomSlots.push({
           position: 'bottom',
-          priority: i + 1,
+          priority: bottomStart + i,
           job: null
         });
       }
@@ -345,10 +352,29 @@ export default function JobGridLayoutEditor({
               채용공고 그리드 레이아웃 편집기
             </h2>
             <p className="text-sm text-gray-600 mt-1">
-              실제 /jobs 페이지에 표시되는 공고 위치를 관리합니다
+              실제 /jobs 페이지에 표시되는 공고 위치를 관리합니다 (페이지당 75개 슬롯)
             </p>
           </div>
           <div className="flex items-center gap-3">
+            {/* 페이지네이션 */}
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 rounded-lg">
+              <button
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="p-1 hover:bg-gray-200 rounded disabled:opacity-30 disabled:cursor-not-allowed"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <span className="text-sm font-medium px-2">
+                페이지 {currentPage}
+              </span>
+              <button
+                onClick={() => setCurrentPage(p => p + 1)}
+                className="p-1 hover:bg-gray-200 rounded"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
             <button
               onClick={handleReset}
               disabled={saving}

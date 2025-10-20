@@ -289,34 +289,34 @@ export default function JobsPage() {
       <section className="py-12">
         <div className="container mx-auto px-4 lg:px-8">
           {/* Top 20 Jobs - 4열 그리드 */}
-          {topJobs.length > 0 && (
-            <div className="mb-16">
-              <div className="relative bg-gradient-to-r from-emerald-700 to-emerald-600 rounded-2xl p-6 mb-8 overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-emerald-900/30 via-transparent to-green-900/20"></div>
-                <div className="relative flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="flex items-center justify-center w-12 h-12 bg-white/20 rounded-xl backdrop-blur-md">
-                      <span className="text-2xl">🔥</span>
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="px-2 py-0.5 bg-white/90 text-emerald-700 text-xs font-bold rounded-full animate-pulse">
-                          프리미엄
-                        </span>
-                        <span className="text-white/90 text-sm">최상단 노출 공고</span>
-                      </div>
-                      <h2 className="text-2xl font-bold text-white">
-                        지금 당장 주목해야 할 채용공고
-                      </h2>
-                    </div>
+          <div className="mb-16">
+            <div className="relative bg-gradient-to-r from-emerald-700 to-emerald-600 rounded-2xl p-6 mb-8 overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-emerald-900/30 via-transparent to-green-900/20"></div>
+              <div className="relative flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center justify-center w-12 h-12 bg-white/20 rounded-xl backdrop-blur-md">
+                    <span className="text-2xl">🔥</span>
                   </div>
-                  <div className="text-white/90 text-sm">
-                    총 {topJobs.length}개
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="px-2 py-0.5 bg-white/90 text-emerald-700 text-xs font-bold rounded-full animate-pulse">
+                        프리미엄
+                      </span>
+                      <span className="text-white/90 text-sm">최상단 노출 공고 (최대 20개)</span>
+                    </div>
+                    <h2 className="text-2xl font-bold text-white">
+                      지금 당장 주목해야 할 채용공고
+                    </h2>
                   </div>
                 </div>
+                <div className="text-white/90 text-sm">
+                  {topJobs.length > 0 ? `총 ${topJobs.length}개` : '등록 대기 중'}
+                </div>
               </div>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                {topJobs.map((job, index) => (
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {topJobs.length > 0 ? (
+                topJobs.map((job, index) => (
                   <motion.div
                     key={job.id}
                     initial={{ opacity: 0, y: 20 }}
@@ -325,40 +325,51 @@ export default function JobsPage() {
                   >
                     <JobGridCard job={job} size="large" />
                   </motion.div>
-                ))}
-              </div>
+                ))
+              ) : (
+                // 빈 슬롯 표시 (최대 20개)
+                Array.from({ length: 20 }).map((_, index) => (
+                  <div
+                    key={`empty-top-${index}`}
+                    className="h-64 rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 flex flex-col items-center justify-center text-gray-400"
+                  >
+                    <span className="text-sm font-medium">빈 슬롯</span>
+                    <span className="text-xs mt-1">#{index + 1}</span>
+                  </div>
+                ))
+              )}
             </div>
-          )}
+          </div>
 
           {/* Middle 25 Jobs - 5열 그리드 */}
-          {middleJobs.length > 0 && (
-            <div className="mb-16">
-              <div className="relative bg-gradient-to-r from-emerald-800 to-emerald-700 rounded-2xl px-8 py-12 mb-16 overflow-hidden">
-                <div className="absolute top-8 left-0 right-0 bottom-0 bg-gradient-to-bl from-green-900/30 via-transparent to-emerald-900/20"></div>
-                <div className="relative flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="flex items-center justify-center w-12 h-12 bg-white/20 rounded-xl backdrop-blur-md">
-                      <span className="text-2xl">⭐</span>
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="px-2 py-0.5 bg-white/90 text-emerald-800 text-xs font-bold rounded-full">
-                          추천 공고
-                        </span>
-                        <span className="text-white/90 text-sm">당신을 위한 맞춤 추천</span>
-                      </div>
-                      <h2 className="text-2xl font-bold text-white">
-                        당신을 위한 맞춤 채용공고
-                      </h2>
-                    </div>
+          <div className="mb-16">
+            <div className="relative bg-gradient-to-r from-emerald-800 to-emerald-700 rounded-2xl px-8 py-12 mb-16 overflow-hidden">
+              <div className="absolute top-8 left-0 right-0 bottom-0 bg-gradient-to-bl from-green-900/30 via-transparent to-emerald-900/20"></div>
+              <div className="relative flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center justify-center w-12 h-12 bg-white/20 rounded-xl backdrop-blur-md">
+                    <span className="text-2xl">⭐</span>
                   </div>
-                  <div className="text-white/90 text-sm">
-                    총 {middleJobs.length}개
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="px-2 py-0.5 bg-white/90 text-emerald-800 text-xs font-bold rounded-full">
+                        추천 공고
+                      </span>
+                      <span className="text-white/90 text-sm">당신을 위한 맞춤 추천 (최대 25개)</span>
+                    </div>
+                    <h2 className="text-2xl font-bold text-white">
+                      당신을 위한 맞춤 채용공고
+                    </h2>
                   </div>
                 </div>
+                <div className="text-white/90 text-sm">
+                  {middleJobs.length > 0 ? `총 ${middleJobs.length}개` : '등록 대기 중'}
+                </div>
               </div>
-              <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-                {middleJobs.map((job, index) => (
+            </div>
+            <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+              {middleJobs.length > 0 ? (
+                middleJobs.map((job, index) => (
                   <motion.div
                     key={job.id}
                     initial={{ opacity: 0, y: 20 }}
@@ -367,40 +378,51 @@ export default function JobsPage() {
                   >
                     <JobGridCard job={job} size="medium" />
                   </motion.div>
-                ))}
-              </div>
+                ))
+              ) : (
+                // 빈 슬롯 표시 (최대 25개)
+                Array.from({ length: 25 }).map((_, index) => (
+                  <div
+                    key={`empty-middle-${index}`}
+                    className="h-56 rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 flex flex-col items-center justify-center text-gray-400"
+                  >
+                    <span className="text-xs font-medium">빈 슬롯</span>
+                    <span className="text-[10px] mt-1">#{index + 1}</span>
+                  </div>
+                ))
+              )}
             </div>
-          )}
+          </div>
 
           {/* Bottom 30 Jobs - 6열 그리드 */}
-          {bottomJobs.length > 0 && (
-            <div>
-              <div className="relative bg-gradient-to-r from-green-900 to-emerald-800 rounded-2xl px-8 py-12 mb-16 overflow-hidden">
-                <div className="absolute top-8 left-0 right-0 bottom-0 bg-gradient-to-tr from-green-950/40 via-transparent to-emerald-950/30"></div>
-                <div className="relative flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="flex items-center justify-center w-12 h-12 bg-white/20 rounded-xl backdrop-blur-md">
-                      <span className="text-2xl">📋</span>
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="px-2 py-0.5 bg-emerald-600 text-white text-xs font-bold rounded-full">
-                          실시간 업데이트
-                        </span>
-                        <span className="text-white/80 text-sm">모든 채용 포지션</span>
-                      </div>
-                      <h2 className="text-2xl font-bold text-white">
-                        모든 채용공고를 한눈에
-                      </h2>
-                    </div>
+          <div>
+            <div className="relative bg-gradient-to-r from-green-900 to-emerald-800 rounded-2xl px-8 py-12 mb-16 overflow-hidden">
+              <div className="absolute top-8 left-0 right-0 bottom-0 bg-gradient-to-tr from-green-950/40 via-transparent to-emerald-950/30"></div>
+              <div className="relative flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center justify-center w-12 h-12 bg-white/20 rounded-xl backdrop-blur-md">
+                    <span className="text-2xl">📋</span>
                   </div>
-                  <div className="text-white/90 text-sm">
-                    총 {bottomJobs.length}개
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="px-2 py-0.5 bg-emerald-600 text-white text-xs font-bold rounded-full">
+                        실시간 업데이트
+                      </span>
+                      <span className="text-white/80 text-sm">모든 채용 포지션 (최대 30개)</span>
+                    </div>
+                    <h2 className="text-2xl font-bold text-white">
+                      모든 채용공고를 한눈에
+                    </h2>
                   </div>
                 </div>
+                <div className="text-white/90 text-sm">
+                  {bottomJobs.length > 0 ? `총 ${bottomJobs.length}개` : '등록 대기 중'}
+                </div>
               </div>
-              <div className="grid grid-cols-3 md:grid-cols-5 lg:grid-cols-6 gap-2.5">
-                {bottomJobs.map((job, index) => (
+            </div>
+            <div className="grid grid-cols-3 md:grid-cols-5 lg:grid-cols-6 gap-2.5">
+              {bottomJobs.length > 0 ? (
+                bottomJobs.map((job, index) => (
                   <motion.div
                     key={job.id}
                     initial={{ opacity: 0, y: 20 }}
@@ -409,23 +431,21 @@ export default function JobsPage() {
                   >
                     <JobGridCard job={job} size="small" />
                   </motion.div>
-                ))}
-              </div>
+                ))
+              ) : (
+                // 빈 슬롯 표시 (최대 30개)
+                Array.from({ length: 30 }).map((_, index) => (
+                  <div
+                    key={`empty-bottom-${index}`}
+                    className="h-48 rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 flex flex-col items-center justify-center text-gray-400"
+                  >
+                    <span className="text-[10px] font-medium">빈 슬롯</span>
+                    <span className="text-[9px] mt-1">#{index + 1}</span>
+                  </div>
+                ))
+              )}
             </div>
-          )}
-
-          {/* 공고가 하나도 없을 때 */}
-          {topJobs.length === 0 && middleJobs.length === 0 && bottomJobs.length === 0 && (
-            <div className="text-center py-20">
-              <div className="text-6xl mb-4">📭</div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-2">
-                등록된 채용공고가 없습니다
-              </h3>
-              <p className="text-gray-600 mb-8">
-                곧 다양한 채용공고가 등록될 예정입니다
-              </p>
-            </div>
-          )}
+          </div>
         </div>
       </section>
     </div>
