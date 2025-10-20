@@ -10,6 +10,98 @@
 
 ### 2025-10-20
 
+#### 🔐 네이버 OAuth 중복 회원가입 방지 (서버 사이드 콜백)
+**[FIX]** 네이버 OAuth 플로우에 중복 가입 차단 로직 추가
+
+**변경 파일 (3개)**:
+- `app/auth/naver/callback/route.ts` (223줄 → 254줄)
+- `lib/supabase/public-job-service.ts` (244줄 → 248줄, 타입 필드 추가)
+- `types/jobseeker-dashboard.types.ts` (81줄 → 83줄, 타입 필드 추가)
+
+**변경 내용**:
+1. **네이버 OAuth 콜백 핸들러** (`app/auth/naver/callback/route.ts`)
+   - 기존 사용자 확인 후 중복 회원 유형 체크 로직 추가 (94-123번 줄)
+   - 기업 회원 시도 시: `users` 테이블 체크 → 개인 회원 존재 시 차단
+   - 개인 회원 시도 시: `companies` 테이블 체크 → 기업 회원 존재 시 차단
+   - 차단 시: `/login?error=already_registered_as_jobseeker|company`로 리다이렉트
+
+2. **타입 호환성 수정**
+   - `types/jobseeker-dashboard.types.ts`: `Job` 타입에 `companyId`, `preferredQualifications` 필드 추가 (optional)
+   - `lib/supabase/public-job-service.ts`: `transformToJobCardFormat` 함수에서 두 필드 값 할당
+
+**문제 원인**:
+- 구글/카카오: `app/login/page.tsx`에서 클라이언트 사이드 hash fragment로 처리 → 중복 체크 로직 있음 ✅
+- 네이버: `app/auth/naver/callback/route.ts`에서 **서버 사이드** Authorization Code 방식 → 중복 체크 로직 없음 ❌
+
+**해결 방법**:
+- 네이버 OAuth 콜백 서버 라우트에 중복 체크 로직 추가
+- 기존 사용자 확인 후 반대편 테이블(users/companies)에 레코드가 있는지 검증
+- 중복 발견 시 즉시 `/login?error=...`로 리다이렉트 → 로그인 페이지에서 에러 표시
+
+**시나리오**:
+```
+예) 네이버 계정 heart7430@hanmail.net으로 기업 회원 가입 완료
+→ 같은 네이버 계정으로 개인 회원 로그인/회원가입 시도
+→ ✅ 차단! "이미 기업 회원으로 가입된 계정입니다."
+→ 로그인 페이지로 리다이렉트 (기업 회원 탭 자동 선택)
+```
+
+**영향**:
+- 네이버 OAuth가 구글/카카오와 동일하게 중복 가입 방지 작동
+- 모든 OAuth 제공자에서 일관된 사용자 경험 제공
+
+---
+
+#### 🔐 OAuth 중복 회원가입 방지 로직 구현 (구글/카카오)
+**[ADD]** 다른 회원 유형으로 중복 가입 시도 차단 기능
+
+**변경 파일 (2개)**:
+- `hooks/useSignup.ts` (506줄 → 534줄)
+- `app/login/page.tsx` (718줄 → 781줄)
+
+**변경 내용**:
+1. **handleCompanyOAuth** (기업 회원 OAuth 처리)
+   - 기업 회원가입 시도 전 `users` 테이블 체크 추가
+   - 이미 개인 회원으로 가입된 경우 → 로그아웃 + 에러 메시지 + 로그인 페이지 리다이렉트
+   - 정상 케이스: 기업 회원 온보딩으로 진행
+
+2. **handleJobseekerOAuth** (개인 회원 OAuth 처리)
+   - 개인 회원가입 시도 전 `companies` 테이블 체크 추가
+   - 이미 기업 회원으로 가입된 경우 → 로그아웃 + 에러 메시지 + 로그인 페이지 리다이렉트
+   - 정상 케이스: 개인 회원 온보딩으로 진행
+
+3. **로그인 페이지 에러 표시**
+   - URL 파라미터 체크 (`?error=already_registered_as_jobseeker|company`)
+   - localStorage 체크 (`signup_error`)
+   - 자동으로 올바른 탭 선택 (개인/기업)
+   - 에러 메시지 표시: "이미 X 회원으로 가입된 계정입니다. X 회원 탭에서 로그인해주세요."
+
+**시나리오**:
+```
+예) 구글 계정 test@gmail.com으로 기업 회원 가입 완료
+→ 같은 구글 계정으로 개인 회원 회원가입 시도
+→ ❌ 차단! "이미 기업 회원으로 가입된 계정입니다."
+→ 로그인 페이지로 리다이렉트 (기업 회원 탭 자동 선택)
+```
+
+**이유**:
+- 같은 OAuth 계정으로 개인/기업 중복 가입 시 데이터 충돌 발생
+- 사용자가 실수로 다른 회원 유형으로 가입 시도하는 경우 방지
+- DB 무결성 유지 (1개 OAuth 계정 = 1개 회원 유형)
+
+**영향**:
+- ✅ OAuth (구글, 카카오, 네이버) 모든 provider에 적용
+- ✅ 기존 가입 회원은 영향 없음
+- ✅ 신규 가입 시도 시에만 체크
+- ✅ 같은 유형으로 재로그인하는 경우는 정상 처리
+
+**사용자 경험**:
+- 혼란 방지: 명확한 에러 메시지
+- 자동 리다이렉트: 올바른 로그인 탭으로 이동
+- 안내: "이미 X 회원으로 가입된 계정입니다"
+
+---
+
 #### 🐛 채용공고 작성 페이지 초기화 에러 수정
 **[FIX]** editorContent 변수 선언 순서 에러 해결
 

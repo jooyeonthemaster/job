@@ -121,12 +121,13 @@ function transformToJobCardFormat(job: PublicJob): JobCardType {
     id: job.id,
     title: job.title,
     titleEn: job.title_en,
+    companyId: job.company.id,  // ✅ 타입 호환성
     company: {
       id: job.company.id,
       name: job.company.name,
       nameEn: job.company.name_en || job.company.name,
-      logo: job.company.logo || undefined,
-      bannerImage: undefined, // 현재 DB에 없음
+      logo: job.company.logo || '',
+      bannerImage: '', // 현재 DB에 없음
       industry: job.company.industry || 'Technology',
       location: job.company.location || job.location,
       employeeCount: '100+',
@@ -140,8 +141,8 @@ function transformToJobCardFormat(job: PublicJob): JobCardType {
     },
     location: job.location,
     department: job.department,
-    employmentType: job.employment_type,
-    experienceLevel: job.experience_level,
+    employmentType: job.employment_type as "FULL_TIME" | "PART_TIME" | "CONTRACT" | "INTERNSHIP",
+    experienceLevel: job.experience_level as "ENTRY" | "JUNIOR" | "MID" | "SENIOR" | "EXECUTIVE",
     salary: {
       min: job.salary_min || 0,
       max: job.salary_max || 0,
@@ -149,37 +150,19 @@ function transformToJobCardFormat(job: PublicJob): JobCardType {
       negotiable: job.salary_negotiable
     },
     description: '',
-    mainTasks: [],
     requirements: [],
-    preferredQualifications: [],
     benefits: [],
     tags: [],
+    preferredQualifications: [],  // ✅ 타입 호환성
     visaSponsorship: job.visa_sponsorship,
     languageRequirements: {
-      korean: job.korean_level,
+      korean: job.korean_level as "NONE" | "BASIC" | "INTERMEDIATE" | "FLUENT" | "NATIVE",
       english: 'INTERMEDIATE'
     },
     deadline: job.deadline,
-    workConditions: {
-      type: job.employment_type,
-      probation: '',
-      location: job.location,
-      workHours: '',
-      salary: '',
-      startDate: ''
-    },
-    manager: {
-      name: '',
-      position: '',
-      email: '',
-      phone: ''
-    },
     views: job.views,
     applicants: job.applicants,
-    status: 'active',
-    postedAt: job.posted_at,
-    createdAt: job.posted_at,
-    updatedAt: job.posted_at
+    postedAt: job.posted_at
   };
 }
 

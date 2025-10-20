@@ -67,6 +67,7 @@ export type ChecklistItem = {
 export type Job = {
   id: string;
   title: string;
+  companyId?: string;  // ✅ public-job-service 호환성
   company: {
     name: string;
   };
@@ -77,4 +78,5 @@ export type Job = {
   };
   employmentType: string;
   tags: string[];
+  preferredQualifications?: string[];  // ✅ public-job-service 호환성
 };

@@ -90,6 +90,37 @@ export async function GET(request: NextRequest) {
       supabaseUserId = existingUser.id;
       userEmail = existingUser.email!;
       userPassword = existingUser.user_metadata?.naver_temp_password || `naver_${id}_temp`;
+
+      // ✅ 중복 회원 유형 체크 (기존 사용자)
+      if (userType === 'company') {
+        // 기업 회원으로 로그인하려는데, 개인 회원으로 이미 가입되어 있는지 체크
+        const { data: existingJobseeker } = await supabaseAdmin
+          .from('users')
+          .select('id, email, full_name')
+          .eq('id', supabaseUserId)
+          .maybeSingle();
+
+        if (existingJobseeker) {
+          console.warn('[Naver Callback] ⚠️ 이미 개인 회원으로 가입된 계정:', existingJobseeker.email);
+          return NextResponse.redirect(
+            `${origin}/login?error=already_registered_as_jobseeker`
+          );
+        }
+      } else {
+        // 개인 회원으로 로그인하려는데, 기업 회원으로 이미 가입되어 있는지 체크
+        const { data: existingCompany } = await supabaseAdmin
+          .from('companies')
+          .select('id, email, name')
+          .eq('id', supabaseUserId)
+          .maybeSingle();
+
+        if (existingCompany) {
+          console.warn('[Naver Callback] ⚠️ 이미 기업 회원으로 가입된 계정:', existingCompany.email);
+          return NextResponse.redirect(
+            `${origin}/login?error=already_registered_as_company`
+          );
+        }
+      }
     } else {
       // 6. 신규 사용자 생성
       console.log('[Naver Callback] 신규 사용자 생성 중...');
