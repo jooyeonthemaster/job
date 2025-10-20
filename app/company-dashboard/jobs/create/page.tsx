@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useJobForm } from '@/hooks/useJobForm';
 import { useJobFormValidation } from '@/hooks/useJobFormValidation';
@@ -8,17 +8,44 @@ import { createJob } from '@/lib/supabase/job-service';
 import { supabase } from '@/lib/supabase/config';
 import JobMetadataForm from '@/components/job-create/metadata/JobMetadataForm';
 import JobContentEditor from '@/components/job-create/editor/JobContentEditor';
+import JobPreviewModal from '@/components/job-create/JobPreviewModal';
 import { ChevronLeft, Save, Eye, Send } from 'lucide-react';
 
 export default function JobCreatePage() {
   const router = useRouter();
   const { formData, updateField, resetForm } = useJobForm();
-  const { errors, isValid } = useJobFormValidation(formData);
 
   const [editorContent, setEditorContent] = useState<string>('');
+  const { errors, isValid } = useJobFormValidation(formData, editorContent);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [currentStep, setCurrentStep] = useState<'metadata' | 'content'>('metadata');
+  const [showPreview, setShowPreview] = useState(false);
+  const [companyData, setCompanyData] = useState<any>(null);
+
+  // 기업 정보 로드
+  useEffect(() => {
+    const loadCompanyData = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { data: company } = await supabase
+          .from('companies')
+          .select('name, logo')
+          .eq('id', user.id)
+          .single();
+
+        if (company) {
+          setCompanyData(company);
+        }
+      } catch (error) {
+        console.error('Failed to load company data:', error);
+      }
+    };
+    loadCompanyData();
+  }, []);
 
   const handleEditorChange = (content: string) => {
     setEditorContent(content);
@@ -35,13 +62,15 @@ export default function JobCreatePage() {
         throw new Error('로그인이 필요합니다.');
       }
 
-      const result = await createJob(formData, user.id, editorContent);
+      // isDraft: true로 전달하여 draft 상태로 저장
+      const result = await createJob(formData, user.id, editorContent, true);
 
       if (!result.success) {
         throw new Error(result.error);
       }
 
       // 임시저장 후 목록으로 이동
+      alert('임시저장이 완료되었습니다.');
       router.push('/company-dashboard?tab=jobs');
     } catch (err: any) {
       console.error('Save draft error:', err);
@@ -81,7 +110,7 @@ export default function JobCreatePage() {
       }
 
       // 제출 성공
-      alert('채용공고가 등록되었습니다. 결제 확인 후 공고가 활성화됩니다.');
+      alert('채용공고가 등록되었습니다. 관리자 승인 및 결제 확인 후 공고가 활성화됩니다.');
       router.push('/company-dashboard?tab=jobs');
     } catch (err: any) {
       console.error('Submit error:', err);
@@ -92,13 +121,22 @@ export default function JobCreatePage() {
   };
 
   const handlePreview = () => {
-    // TODO: 미리보기 기능 구현
-    alert('미리보기 기능은 곧 추가됩니다.');
+    setShowPreview(true);
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
+    <>
+      <JobPreviewModal
+        isOpen={showPreview}
+        onClose={() => setShowPreview(false)}
+        formData={formData}
+        editorContent={editorContent}
+        companyName={companyData?.name}
+        companyLogo={companyData?.logo}
+      />
+
+      <div className="min-h-screen bg-gray-50">
+        {/* Header */}
       <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
@@ -260,6 +298,7 @@ export default function JobCreatePage() {
           </button>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 }

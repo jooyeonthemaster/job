@@ -10,6 +10,81 @@
 
 ### 2025-10-20
 
+#### 🐛 채용공고 작성 페이지 초기화 에러 수정
+**[FIX]** editorContent 변수 선언 순서 에러 해결
+
+**변경 파일**:
+- `app/company-dashboard/jobs/create/page.tsx` (304줄 → 304줄)
+
+**변경 내용**:
+- useState 선언 순서 변경 (editorContent를 먼저 선언)
+- useJobFormValidation hook 호출을 editorContent 선언 이후로 이동
+
+**이유**:
+- ReferenceError: Cannot access 'editorContent' before initialization 에러 발생
+- 17번 줄에서 editorContent 사용, 19번 줄에서 선언하는 순서 문제
+
+**수정 전**:
+```typescript
+const { errors, isValid } = useJobFormValidation(formData, editorContent); // 17번 줄
+const [editorContent, setEditorContent] = useState<string>(''); // 19번 줄
+```
+
+**수정 후**:
+```typescript
+const [editorContent, setEditorContent] = useState<string>(''); // 18번 줄
+const { errors, isValid } = useJobFormValidation(formData, editorContent); // 19번 줄
+```
+
+**영향**:
+- 채용공고 작성 페이지 정상 동작
+- 런타임 에러 해결
+
+---
+
+#### ✨ 빈 그리드 표시 + 페이지네이션 구현
+**[UPDATE]** /jobs 페이지 빈 슬롯 시각화 및 그리드 편집기 페이지네이션
+
+**변경 파일 (2개)**:
+- `app/jobs/page.tsx` (452줄 → 453줄)
+- `components/admin/JobGridLayoutEditor.tsx` (820줄 → 835줄)
+
+**변경 내용**:
+
+**1. /jobs 페이지 - 빈 그리드 표시**
+- 공고가 없어도 3개 섹션 구조 항상 표시
+- 빈 슬롯: 점선 테두리 + "빈 슬롯 #N" 표시
+- 각 섹션 최대 개수 명시:
+  - Top: 최대 20개
+  - Middle: 최대 25개
+  - Bottom: 최대 30개
+- 상태 표시: "총 N개" 또는 "등록 대기 중"
+
+**2. 그리드 레이아웃 편집기 - 페이지네이션**
+- 페이지당 75개 슬롯 (20 + 25 + 30)
+- 페이지 기반 priority 자동 계산:
+  ```typescript
+  // 페이지 1: Top 1-20, Middle 1-25, Bottom 1-30
+  // 페이지 2: Top 21-40, Middle 26-50, Bottom 31-60
+  const topStart = (currentPage - 1) * 20 + 1;
+  const middleStart = (currentPage - 1) * 25 + 1;
+  const bottomStart = (currentPage - 1) * 30 + 1;
+  ```
+- 페이지네이션 UI: 헤더에 이전/다음 버튼
+- 각 페이지 독립적으로 공고 할당 가능
+
+**이유**:
+- 사용자 요구: "빈 그리드도 공고 표기 위치 느낌으로 표시"
+- 75개 넘으면 페이지네이션 필요
+- 실제 구조를 시각적으로 보여줘야 관리자가 이해 쉬움
+
+**효과**:
+- 공고가 1개만 있어도 전체 구조 파악 가능
+- 어디에 공고를 배치할지 미리 계획 가능
+- 2페이지 이상 공고 관리 가능
+
+---
+
 #### 🐛 메인 페이지 null company 에러 수정
 **[FIX]** 회사 정보 없는 공고로 인한 TypeError 방지
 
