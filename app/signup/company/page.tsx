@@ -10,7 +10,6 @@ import Section3Images from '@/components/company-signup/Section3Images';
 import Section4Benefits from '@/components/company-signup/Section4Benefits';
 import Section5Manager from '@/components/company-signup/Section5Manager';
 import Section6Address from '@/components/company-signup/Section6Address';
-import Section7Account from '@/components/company-signup/Section7Account';
 import TermsAgreement from '@/components/company-signup/TermsAgreement';
 import {
   type CompanySignupFormData,
@@ -73,8 +72,6 @@ export default function CompanySignupPage() {
     agreeServiceTerms: false,
     agreePrivacyTerms: false,
     agreeCompanyInfoTerms: false,
-    agreePublicInfoTerms: false,
-    agreeAdminInfoTerms: false,
     agreeMarketingTerms: false,
   });
 
@@ -99,12 +96,12 @@ export default function CompanySignupPage() {
             email: user.email || ''
           }));
 
-          // 가입 방식 확인
-          const provider = user.app_metadata?.provider || 'email';
+          // 가입 방식 확인 (user_metadata 우선 - 커스텀 OAuth용)
+          const provider = user.user_metadata?.provider || user.app_metadata?.provider || 'email';
           const isEmail = provider === 'email';
           setIsEmailSignup(isEmail);
 
-          console.log('[Onboarding] 가입 방식:', isEmail ? '이메일' : '소셜 로그인 (Google, Kakao 등)');
+          console.log('[Onboarding] 가입 방식:', isEmail ? '이메일' : `소셜 로그인 (${provider})`);
         }
       } catch (error) {
         console.error('[Onboarding] 사용자 정보 가져오기 에러:', error);
@@ -228,7 +225,7 @@ export default function CompanySignupPage() {
       console.log('[Signup] Companies 테이블에 저장 시작');
       const dataToInsert = {
         id: user.id,
-        email: user.email,
+        email: formData.email || user.email, // formData 우선, 없으면 user.email
         ...insertData,
       };
       console.log('[Signup] 저장할 데이터:', JSON.stringify(dataToInsert, null, 2));
@@ -409,7 +406,7 @@ export default function CompanySignupPage() {
               />
             </div>
 
-            {/* Section 5: 담당자 정보 */}
+            {/* Section 5: 담당자 정보 (계정 정보 통합) */}
             <div className="bg-white rounded-2xl shadow-lg p-8">
               <Section5Manager
                 formData={{
@@ -418,9 +415,13 @@ export default function CompanySignupPage() {
                   managerEmail: formData.managerEmail,
                   managerPosition: formData.managerPosition,
                   managerPhone: formData.managerPhone,
+                  email: formData.email, // ✅ 계정 이메일 추가
+                  password: formData.password,
+                  passwordConfirm: formData.passwordConfirm,
                 }}
                 onChange={handleChange}
                 errors={errors}
+                isEmailSignup={isEmailSignup} // ✅ 이메일 가입 여부 전달
               />
             </div>
 
@@ -436,21 +437,7 @@ export default function CompanySignupPage() {
               />
             </div>
 
-            {/* Section 7: 계정 정보 */}
-            <div className="bg-white rounded-2xl shadow-lg p-8">
-              <Section7Account
-                formData={{
-                  email: formData.email,
-                  password: formData.password || '',
-                  passwordConfirm: formData.passwordConfirm || '',
-                }}
-                onChange={handleChange}
-                errors={errors}
-                isEmailSignup={isEmailSignup}
-              />
-            </div>
-
-            {/* Section 8: 약관 동의 */}
+            {/* Section 7: 약관 동의 */}
             <div className="bg-white rounded-2xl shadow-lg p-8">
               <TermsAgreement
                 agreements={{
@@ -458,8 +445,6 @@ export default function CompanySignupPage() {
                   agreeServiceTerms: formData.agreeServiceTerms,
                   agreePrivacyTerms: formData.agreePrivacyTerms,
                   agreeCompanyInfoTerms: formData.agreeCompanyInfoTerms,
-                  agreePublicInfoTerms: formData.agreePublicInfoTerms,
-                  agreeAdminInfoTerms: formData.agreeAdminInfoTerms,
                   agreeMarketingTerms: formData.agreeMarketingTerms,
                 }}
                 onChange={handleChange}

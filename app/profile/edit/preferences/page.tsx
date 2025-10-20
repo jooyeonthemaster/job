@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext_Supabase';
-import { getUserProfile, updateUserProfile } from '@/lib/supabase/jobseeker-service';
+import { getUserProfile } from '@/lib/supabase/jobseeker-service';
+import { savePreferences } from '@/lib/supabase/profile-checklist';
 import Step4_Preferences from '@/components/onboarding/job-seeker/Step4_Preferences';
 import { ArrowLeft } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -43,10 +44,7 @@ export default function PreferencesEditPage() {
     if (!user) return;
 
     try {
-      await updateUserProfile(user.id, {
-        ...data,
-        updatedAt: new Date().toISOString()
-      });
+      await savePreferences(user.id, data);
 
       alert('선호 조건이 성공적으로 업데이트되었습니다!');
       router.push('/jobseeker-dashboard');

@@ -11,8 +11,6 @@ interface Props {
     agreeServiceTerms: boolean;
     agreePrivacyTerms: boolean;
     agreeCompanyInfoTerms: boolean;
-    agreePublicInfoTerms: boolean;
-    agreeAdminInfoTerms: boolean;
     agreeMarketingTerms: boolean;
   };
   onChange: (field: string, value: boolean) => void;
@@ -33,8 +31,6 @@ export default function TermsAgreement({ agreements, onChange, errors }: Props) 
     onChange('agreeServiceTerms', checked);
     onChange('agreePrivacyTerms', checked);
     onChange('agreeCompanyInfoTerms', checked);
-    onChange('agreePublicInfoTerms', checked);
-    onChange('agreeAdminInfoTerms', checked);
     onChange('agreeMarketingTerms', checked);
   };
 

@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext_Supabase';
-import { getUserProfile, updateUserProfile } from '@/lib/supabase/jobseeker-service';
+import { getUserProfile } from '@/lib/supabase/jobseeker-service';
+import { saveSkillsAndLanguages } from '@/lib/supabase/profile-checklist';
 import Step3_Skills from '@/components/onboarding/job-seeker/Step3_Skills';
 import { ArrowLeft } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -28,7 +29,23 @@ export default function SkillsEditPage() {
           router.push('/onboarding/job-seeker/quick');
           return;
         }
-        setProfileData(profile);
+
+        // Transform data for Step3_Skills component (korean_level + otherLanguages)
+        const transformedProfile = {
+          ...profile,
+          skills: profile.skills?.map((skill: any) =>
+            typeof skill === 'string' ? skill : skill.skill_name || skill.name || skill
+          ) || [],
+          koreanLevel: profile.korean_level || '',
+          otherLanguages: profile.languages && profile.languages.length > 0
+            ? profile.languages.map((lang: any) => ({
+                language: lang.language || lang.language_name || '',
+                proficiency: lang.proficiency || ''
+              }))
+            : [{ language: '', proficiency: '' }]
+        };
+
+        setProfileData(transformedProfile);
       } catch (error) {
         console.error('Failed to load profile:', error);
       } finally {
@@ -43,9 +60,10 @@ export default function SkillsEditPage() {
     if (!user) return;
 
     try {
-      await updateUserProfile(user.id, {
-        ...data,
-        updatedAt: new Date().toISOString()
+      await saveSkillsAndLanguages(user.id, {
+        skills: data.skills,
+        korean_level: data.koreanLevel,
+        otherLanguages: data.otherLanguages
       });
 
       alert('기술 및 언어가 성공적으로 업데이트되었습니다!');

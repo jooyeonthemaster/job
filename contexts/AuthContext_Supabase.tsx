@@ -8,6 +8,7 @@ import type { User as SupabaseUser } from '@supabase/supabase-js';
 // =====================================================
 // 타입 정의
 // =====================================================
+// Updated: DB 테이블 기반 타입 판단
 
 export type UserType = 'company' | 'jobseeker';
 
@@ -224,9 +225,48 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       console.log('[AuthContext] 사용자 인증 확인:', authUser.id);
 
-      // 1. 사용자 타입 확인 (메타데이터에서)
-      const type = (authUser.user_metadata?.user_type || 'jobseeker') as UserType;
-      console.log('[AuthContext] 사용자 타입:', type);
+      // ✅ 1. localStorage에서 OAuth 중 설정된 pending_user_type 먼저 확인 (최우선)
+      const pendingType = localStorage.getItem('pending_user_type') as UserType | null;
+      console.log('[AuthContext] pending_user_type (localStorage):', pendingType);
+
+      // 2. metadata에서 확인 (OAuth 콜백에서 설정됨)
+      const metadataUserType = authUser.user_metadata?.user_type as UserType | undefined;
+      console.log('[AuthContext] metadata user_type:', metadataUserType);
+
+      // 3. DB 테이블 존재 여부로 사용자 타입 확인 (fallback)
+      const { data: companyData } = await supabase
+        .from('companies')
+        .select('id')
+        .eq('id', authUser.id)
+        .maybeSingle();
+
+      const { data: userData } = await supabase
+        .from('users')
+        .select('id')
+        .eq('id', authUser.id)
+        .maybeSingle();
+
+      let type: UserType;
+
+      // ✅ 우선순위: localStorage > metadata > DB companies > DB users > 기본값
+      if (pendingType) {
+        type = pendingType;
+        localStorage.removeItem('pending_user_type'); // 1회용 - 즉시 삭제
+        console.log('[AuthContext] 사용자 타입:', type, '(localStorage 우선 - OAuth 중)');
+      } else if (metadataUserType) {
+        type = metadataUserType;
+        console.log('[AuthContext] 사용자 타입:', type, '(metadata 우선 - Race Condition 방지)');
+      } else if (companyData) {
+        type = 'company';
+        console.log('[AuthContext] 사용자 타입: company (DB 테이블 확인)');
+      } else if (userData) {
+        type = 'jobseeker';
+        console.log('[AuthContext] 사용자 타입: jobseeker (DB 테이블 확인)');
+      } else {
+        // 최후의 기본값
+        type = 'jobseeker';
+        console.log('[AuthContext] 사용자 타입:', type, '(기본값)');
+      }
 
       setUser(authUser as AuthUser);
       setUserType(type);

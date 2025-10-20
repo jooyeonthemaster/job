@@ -104,10 +104,10 @@ export default function Section2CompanyInfo({ formData, onChange, errors }: Prop
         )}
       </div>
 
-      {/* 업태 - K-Work 21개 옵션 (필수) */}
+      {/* 업태 - K-Work 21개 옵션 (선택) */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
-          업태 <span className="text-red-500">*</span>
+          업태 <span className="text-gray-500">(선택)</span>
         </label>
         <div className="relative">
           <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -131,10 +131,10 @@ export default function Section2CompanyInfo({ formData, onChange, errors }: Prop
         )}
       </div>
 
-      {/* 업종 1단계 - K-Work 15개 카테고리 (필수) */}
+      {/* 업종 1단계 - K-Work 15개 카테고리 (선택) */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
-          업종 <span className="text-red-500">*</span>
+          업종 <span className="text-gray-500">(선택)</span>
         </label>
         <div className="relative">
           <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -158,11 +158,11 @@ export default function Section2CompanyInfo({ formData, onChange, errors }: Prop
         )}
       </div>
 
-      {/* 업종 2단계 - 1단계 선택시 표시 (필수) */}
+      {/* 업종 2단계 - 1단계 선택시 표시 (선택) */}
       {formData.industry && industryDetailOptions.length > 0 && (
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            업종 상세 <span className="text-red-500">*</span>
+            업종 상세 <span className="text-gray-500">(선택)</span>
           </label>
           <div className="relative">
             <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -213,7 +213,7 @@ export default function Section2CompanyInfo({ formData, onChange, errors }: Prop
       {/* 홈페이지 주소 */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
-          홈페이지 주소 <span className="text-gray-500">(선택)</span>
+          홈페이지 주소 <span className="text-red-500">*</span>
         </label>
         <div className="relative">
           <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />

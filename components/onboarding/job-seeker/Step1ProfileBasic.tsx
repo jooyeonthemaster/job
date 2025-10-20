@@ -8,9 +8,10 @@ import CustomCloudinaryUpload from '@/components/CustomCloudinaryUpload';
 interface Props {
   data?: any;
   onNext: (data: any) => void;
+  buttonText?: string;
 }
 
-const Step1ProfileBasic = ({ data, onNext }: Props) => {
+const Step1ProfileBasic = ({ data, onNext, buttonText = '다음 단계로' }: Props) => {
   const [fullName, setFullName] = useState(data?.fullName || '');
   const [headline, setHeadline] = useState(data?.headline || '');
   const [profileImageUrl, setProfileImageUrl] = useState<string>(data?.profileImageUrl || '');
@@ -86,11 +87,11 @@ const Step1ProfileBasic = ({ data, onNext }: Props) => {
         </div>
       </div>
       
-      <button 
+      <button
         onClick={handleNext}
         className="w-full py-3 px-4 bg-secondary-600 text-white font-medium rounded-xl hover:bg-secondary-700 transition-colors mt-8"
       >
-        다음 단계로
+        {buttonText}
       </button>
       
       {/* Validation Modal */}

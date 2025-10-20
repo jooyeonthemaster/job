@@ -102,8 +102,6 @@ export interface CompanySignupFormData {
   agreeServiceTerms: boolean;           // 서비스 이용약관 (필수)
   agreePrivacyTerms: boolean;           // 개인정보 수집 및 이용 (필수)
   agreeCompanyInfoTerms: boolean;       // 기업정보 수집·이용·제공·조회 (필수)
-  agreePublicInfoTerms: boolean;        // 공공기관 신용정보 제공·조회 (필수)
-  agreeAdminInfoTerms: boolean;         // 행정정보 공동이용 (필수)
   agreeMarketingTerms: boolean;         // 마케팅 정보 수신 (선택)
 }
 
@@ -314,17 +312,20 @@ export const validateCompanySignupForm = (
     errors.companyScale = '기업규모를 선택해주세요';
   }
 
-  if (!formData.businessCondition) {
-    errors.businessCondition = '업태를 선택해주세요';
-  }
+  // ✅ 업태는 선택 필드 (필수 체크 제거)
+  // if (!formData.businessCondition) {
+  //   errors.businessCondition = '업태를 선택해주세요';
+  // }
 
-  if (!formData.industry) {
-    errors.industry = '업종을 선택해주세요';
-  }
+  // ✅ 업종은 선택 필드 (필수 체크 제거)
+  // if (!formData.industry) {
+  //   errors.industry = '업종을 선택해주세요';
+  // }
 
-  if (formData.industry && !formData.industryDetail) {
-    errors.industryDetail = '업종 상세를 선택해주세요';
-  }
+  // ✅ 업종 상세도 선택 필드 (필수 체크 제거)
+  // if (formData.industry && !formData.industryDetail) {
+  //   errors.industryDetail = '업종 상세를 선택해주세요';
+  // }
 
   // 대표번호 검증 (선택)
   if (formData.companyPhone && !validatePhone(formData.companyPhone)) {
@@ -336,7 +337,10 @@ export const validateCompanySignupForm = (
     errors.phone = '올바른 전화번호 형식이 아닙니다 (숫자만 7~11자리)';
   }
 
-  if (formData.website && !validateWebsite(formData.website)) {
+  // ✅ 홈페이지는 필수 필드
+  if (!formData.website) {
+    errors.website = '홈페이지 주소를 입력해주세요';
+  } else if (!validateWebsite(formData.website)) {
     errors.website = '올바른 URL 형식이 아닙니다 (http:// 또는 https://)';
   }
 
@@ -358,19 +362,20 @@ export const validateCompanySignupForm = (
     errors.managerName = '담당자명을 입력해주세요';
   }
 
-  if (!formData.managerEmail) {
-    errors.managerEmail = '담당자 이메일을 입력해주세요';
-  } else if (!validateEmail(formData.managerEmail)) {
-    errors.managerEmail = '올바른 이메일 형식이 아닙니다';
-  }
+  // ✅ managerEmail은 제거됨 (email 필드가 담당자 이메일 역할)
+  // if (!formData.managerEmail) {
+  //   errors.managerEmail = '담당자 이메일을 입력해주세요';
+  // } else if (!validateEmail(formData.managerEmail)) {
+  //   errors.managerEmail = '올바른 이메일 형식이 아닙니다';
+  // }
 
-  if (!formData.managerPosition) {
-    errors.managerPosition = '담당자 직급/직책을 입력해주세요';
-  }
+  // ✅ 담당자 직급/직책은 선택 필드 (필수 체크 제거)
+  // if (!formData.managerPosition) {
+  //   errors.managerPosition = '담당자 직급/직책을 입력해주세요';
+  // }
 
-  if (!formData.managerPhone) {
-    errors.managerPhone = '담당자 연락처를 입력해주세요';
-  } else if (!validatePhone(formData.managerPhone)) {
+  // ✅ 담당자 연락처는 선택 필드, 입력 시에만 형식 검증
+  if (formData.managerPhone && !validatePhone(formData.managerPhone)) {
     errors.managerPhone = '올바른 전화번호 형식이 아닙니다 (10-11자리)';
   }
 
@@ -410,12 +415,6 @@ export const validateCompanySignupForm = (
   }
   if (!formData.agreeCompanyInfoTerms) {
     errors.terms = '기업정보 수집·이용·제공·조회에 동의해주세요';
-  }
-  if (!formData.agreePublicInfoTerms) {
-    errors.terms = '공공기관 신용정보 제공·조회에 동의해주세요';
-  }
-  if (!formData.agreeAdminInfoTerms) {
-    errors.terms = '행정정보 공동이용에 동의해주세요';
   }
 
   return {

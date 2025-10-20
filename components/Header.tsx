@@ -19,7 +19,8 @@ export default function Header() {
   const handleLogout = async () => {
     try {
       await logout();
-      router.push('/');
+      // 페이지 새로고침과 함께 홈으로 이동
+      window.location.href = '/';
     } catch (error) {
       console.error('Logout error:', error);
     }
@@ -45,11 +46,11 @@ export default function Header() {
             onClick={() => setProfileMenuOpen(!profileMenuOpen)}
             className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded-lg transition-colors"
           >
-            {userProfile?.profileImageUrl ? (
+            {userProfile?.profileImageUrl || userProfile?.profile_image_url ? (
               <div className="w-8 h-8 rounded-full overflow-hidden">
                 <OptimizedImage
-                  src={userProfile.profileImageUrl}
-                  alt={userProfile.fullName || 'Profile'}
+                  src={userProfile.profileImageUrl || userProfile.profile_image_url}
+                  alt={userProfile.fullName || userProfile.full_name || userProfile.name || 'Profile'}
                   width={32}
                   height={32}
                   type="profile"
@@ -59,12 +60,12 @@ export default function Header() {
             ) : (
               <div className="w-8 h-8 rounded-full bg-primary-100 flex items-center justify-center">
                 <span className="text-sm font-medium text-primary-700">
-                  {userProfile?.fullName?.charAt(0) || user?.email?.charAt(0).toUpperCase()}
+                  {(userProfile?.fullName || userProfile?.full_name || userProfile?.name)?.charAt(0) || user?.email?.charAt(0).toUpperCase()}
                 </span>
               </div>
             )}
             <span className="text-sm font-medium text-gray-700">
-              {userProfile?.fullName || user?.email?.split('@')[0]}
+              {userProfile?.fullName || userProfile?.full_name || userProfile?.name || user?.email?.split('@')[0]}
             </span>
             <ChevronDown className="w-4 h-4 text-gray-600" />
           </button>
@@ -79,7 +80,7 @@ export default function Header() {
               <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-20">
                 <div className="px-4 py-3 border-b border-gray-100">
                   <p className="text-sm font-medium text-gray-900">
-                    {userProfile?.fullName || '사용자'}
+                    {userProfile?.fullName || userProfile?.full_name || userProfile?.name || '사용자'}
                   </p>
                   <p className="text-xs text-gray-500 mt-1">
                     {user?.email}

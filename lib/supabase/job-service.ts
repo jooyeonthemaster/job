@@ -5,12 +5,13 @@ import { JobFormData, JobSubmitData } from '@/types/job-form.types';
 import { JobContentBlock, EditorBlock } from '@/types/job-content.types';
 
 // ==========================================
-// 채용공고 생성
+// 채용공고 생성 (임시저장 또는 등록)
 // ==========================================
 export async function createJob(
   formData: JobFormData,
   companyId: string,
-  editorContent: string
+  editorContent: string,
+  isDraft: boolean = false // true: 임시저장(draft), false: 등록(pending_approval)
 ): Promise<{ success: boolean; jobId?: string; error?: string }> {
   try {
     // 1. 회사 정보 조회
@@ -79,7 +80,7 @@ export async function createJob(
 
         // 메타 정보
         deadline: formData.deadline,
-        status: 'pending_payment',
+        status: isDraft ? 'draft' : 'pending_approval', // 임시저장 or 승인대기
         posted_at: new Date().toISOString(),
       })
       .select()
@@ -253,7 +254,7 @@ export async function deleteJob(jobId: string) {
 // ==========================================
 export async function updateJobStatus(
   jobId: string,
-  status: 'pending_payment' | 'active' | 'closed' | 'draft'
+  status: 'draft' | 'pending_approval' | 'active' | 'rejected' | 'expired' | 'closed'
 ) {
   try {
     const { error } = await supabase

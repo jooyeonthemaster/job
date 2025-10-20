@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext_Supabase';
-import { getUserProfile, updateUserProfile } from '@/lib/supabase/jobseeker-service';
+import { getUserProfile } from '@/lib/supabase/jobseeker-service';
+import { saveExperienceAndEducation } from '@/lib/supabase/profile-checklist';
 import Step2_Experience from '@/components/onboarding/job-seeker/Step2_Experience';
 import { ArrowLeft } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -43,9 +44,9 @@ export default function ExperienceEditPage() {
     if (!user) return;
 
     try {
-      await updateUserProfile(user.id, {
-        ...data,
-        updatedAt: new Date().toISOString()
+      await saveExperienceAndEducation(user.id, {
+        experiences: data.experiences,
+        educations: data.educations
       });
 
       alert('경력 및 학력이 성공적으로 업데이트되었습니다!');

@@ -13,9 +13,11 @@ interface Props {
 const Step3Skills = ({ data, onNext, onBack }: Props) => {
   const [skills, setSkills] = useState<string[]>(data?.skills || []);
   const [skillInput, setSkillInput] = useState('');
-  const [languages, setLanguages] = useState<string[]>(data?.languages || []);
-  const [languageInput, setLanguageInput] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
+  const [koreanLevel, setKoreanLevel] = useState<string>(data?.koreanLevel || '');
+  const [otherLanguages, setOtherLanguages] = useState<Array<{ language: string; proficiency: string }>>(
+    data?.otherLanguages || [{ language: '', proficiency: '' }]
+  );
   const [showErrors, setShowErrors] = useState(false);
 
   const skillCategories = {
@@ -69,8 +71,40 @@ const Step3Skills = ({ data, onNext, onBack }: Props) => {
     ]
   };
 
-  const popularLanguages = [
-    '한국어', '영어', '일본어', '중국어', '스페인어', '프랑스어', '독일어', '러시아어'
+  const KOREAN_LEVELS = [
+    { value: 'topik1', label: 'TOPIK 1급' },
+    { value: 'topik2', label: 'TOPIK 2급' },
+    { value: 'topik3', label: 'TOPIK 3급' },
+    { value: 'topik4', label: 'TOPIK 4급' },
+    { value: 'topik5', label: 'TOPIK 5급' },
+    { value: 'topik6', label: 'TOPIK 6급' },
+    { value: 'native', label: '모국어 수준' },
+    { value: 'none', label: '해당 없음' }
+  ];
+
+  const LANGUAGE_OPTIONS = [
+    { value: 'english', label: '영어' },
+    { value: 'chinese', label: '중국어' },
+    { value: 'japanese', label: '일본어' },
+    { value: 'spanish', label: '스페인어' },
+    { value: 'french', label: '프랑스어' },
+    { value: 'german', label: '독일어' },
+    { value: 'russian', label: '러시아어' },
+    { value: 'arabic', label: '아랍어' },
+    { value: 'vietnamese', label: '베트남어' },
+    { value: 'thai', label: '태국어' },
+    { value: 'indonesian', label: '인도네시아어' },
+    { value: 'hindi', label: '힌디어' },
+    { value: 'portuguese', label: '포르투갈어' },
+    { value: 'other', label: '기타' }
+  ];
+
+  const PROFICIENCY_LEVELS = [
+    { value: 'native', label: '원어민' },
+    { value: 'fluent', label: '유창함' },
+    { value: 'business', label: '비즈니스' },
+    { value: 'intermediate', label: '중급' },
+    { value: 'beginner', label: '초급' }
   ];
 
   const addSkill = (skill: string) => {
@@ -84,28 +118,37 @@ const Step3Skills = ({ data, onNext, onBack }: Props) => {
     setSkills(skills.filter(skill => skill !== skillToRemove));
   };
 
-  const addLanguage = (language: string) => {
-    if (language && !languages.includes(language)) {
-      setLanguages([...languages, language]);
-    }
-    setLanguageInput('');
+  const addLanguageRow = () => {
+    setOtherLanguages([...otherLanguages, { language: '', proficiency: '' }]);
   };
 
-  const removeLanguage = (languageToRemove: string) => {
-    setLanguages(languages.filter(language => language !== languageToRemove));
+  const removeLanguageRow = (index: number) => {
+    setOtherLanguages(otherLanguages.filter((_, i) => i !== index));
+  };
+
+  const updateLanguage = (index: number, field: 'language' | 'proficiency', value: string) => {
+    const updated = otherLanguages.map((lang, i) =>
+      i === index ? { ...lang, [field]: value } : lang
+    );
+    setOtherLanguages(updated);
   };
 
   const validateForm = () => {
     const errors = [];
-    
+
     if (skills.length === 0) {
       errors.push('최소 1개 이상의 기술/역량을 추가해주세요');
     }
-    
-    if (languages.length === 0) {
-      errors.push('최소 1개 이상의 언어를 추가해주세요');
+
+    if (!koreanLevel) {
+      errors.push('한국어 능력을 선택해주세요');
     }
-    
+
+    const hasValidLanguage = otherLanguages.some(lang => lang.language && lang.proficiency);
+    if (!hasValidLanguage) {
+      errors.push('최소 1개 이상의 언어와 숙련도를 선택해주세요');
+    }
+
     return errors;
   };
 
@@ -115,7 +158,11 @@ const Step3Skills = ({ data, onNext, onBack }: Props) => {
       setShowErrors(true);
     } else {
       setShowErrors(false);
-      onNext({ skills, languages });
+      onNext({
+        skills,
+        koreanLevel,
+        otherLanguages: otherLanguages.filter(lang => lang.language && lang.proficiency)
+      });
     }
   };
 
@@ -219,74 +266,79 @@ const Step3Skills = ({ data, onNext, onBack }: Props) => {
       </div>
 
       {/* 언어 능력 */}
-      <div className="space-y-6">
+      <div className="border-b pb-8">
+        <h3 className="text-lg font-semibold text-gray-900 mb-6">언어 능력</h3>
+
+        {/* 한국어 능력 */}
+        <div className="mb-6">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            한국어 능력 <span className="text-red-500">*</span>
+          </label>
+          <select
+            value={koreanLevel}
+            onChange={(e) => setKoreanLevel(e.target.value)}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+          >
+            <option value="">선택하세요</option>
+            {KOREAN_LEVELS.map((level) => (
+              <option key={level.value} value={level.value}>
+                {level.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* 한국어 외 언어 */}
         <div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">언어 능력</h3>
-          
-          {/* 언어 입력 */}
-          <div className="flex gap-2 mb-4">
-            <input
-              type="text"
-              value={languageInput}
-              onChange={(e) => setLanguageInput(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addLanguage(languageInput))}
-              placeholder="구사 가능한 언어를 입력하세요"
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
-            />
-            <button
-              type="button"
-              onClick={() => addLanguage(languageInput)}
-              className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
-            >
-              추가
-            </button>
-          </div>
-
-          {/* 인기 언어 */}
-          <div className="mb-4">
-            <p className="text-sm text-gray-600 mb-2">주요 언어:</p>
-            <div className="flex flex-wrap gap-2">
-              {popularLanguages.map((language) => (
-                <button
-                  key={language}
-                  type="button"
-                  onClick={() => addLanguage(language)}
-                  disabled={languages.includes(language)}
-                  className={`px-3 py-1 rounded-full text-sm transition-colors ${
-                    languages.includes(language)
-                      ? 'bg-green-100 text-green-600 cursor-not-allowed'
-                      : 'bg-gray-100 text-gray-600 hover:bg-primary-100 hover:text-primary-600'
-                  }`}
+          <label className="block text-sm font-medium text-gray-700 mb-3">
+            한국어 외 구사 가능 언어 <span className="text-red-500">*</span>
+          </label>
+          <div className="space-y-3">
+            {otherLanguages.map((lang, index) => (
+              <div key={index} className="flex gap-3">
+                <select
+                  value={lang.language}
+                  onChange={(e) => updateLanguage(index, 'language', e.target.value)}
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
                 >
-                  {language}
-                  {languages.includes(language) && <span className="ml-1">✓</span>}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* 선택된 언어 */}
-          <div>
-            <p className="text-sm font-medium text-gray-700 mb-2">
-              구사 가능한 언어 ({languages.length})
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {languages.map((language) => (
-                <span
-                  key={language}
-                  className="px-3 py-1 bg-secondary-100 text-secondary-700 rounded-full text-sm flex items-center gap-1"
+                  <option value="">언어 선택</option>
+                  {LANGUAGE_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  value={lang.proficiency}
+                  onChange={(e) => updateLanguage(index, 'proficiency', e.target.value)}
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
                 >
-                  {language}
+                  <option value="">숙련도 선택</option>
+                  {PROFICIENCY_LEVELS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+                {otherLanguages.length > 1 && (
                   <button
                     type="button"
-                    onClick={() => removeLanguage(language)}
-                    className="text-secondary-500 hover:text-red-500"
+                    onClick={() => removeLanguageRow(index)}
+                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
                   >
-                    <X className="w-3 h-3" />
+                    <X className="w-5 h-5" />
                   </button>
-                </span>
-              ))}
-            </div>
+                )}
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={addLanguageRow}
+              className="flex items-center gap-2 px-4 py-2 text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+              언어 추가
+            </button>
           </div>
         </div>
       </div>
@@ -308,14 +360,14 @@ const Step3Skills = ({ data, onNext, onBack }: Props) => {
           onClick={onBack}
           className="px-6 py-3 bg-gray-100 text-gray-700 font-medium rounded-xl hover:bg-gray-200 transition-colors"
         >
-          이전 단계로
+          돌아가기
         </button>
         <button
           type="button"
           onClick={handleNext}
-          className="px-6 py-3 bg-secondary-600 text-white font-medium rounded-xl hover:bg-secondary-700 transition-colors"
+          className="px-6 py-3 bg-primary-600 text-white font-medium rounded-xl hover:bg-primary-700 transition-colors"
         >
-          다음 단계로
+          저장
         </button>
       </div>
       

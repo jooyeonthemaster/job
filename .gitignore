@@ -45,3 +45,9 @@ next-env.d.ts
 
 # Windows special files
 nul
+
+# Documentation (archived analysis files)
+/docs/
+
+# Claude Code settings (local only)
+.clauderc

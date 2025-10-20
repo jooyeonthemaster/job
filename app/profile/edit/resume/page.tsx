@@ -191,7 +191,7 @@ export default function ResumeEditPage() {
           {/* 파일 업로드 */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              {currentResumeUrl ? '새 이력서 업로드 (선택)' : '이력서 업로드'}
+              {currentResumeUrl ? '새 이력서 업로드' : '이력서 업로드'}
             </label>
 
             <div className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${

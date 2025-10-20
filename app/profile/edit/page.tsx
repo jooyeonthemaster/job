@@ -74,6 +74,7 @@ const ProfileEditInner = () => {
           fullName: supabaseProfile.full_name,
           email: supabaseProfile.email,
           phone: supabaseProfile.phone,
+          desiredJobCategory: supabaseProfile.desired_job_category,
           headline: supabaseProfile.headline,
           profileImageUrl: supabaseProfile.profile_image_url,
           resumeFileUrl: supabaseProfile.resume_file_url,
@@ -149,6 +150,7 @@ const ProfileEditInner = () => {
         // 1. Update basic profile information
         await updateUserProfile(user.id, {
           fullName: updatedData.fullName,
+          desiredJobCategory: updatedData.desiredJobCategory,
           headline: updatedData.headline,
           phone: updatedData.phone,
           profileImageUrl: updatedData.profileImageUrl,

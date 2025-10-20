@@ -68,10 +68,10 @@ export default function Section7Account({ formData, onChange, errors, isEmailSig
             value={formData.email}
             onChange={(e) => onChange('email', e.target.value)}
             placeholder="company@example.com"
-            disabled={true} // 항상 읽기 전용 (회원가입 시 이미 설정됨)
-            className={`w-full pl-10 pr-10 py-3 border rounded-xl outline-none transition-colors bg-gray-50 cursor-not-allowed ${
-              errors.email ? 'border-red-500' : 'border-gray-300'
-            }`}
+            disabled={isEmailSignup} // 이메일 가입만 disabled, 소셜 로그인(구글/카카오)은 editable
+            className={`w-full pl-10 pr-10 py-3 border rounded-xl outline-none transition-colors ${
+              isEmailSignup ? 'bg-gray-50 cursor-not-allowed' : 'bg-white focus:ring-2 focus:ring-primary-500'
+            } ${errors.email ? 'border-red-500' : 'border-gray-300'}`}
           />
           {isEmailValid && (
             <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-green-500" />

@@ -8,6 +8,7 @@ export interface JobseekerOnboardingFormData {
   phoneVerified: boolean;              // 전화번호 인증 여부
   foreignerNumber: string;             // 외국인등록번호 (외국인만, 123456-1234567)
   foreignerNumberVerified: boolean;    // 외국인등록번호 인증 여부
+  desiredJobCategory: string;          // 희망 근무 직군 (필수)
 
   // 2. 계정 정보
   email: string;                       // 이메일 (아이디 대체)
@@ -187,6 +188,11 @@ export const validateJobseekerOnboardingForm = (
     errors.fullName = '이름을 입력해주세요.';
   }
 
+  // 1-1. 희망 근무 직군 (필수)
+  if (!formData.desiredJobCategory.trim()) {
+    errors.desiredJobCategory = '희망 근무 직군을 입력해주세요.';
+  }
+
   // 2. 한국인/외국인 구분 검증
   if (isKorean) {
     // 한국인: phone 필수
@@ -295,6 +301,7 @@ export interface JobseekerInsertData {
   phone_verified: boolean;
   foreigner_number: string;
   foreigner_number_verified: boolean;
+  desired_job_category: string;
   address: string;
   address_detail: string | null;
   nationality: string;
@@ -319,6 +326,7 @@ export const transformJobseekerFormData = (
     phone_verified: formData.phoneVerified,
     foreigner_number: formData.foreignerNumber,
     foreigner_number_verified: formData.foreignerNumberVerified,
+    desired_job_category: formData.desiredJobCategory.trim(),
     address: formData.address,
     address_detail: formData.addressDetail || null,
     nationality: formData.nationality,

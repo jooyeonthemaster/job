@@ -92,7 +92,7 @@ export default function IntroductionEditPage() {
             {/* 자기소개 입력 */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                자기소개 (선택)
+                자기소개
               </label>
               <textarea
                 value={introduction}

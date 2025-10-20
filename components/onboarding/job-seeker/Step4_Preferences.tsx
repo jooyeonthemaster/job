@@ -13,14 +13,14 @@ interface Props {
 const Step4Preferences = ({ data, onSubmit, onBack }: Props) => {
   const [showErrors, setShowErrors] = useState(false);
   const [formData, setFormData] = useState({
+    desiredJobCategory: data?.desired_job_category || '',  // ✅ 희망 직군 추가
     desiredPositions: data?.desiredPositions || [],
     preferredLocations: data?.preferredLocations || [],
     salaryRange: data?.salaryRange || { min: '', max: '' },
     workType: data?.workType || '',
     companySize: data?.companySize || '',
     visaSponsorship: data?.visaSponsorship || false,
-    remoteWork: data?.remoteWork || '',
-    introduction: data?.introduction || ''
+    remoteWork: data?.remoteWork || ''
   });
 
   const [positionInput, setPositionInput] = useState('');
@@ -69,27 +69,32 @@ const Step4Preferences = ({ data, onSubmit, onBack }: Props) => {
 
   const validateForm = () => {
     const errors = [];
-    
+
+    // 희망 직군 검증 (필수)
+    if (!formData.desiredJobCategory) {
+      errors.push('희망 직군을 선택해주세요');
+    }
+
     // 희망 직무 검증
     if (formData.desiredPositions.length === 0) {
       errors.push('최소 1개 이상의 희망 직무를 추가해주세요');
     }
-    
+
     // 희망 근무지 검증
     if (formData.preferredLocations.length === 0) {
       errors.push('최소 1개 이상의 희망 근무지를 추가해주세요');
     }
-    
+
     // 희망 연봉 검증
     if (!formData.salaryRange.min || formData.salaryRange.min === '') {
       errors.push('희망 최소 연봉을 입력해주세요');
     }
-    
+
     // 근무 형태 검증
     if (!formData.workType) {
       errors.push('근무 형태를 선택해주세요 (정규직, 계약직, 프리랜서 등)');
     }
-    
+
     return errors;
   };
 
@@ -114,11 +119,39 @@ const Step4Preferences = ({ data, onSubmit, onBack }: Props) => {
         <p className="text-gray-600 mb-8">원하는 근무 조건과 희망 사항을 설정해주세요.</p>
       </div>
 
+      {/* 희망 직군 */}
+      <div>
+        <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2 mb-4">
+          <Building className="w-5 h-5" />
+          희망 직군 <span className="text-red-500">*</span>
+        </h3>
+        <select
+          value={formData.desiredJobCategory}
+          onChange={(e) => handleChange('desiredJobCategory', e.target.value)}
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+        >
+          <option value="">선택하세요</option>
+          <option value="개발">개발</option>
+          <option value="디자인">디자인</option>
+          <option value="마케팅">마케팅</option>
+          <option value="영업">영업</option>
+          <option value="경영/기획">경영/기획</option>
+          <option value="재무/회계">재무/회계</option>
+          <option value="인사/총무">인사/총무</option>
+          <option value="생산/제조">생산/제조</option>
+          <option value="서비스">서비스</option>
+          <option value="기타">기타</option>
+        </select>
+        <p className="text-sm text-gray-500 mt-2">
+          💡 직군을 선택하면 더 정확한 채용공고 추천을 받으실 수 있습니다
+        </p>
+      </div>
+
       {/* 희망 직무 */}
       <div>
         <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2 mb-4">
           <Target className="w-5 h-5" />
-          희망 직무
+          희망 직무 <span className="text-red-500">*</span>
         </h3>
         
         <div className="flex gap-2 mb-4">
@@ -245,12 +278,13 @@ const Step4Preferences = ({ data, onSubmit, onBack }: Props) => {
       </div>
 
       {/* 기타 조건 */}
-      <div className="grid md:grid-cols-2 gap-6">
+      <div className="space-y-6">
+        {/* 희망 연봉 - 전체 너비 */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             희망 연봉 (만원)
           </label>
-          <div className="flex gap-2 items-center">
+          <div className="flex gap-2 items-center max-w-md">
             <input
               type="number"
               value={formData.salaryRange.min}
@@ -269,54 +303,57 @@ const Step4Preferences = ({ data, onSubmit, onBack }: Props) => {
           </div>
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            고용 형태
-          </label>
-          <select
-            value={formData.workType}
-            onChange={(e) => handleChange('workType', e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
-          >
-            <option value="">선택하세요</option>
-            <option value="정규직">정규직</option>
-            <option value="계약직">계약직</option>
-            <option value="인턴">인턴</option>
-            <option value="프리랜서">프리랜서</option>
-          </select>
-        </div>
+        {/* 고용 형태, 회사 규모, 재택근무 */}
+        <div className="grid md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              고용 형태
+            </label>
+            <select
+              value={formData.workType}
+              onChange={(e) => handleChange('workType', e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+            >
+              <option value="">선택하세요</option>
+              <option value="정규직">정규직</option>
+              <option value="계약직">계약직</option>
+              <option value="인턴">인턴</option>
+              <option value="프리랜서">프리랜서</option>
+            </select>
+          </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            회사 규모
-          </label>
-          <select
-            value={formData.companySize}
-            onChange={(e) => handleChange('companySize', e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
-          >
-            <option value="">선택하세요</option>
-            <option value="스타트업">스타트업 (1-50명)</option>
-            <option value="중소기업">중소기업 (51-300명)</option>
-            <option value="중견기업">중견기업 (301-1000명)</option>
-            <option value="대기업">대기업 (1000명 이상)</option>
-          </select>
-        </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              회사 규모
+            </label>
+            <select
+              value={formData.companySize}
+              onChange={(e) => handleChange('companySize', e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+            >
+              <option value="">선택하세요</option>
+              <option value="스타트업">스타트업 (1-50명)</option>
+              <option value="중소기업">중소기업 (51-300명)</option>
+              <option value="중견기업">중견기업 (301-1000명)</option>
+              <option value="대기업">대기업 (1000명 이상)</option>
+            </select>
+          </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            재택근무
-          </label>
-          <select
-            value={formData.remoteWork}
-            onChange={(e) => handleChange('remoteWork', e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
-          >
-            <option value="">선택하세요</option>
-            <option value="불가">재택근무 불가</option>
-            <option value="부분">부분 재택근무</option>
-            <option value="완전">완전 재택근무</option>
-          </select>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              재택근무
+            </label>
+            <select
+              value={formData.remoteWork}
+              onChange={(e) => handleChange('remoteWork', e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+            >
+              <option value="">선택하세요</option>
+              <option value="불가">재택근무 불가</option>
+              <option value="부분">부분 재택근무</option>
+              <option value="완전">완전 재택근무</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -331,20 +368,6 @@ const Step4Preferences = ({ data, onSubmit, onBack }: Props) => {
           />
           <span className="text-sm text-gray-700">비자 후원이 필요합니다</span>
         </label>
-      </div>
-
-      {/* 자기소개 */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          간단한 자기소개 (선택)
-        </label>
-        <textarea
-          value={formData.introduction}
-          onChange={(e) => handleChange('introduction', e.target.value)}
-          placeholder="자신의 경험, 강점, 목표 등을 간단히 소개해주세요"
-          rows={4}
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
-        />
       </div>
 
       {/* 완료 안내 */}
@@ -363,14 +386,14 @@ const Step4Preferences = ({ data, onSubmit, onBack }: Props) => {
           onClick={onBack}
           className="px-6 py-3 bg-gray-100 text-gray-700 font-medium rounded-xl hover:bg-gray-200 transition-colors"
         >
-          이전 단계로
+          돌아가기
         </button>
         <button
           type="button"
           onClick={handleSubmit}
           className="px-6 py-3 bg-primary-600 text-white font-medium rounded-xl hover:bg-primary-700 transition-colors"
         >
-          온보딩 완료
+          저장
         </button>
       </div>
       

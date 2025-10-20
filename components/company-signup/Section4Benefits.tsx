@@ -149,7 +149,7 @@ export default function Section4Benefits({ formData, onChange, errors }: Props) 
       {/* 자주 사용되는 복지 */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-3">
-          자주 사용되는 복지 <span className="text-red-500">*</span>
+          자주 사용되는 복지 <span className="text-gray-500">(최소 1개 선택)</span>
         </label>
         <div className="flex flex-wrap gap-2">
           {COMMON_BENEFITS.map((benefit) => {
