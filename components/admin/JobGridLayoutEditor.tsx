@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { X, Save, RotateCcw, Sparkles, TrendingUp, Grid3x3, Eye } from 'lucide-react';
-import { getAllJobs, type JobWithCompany } from '@/lib/supabase/admin-service';
+import { type JobWithCompany } from '@/lib/supabase/admin-service';
 import { supabase } from '@/lib/supabase/config';
 
 interface GridSlot {
@@ -27,6 +27,7 @@ export default function JobGridLayoutEditor({
   const [selectedJob, setSelectedJob] = useState<JobWithCompany | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
   // 초기 데이터 로드
   useEffect(() => {
@@ -38,12 +39,26 @@ export default function JobGridLayoutEditor({
   const loadData = async () => {
     setLoading(true);
     try {
-      const allJobs = await getAllJobs();
+      // 활성화되고 결제 완료된 공고만 DB에서 직접 필터링 (성능 최적화)
+      const { data: allJobs, error } = await supabase
+        .from('jobs')
+        .select(`
+          *,
+          companies (
+            id,
+            name,
+            logo,
+            industry
+          )
+        `)
+        .eq('status', 'active')
+        .eq('payment_status', 'confirmed')
+        .order('created_at', { ascending: false })
+        .limit(100); // 최대 100개까지 (페이지네이션 대비)
 
-      // 활성화되고 결제 완료된 공고만 필터링
-      const activeJobs = allJobs.filter(
-        job => job.status === 'active' && job.payment_status === 'confirmed'
-      );
+      if (error) throw error;
+
+      const activeJobs = (allJobs || []) as JobWithCompany[];
 
       // 슬롯 초기화 (16개: top 4, middle 8, bottom 4)
       const initialSlots: GridSlot[] = [];
@@ -95,6 +110,11 @@ export default function JobGridLayoutEditor({
       // 할당 안 된 공고 목록
       const assigned = initialSlots.filter(s => s.job !== null).map(s => s.job!.id);
       setUnassignedJobs(activeJobs.filter(job => !assigned.includes(job.id)));
+
+      // 100개 이상이면 경고
+      if (activeJobs.length >= 100) {
+        console.warn('⚠️ 결제 완료 공고가 100개 이상입니다. 일부 공고가 표시되지 않을 수 있습니다.');
+      }
     } catch (error) {
       console.error('Failed to load grid data:', error);
       alert('데이터 로딩에 실패했습니다.');
@@ -448,15 +468,41 @@ export default function JobGridLayoutEditor({
               <div className="sticky top-24">
                 <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
                   <h3 className="text-sm font-semibold text-gray-900 mb-3">
-                    할당 대기 공고 ({unassignedJobs.length})
+                    할당 대기 공고 ({unassignedJobs.length}개)
                   </h3>
+
+                  {/* 검색창 */}
+                  <div className="mb-3">
+                    <input
+                      type="text"
+                      placeholder="공고 검색 (제목, 회사명)"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    />
+                  </div>
+
                   <div className="space-y-2 max-h-[600px] overflow-y-auto">
-                    {unassignedJobs.length === 0 ? (
+                    {unassignedJobs.filter(job => {
+                      if (!searchTerm) return true;
+                      const term = searchTerm.toLowerCase();
+                      return (
+                        job.title.toLowerCase().includes(term) ||
+                        job.companies?.name.toLowerCase().includes(term)
+                      );
+                    }).length === 0 ? (
                       <p className="text-sm text-gray-500 text-center py-8">
-                        모든 공고가 배치되었습니다
+                        {searchTerm ? '검색 결과가 없습니다' : '모든 공고가 배치되었습니다'}
                       </p>
                     ) : (
-                      unassignedJobs.map(job => (
+                      unassignedJobs.filter(job => {
+                        if (!searchTerm) return true;
+                        const term = searchTerm.toLowerCase();
+                        return (
+                          job.title.toLowerCase().includes(term) ||
+                          job.companies?.name.toLowerCase().includes(term)
+                        );
+                      }).map(job => (
                         <button
                           key={job.id}
                           onClick={() => setSelectedJob(selectedJob?.id === job.id ? null : job)}

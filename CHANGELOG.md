@@ -10,11 +10,48 @@
 
 ### 2025-10-20
 
+#### ⚡ 그리드 레이아웃 편집기 성능 최적화
+**[UPDATE]** 페이지네이션 대비 및 검색 기능 추가
+
+**변경 파일 (1개)**:
+- `components/admin/JobGridLayoutEditor.tsx` (620줄 → 640줄)
+
+**변경 내용**:
+- **DB 쿼리 최적화**: `getAllJobs()` 제거하고 직접 필터링 쿼리 사용
+  ```typescript
+  const { data } = await supabase
+    .from('jobs')
+    .select('*, companies(*)')
+    .eq('status', 'active')
+    .eq('payment_status', 'confirmed')
+    .order('created_at', { ascending: false })
+    .limit(100); // 최대 100개
+  ```
+- **검색 기능 추가**: 제목, 회사명으로 실시간 검색
+- **공고 개수 표시**: "할당 대기 공고 (N개)"
+- **100개 초과 경고**: 콘솔에 경고 메시지 출력
+
+**성능 개선**:
+- 이전: 전체 공고 로드 → 클라이언트 필터링 (느림, 메모리 많이 사용)
+- 이후: DB 레벨 필터링 → 필요한 공고만 로드 (빠름, 메모리 효율적)
+- 예상 효과: 100+ 공고 시 로딩 시간 70% 단축
+
+**이유**:
+- 네가 지적한 대로 공고가 쌓이면 성능 문제 발생
+- 결제 완료 + 활성 공고만 필요하므로 DB 필터링이 효율적
+- 검색으로 많은 공고 중에서 원하는 공고 빠르게 찾기
+
+**향후 확장**:
+- 100개 제한은 추후 페이지네이션으로 확장 가능
+- offset/limit 기반 페이징 구현 예정
+
+---
+
 #### ✨ 그리드 레이아웃 편집기 구현
 **[ADD]** 영화관 좌석 선택 스타일의 공고 위치 관리 UI
 
 **변경 파일 (2개)**:
-- `components/admin/JobGridLayoutEditor.tsx` (신규: 600+ 줄)
+- `components/admin/JobGridLayoutEditor.tsx` (신규: 620줄)
 - `components/admin/JobsTab.tsx` (385줄 → 403줄)
 
 **변경 내용**:
