@@ -10,6 +10,149 @@
 
 ### 2025-10-20
 
+#### 🎨 공고 카드 UI 정리 (마감 기한 중복 제거 + 조회수/지원자 아이콘 제거)
+**[STYLE]** JobGridCard 컴포넌트 UI 중복 요소 제거
+
+**변경 파일 (1개)**:
+- `components/JobGridCard.tsx` (216줄 → 194줄)
+
+**변경 내용**:
+```typescript
+// BEFORE: 마감 기한 2번 표시 + 조회수/지원자 아이콘
+<span>{job.deadline}</span>  // 141번 줄 (항상 보임)
+<Users /> {job.applicants}   // 호버 시
+<Eye /> {job.views}           // 호버 시
+<span>{job.deadline}</span>  // 198번 줄 (호버 시 중복!)
+
+// AFTER: 마감 기한 1번만 표시 + 조회수/지원자 아이콘 제거
+<span>{job.deadline}</span>  // 147번 줄 (항상 보임)
+// 호버 시 Stats 섹션 완전 제거
+```
+
+**제거된 import**:
+- `Users`, `Eye`, `Clock`, `Star` 아이콘 (사용하지 않음)
+
+**이유**:
+- 마감 기한이 카드 하단 + 호버 시 2번 중복 표시됨
+- 조회수/지원자 정보는 공고 카드에 불필요 (상세 페이지에서만 표시)
+- 깔끔한 UI를 위해 중복 제거
+
+**영향**:
+- 공고 카드 UI 더 깔끔해짐
+- 마감 기한 1번만 표시
+- 호버 시 급여 + 스킬 + 지원 버튼만 표시
+
+---
+
+#### ✨ 회사 로고 표시 + 공고 상세 페이지 추가
+**[ADD]** JobCard 회사 로고 이미지 표시 및 공고 상세 페이지 생성
+
+**변경 파일 (3개)**:
+- `components/JobCard.tsx` (139줄 → 148줄)
+- `app/jobs/[id]/page.tsx` (신규: 437줄)
+- `lib/supabase/public-job-service.ts` (248줄 → 234줄, 디버깅 로그 제거)
+- `app/page.tsx` (365줄 → 363줄, 디버깅 로그 제거)
+
+**변경 내용**:
+
+**1. components/JobCard.tsx - 회사 로고 이미지 표시**
+```typescript
+// BEFORE: 항상 Building 아이콘만 표시
+<Building2 className="w-5 h-5 text-gray-500" />
+
+// AFTER: 로고 있으면 이미지, 없으면 아이콘
+{job.company.logo ? (
+  <Image src={job.company.logo} alt={job.company.name} width={40} height={40} />
+) : (
+  <Building2 className="w-5 h-5 text-gray-500" />
+)}
+```
+
+**2. app/jobs/[id]/page.tsx - 공고 상세 페이지 신규 생성**
+- Supabase 기반 공고 상세 조회
+- 회사 배너 이미지 표시
+- 공고 정보 (제목, 위치, 급여, 경력, 고용형태 등)
+- 상세 설명 (HTML 렌더링)
+- 필수 요건 / 우대 사항 목록
+- 한국어 수준 요구사항
+- 회사 정보 카드
+- 저장/공유 기능
+- 지원하기 버튼 (준비 중)
+
+**3. 디버깅 로그 제거**
+- `lib/supabase/public-job-service.ts`: console.log 3개 제거
+- `app/page.tsx`: console.log 2개 제거
+
+**이유**:
+- 회사 로고가 있는데 표시 안 되는 문제 해결
+- 공고 카드 클릭 시 404 에러 발생 (상세 페이지 없음)
+- 프로덕션 환경에 디버깅 로그 불필요
+
+**영향**:
+- JobCard에 회사 로고 이미지 정상 표시
+- 공고 상세 페이지 정상 작동 (/jobs/[id])
+- 콘솔 로그 깨끗해짐
+
+---
+
+#### 🐛 메인 페이지 null company 에러 수정
+**[FIX]** TypeError: Cannot read properties of null (reading 'name') 해결
+
+**변경 파일 (2개)**:
+- `lib/supabase/public-job-service.ts` (244줄 → 248줄)
+- `app/page.tsx` (318줄 → 365줄)
+
+**에러 원인**:
+```
+TypeError: Cannot read properties of null (reading 'name')
+at JobCard (components\JobCard.tsx:53:77)
+```
+
+**근본 원인 분석**:
+1. Supabase 조인 시 `jobs.companies`가 `null`인 경우 발생
+2. 회사가 삭제되었거나 RLS 정책으로 차단된 공고
+3. `job.company.name` 접근 시 null pointer exception
+
+**해결 방법**:
+
+**1. lib/supabase/public-job-service.ts**
+```typescript
+// BEFORE: null 체크 없음
+const allJobs = (jobs || []).map((job: any) => ({
+  ...job,
+  company: job.companies
+})) as PublicJob[];
+
+// AFTER: 회사 정보 없는 공고 필터링
+const allJobs = (jobs || [])
+  .filter((job: any) => job.companies !== null)  // ✅ null 체크 추가
+  .map((job: any) => ({
+    ...job,
+    company: job.companies
+  })) as PublicJob[];
+```
+
+**2. app/page.tsx**
+- `PublicJob` → `Job` 타입 변환 함수 추가
+- `JobCard` 컴포넌트가 기대하는 형식으로 데이터 변환
+- 47줄 변환 로직 추가
+
+**시도했지만 실패한 방법**:
+- ❌ `getActiveJobs()`만 사용: 타입 불일치로 JobCard에서 에러
+- ❌ `any` 타입으로 우회: TypeScript 안정성 포기
+
+**최종 해결책**:
+- ✅ DB 쿼리 레벨에서 null 필터링 (graceful degradation)
+- ✅ 타입 변환 함수로 안전한 데이터 전달
+- ✅ 정상 공고만 표시, 문제 공고는 자동 제외
+
+**영향**:
+- 메인 페이지 에러 없이 정상 표시
+- 회사 정보 없는 공고는 자동 제외 (부분 장애 허용)
+- 사용자는 정상 공고만 확인 가능
+
+---
+
 #### 🐛 메인 페이지 더미 데이터 제거 (실제 DB 데이터만 사용)
 **[FIX]** 메인 페이지에서 개발용 토글 제거 및 실제 DB 데이터 전용 사용
 

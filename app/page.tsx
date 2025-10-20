@@ -5,7 +5,7 @@ import Header from '@/components/Header';
 import JobCard from '@/components/JobCard';
 import CompanyCard from '@/components/CompanyCard';
 import { jobs as dummyJobs, companies } from '@/lib/data';
-import { getFeaturedJobs } from '@/lib/supabase/public-job-service';
+import { getActiveJobs } from '@/lib/supabase/public-job-service';
 import { Job } from '@/types';
 import {
   ArrowRight,
@@ -20,15 +20,65 @@ import { motion } from 'framer-motion';
 
 export default function Home() {
   const [selectedCategory, setSelectedCategory] = useState('ai-match');
-  const [jobs, setJobs] = useState<Job[]>([]);
+  const [topJobs, setTopJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // 실제 공고 로드
+  // PublicJob → Job 변환 함수
+  const convertToJob = (publicJob: any): Job => ({
+    id: publicJob.id,
+    title: publicJob.title,
+    titleEn: publicJob.title_en,
+    companyId: publicJob.company.id,
+    company: {
+      id: publicJob.company.id,
+      name: publicJob.company.name,
+      nameEn: publicJob.company.name_en || publicJob.company.name,
+      logo: publicJob.company.logo || '',
+      bannerImage: '',
+      industry: publicJob.company.industry || 'Technology',
+      location: publicJob.company.location || publicJob.location,
+      employeeCount: '100+',
+      description: '',
+      rating: 0,
+      reviewCount: 0,
+      openPositions: 0,
+      benefits: [],
+      techStack: [],
+      established: ''
+    },
+    location: publicJob.location,
+    department: publicJob.department,
+    employmentType: publicJob.employment_type,
+    experienceLevel: publicJob.experience_level,
+    salary: {
+      min: publicJob.salary_min || 0,
+      max: publicJob.salary_max || 0,
+      currency: 'KRW',
+      negotiable: publicJob.salary_negotiable || false
+    },
+    visaSponsorship: publicJob.visa_sponsorship || false,
+    koreanLevel: publicJob.korean_level || 'NONE',
+    deadline: publicJob.deadline || '',
+    views: publicJob.views || 0,
+    applicants: publicJob.applicants || 0,
+    postedAt: publicJob.posted_at,
+    isNew: false,
+    isFeatured: publicJob.posting_tier === 'premium',
+    tags: [],
+    skills: [],
+    description: '',
+    responsibilities: [],
+    requirements: [],
+    preferredQualifications: []
+  });
+
+  // 실제 공고 로드 (display_position 기준)
   useEffect(() => {
     const loadJobs = async () => {
       try {
-        const fetchedJobs = await getFeaturedJobs(6);
-        setJobs(fetchedJobs);
+        const { topJobs: fetchedTopJobs } = await getActiveJobs();
+        const converted = fetchedTopJobs.map(convertToJob);
+        setTopJobs(converted);
       } catch (error) {
         console.error('Failed to load jobs:', error);
       } finally {
@@ -38,8 +88,8 @@ export default function Home() {
     loadJobs();
   }, []);
 
-  // 표시할 공고 (항상 실제 DB 데이터 사용)
-  const featuredJobs = jobs.slice(0, 3);
+  // 표시할 공고 (Top 포지션 공고 중 최대 2개)
+  const featuredJobs = topJobs.slice(0, 2);
   const topCompanies = companies.slice(0, 6);
 
   // 메인 페이지는 public이므로 AuthContext 로딩 상태를 무시

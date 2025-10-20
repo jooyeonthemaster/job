@@ -84,10 +84,12 @@ export async function getActiveJobs(): Promise<{
 
     if (error) throw error;
 
-    const allJobs = (jobs || []).map((job: any) => ({
-      ...job,
-      company: job.companies
-    })) as PublicJob[];
+    const allJobs = (jobs || [])
+      .filter((job: any) => job.companies !== null)  // 회사 정보 없는 공고 제외
+      .map((job: any) => ({
+        ...job,
+        company: job.companies
+      })) as PublicJob[];
 
     // display_position별로 그룹화
     const topJobs = allJobs.filter(j => j.display_position === 'top');

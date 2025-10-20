@@ -1,16 +1,12 @@
 'use client';
 
 import Link from 'next/link';
-import { 
-  MapPin, 
-  Briefcase, 
-  Clock, 
-  Users,
-  Eye,
+import {
+  MapPin,
+  Briefcase,
   Building2,
   ChevronRight,
-  DollarSign,
-  Star
+  DollarSign
 } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
@@ -179,25 +175,8 @@ export default function JobGridCard({ job, size = 'medium' }: JobGridCardProps) 
                 </div>
               )}
 
-              {/* Stats */}
-              <div className={cn(
-                "flex items-center justify-between pt-2 border-t border-gray-100",
-                detailClasses[size]
-              )}>
-                <div className="flex items-center gap-3 text-gray-500">
-                  <div className="flex items-center gap-1">
-                    <Users className="w-3.5 h-3.5" />
-                    <span>{job.applicants}</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Eye className="w-3.5 h-3.5" />
-                    <span>{job.views}</span>
-                  </div>
-                </div>
-                <span className="text-primary-600 font-medium">
-                  {job.deadline}
-                </span>
-              </div>
+              {/* Divider */}
+              <div className="pt-2 border-t border-gray-100"></div>
 
               {/* Apply Button (for medium and large sizes) */}
               {size !== 'small' && (

@@ -46,8 +46,18 @@ export default function JobCard({ job }: JobCardProps) {
         <div className="p-6 flex-1">
           {/* Company Info */}
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center shrink-0">
-              <Building2 className="w-5 h-5 text-gray-500" />
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center shrink-0 overflow-hidden">
+              {job.company.logo ? (
+                <Image
+                  src={job.company.logo}
+                  alt={job.company.name}
+                  width={40}
+                  height={40}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <Building2 className="w-5 h-5 text-gray-500" />
+              )}
             </div>
             <div>
               <p className="text-sm font-medium text-gray-900">{job.company.name}</p>
