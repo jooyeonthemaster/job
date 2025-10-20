@@ -1,7 +1,7 @@
 'use client';
 
 import { Job } from '@/types';
-import { Building2, MapPin, Users, DollarSign, Globe, Briefcase } from 'lucide-react';
+import { Building2, MapPin, DollarSign, Globe, Briefcase } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 
@@ -112,10 +112,6 @@ export default function JobCard({ job }: JobCardProps) {
           {/* Footer */}
           <div className="flex items-center justify-between pt-4 border-t">
             <div className="flex items-center gap-3 text-xs text-gray-500">
-              <span className="flex items-center gap-1">
-                <Users className="w-3.5 h-3.5" />
-                지원자 {job.applicants}
-              </span>
               {job.visaSponsorship && (
                 <span className="flex items-center gap-1">
                   <Globe className="w-3.5 h-3.5" />
@@ -130,19 +126,23 @@ export default function JobCard({ job }: JobCardProps) {
         </div>
 
         {/* Company Banner Image - 하단에 꽉 차게 표시 */}
-        {job.company.bannerImage && (
-          <div className="relative h-32 overflow-hidden group-hover:opacity-95 transition-opacity">
-            <Image
-              src={job.company.bannerImage}
-              alt={`${job.company.name} 배너`}
-              fill
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              className="object-cover"
-              priority={false}
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent" />
-          </div>
-        )}
+        <div className="relative h-32 overflow-hidden group-hover:opacity-95 transition-opacity">
+          {job.company.bannerImage ? (
+            <>
+              <Image
+                src={job.company.bannerImage}
+                alt={`${job.company.name} 배너`}
+                fill
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                className="object-cover"
+                priority={false}
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent" />
+            </>
+          ) : (
+            <div className="w-full h-full bg-gradient-to-r from-gray-100 via-gray-50 to-gray-100" />
+          )}
+        </div>
       </div>
     </Link>
   );

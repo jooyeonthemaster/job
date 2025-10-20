@@ -3,18 +3,19 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase/config';
-import CustomCloudinaryUpload from '@/components/CustomCloudinaryUpload';
-import { ArrowLeft, Save, Image as ImageIcon } from 'lucide-react';
+import { ArrowLeft, Save, FileText } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 
-export default function ImagesEditPage() {
+export default function SummaryEditPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uid, setUid] = useState('');
-  const [logo, setLogo] = useState('');
-  const [companyImage, setCompanyImage] = useState('');
+  const [formData, setFormData] = useState({
+    summary: ''
+  });
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -22,7 +23,7 @@ export default function ImagesEditPage() {
         const { data: { user }, error: authError } = await supabase.auth.getUser();
 
         if (authError || !user) {
-          router.push('/login/company');
+          router.push('/login');
           return;
         }
 
@@ -39,8 +40,9 @@ export default function ImagesEditPage() {
           return;
         }
 
-        setLogo(profile.logo || '');
-        setCompanyImage(profile.company_image || '');
+        setFormData({
+          summary: profile.summary || ''
+        });
       } catch (error) {
         console.error('Failed to load profile:', error);
       } finally {
@@ -52,20 +54,28 @@ export default function ImagesEditPage() {
   }, [router]);
 
   const handleSave = async () => {
+    const newErrors: Record<string, string> = {};
+    
+    // 유효성 검사는 선택사항이므로 생략
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
     setSaving(true);
     try {
       const { error } = await supabase
         .from('companies')
         .update({
-          logo,
-          company_image: companyImage
+          summary: formData.summary || null
         })
         .eq('id', uid);
 
       if (error) throw error;
 
-      alert('로고 및 회사 이미지가 성공적으로 업데이트되었습니다!');
-      router.push('/company-dashboard');
+      alert('한 줄 소개가 성공적으로 업데이트되었습니다!');
+      router.push('/company-dashboard/edit');
     } catch (error: any) {
       console.error('Update error:', error);
       alert(error.message || '업데이트 중 오류가 발생했습니다.');
@@ -87,14 +97,14 @@ export default function ImagesEditPage() {
       <div className="container mx-auto px-4 py-8 max-w-3xl">
         <div className="mb-6">
           <Link
-            href="/company-dashboard"
+            href="/company-dashboard/edit"
             className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors mb-4"
           >
             <ArrowLeft className="w-4 h-4" />
-            대시보드로 돌아가기
+            돌아가기
           </Link>
-          <h1 className="text-3xl font-bold text-gray-900">로고 & 회사 이미지</h1>
-          <p className="text-gray-600 mt-2">기업 로고와 회사 전경 이미지를 업로드해주세요</p>
+          <h1 className="text-3xl font-bold text-gray-900">기업 한 줄 소개</h1>
+          <p className="text-gray-600 mt-2">우리 기업을 한 줄로 소개해주세요 (선택 항목)</p>
         </div>
 
         <motion.div
@@ -102,38 +112,32 @@ export default function ImagesEditPage() {
           animate={{ opacity: 1, y: 0 }}
           className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-8 border border-gray-100"
         >
-          <div className="space-y-8">
-            {/* 로고 */}
+          <div className="space-y-6">
+            {/* 한 줄 소개 */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-4">
-                <ImageIcon className="inline w-4 h-4 mr-2" />
-                기업 로고
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                기업 한 줄 소개 <span className="text-gray-500">(선택)</span>
               </label>
-              <CustomCloudinaryUpload
-                type="logo"
-                currentImageUrl={logo}
-                onUploadSuccess={(url) => setLogo(url)}
-                userId={uid}
-              />
-              <p className="text-xs text-gray-500 mt-2">
-                권장: 정사각형 (500x500px), PNG 또는 JPG
+              <div className="relative">
+                <FileText className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+                <textarea
+                  value={formData.summary}
+                  onChange={(e) => setFormData({ ...formData, summary: e.target.value })}
+                  placeholder="우리 기업을 한 줄로 소개해주세요 (최대 200자)"
+                  rows={3}
+                  maxLength={200}
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-colors resize-none"
+                />
+              </div>
+              <p className="text-xs text-gray-500 mt-1 text-right">
+                {formData.summary.length} / 200자
               </p>
             </div>
 
-            {/* 회사 전경 이미지 */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-4">
-                <ImageIcon className="inline w-4 h-4 mr-2" />
-                회사 전경 이미지
-              </label>
-              <CustomCloudinaryUpload
-                type="general"
-                currentImageUrl={companyImage}
-                onUploadSuccess={(url) => setCompanyImage(url)}
-                userId={uid}
-              />
-              <p className="text-xs text-gray-500 mt-2">
-                사무실 외관, 내부 사진 등 (JPG, PNG 파일, 최대 10MB)
+            <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl">
+              <p className="text-sm text-blue-800">
+                💡 <strong>한 줄 소개</strong>는 기업 목록에서 구직자들에게 첫 인상을 전달하는 중요한 항목입니다.
+                간결하고 매력적인 소개를 작성해보세요.
               </p>
             </div>
 
@@ -156,7 +160,7 @@ export default function ImagesEditPage() {
                 )}
               </button>
               <Link
-                href="/company-dashboard"
+                href="/company-dashboard/edit"
                 className="px-6 py-3 bg-white border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-colors"
               >
                 취소
@@ -168,17 +172,4 @@ export default function ImagesEditPage() {
     </div>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
 

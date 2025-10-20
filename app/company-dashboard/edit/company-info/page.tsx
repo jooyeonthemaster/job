@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase/config';
-import { Briefcase, Users, Globe, FileText, Building2, Save, ArrowLeft } from 'lucide-react';
+import { Briefcase, Users, Globe, FileText, Building2, Save, ArrowLeft, Phone } from 'lucide-react';
 import { CompanyType } from '@/lib/supabase/company-types';
 import {
   COMPANY_TYPES,
@@ -26,6 +26,7 @@ function EditCompanyInfoContent() {
     businessCondition: '',
     industry: '',
     industryDetail: '',
+    companyPhone: '',
     website: '',
     summary: '',
   });
@@ -58,9 +59,10 @@ function EditCompanyInfoContent() {
         setFormData({
           companyType: company.company_type || '',
           companyScale: company.employee_count || '',
-          businessCondition: company.business_condition || '',
+          businessCondition: company.industry || '',
           industry: company.industry_category || '',
           industryDetail: company.industry_detail || '',
+          companyPhone: company.company_phone || '',
           website: company.website || '',
           summary: company.summary || '',
         });
@@ -97,6 +99,7 @@ function EditCompanyInfoContent() {
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
+    // 온보딩과 동일하게: companyType, companyScale, website만 필수
     if (!formData.companyType) {
       newErrors.companyType = '기업 형태를 선택해주세요.';
     }
@@ -105,17 +108,7 @@ function EditCompanyInfoContent() {
       newErrors.companyScale = '기업 규모를 선택해주세요.';
     }
 
-    if (!formData.businessCondition) {
-      newErrors.businessCondition = '업태를 선택해주세요.';
-    }
-
-    if (!formData.industry) {
-      newErrors.industry = '업종을 선택해주세요.';
-    }
-
-    if (formData.industry && industryDetailOptions.length > 0 && !formData.industryDetail) {
-      newErrors.industryDetail = '업종 상세를 선택해주세요.';
-    }
+    // businessCondition, industry는 선택사항이므로 검사 제거
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -131,9 +124,10 @@ function EditCompanyInfoContent() {
         .update({
           company_type: formData.companyType,
           employee_count: formData.companyScale,
-          business_condition: formData.businessCondition,
-          industry_category: formData.industry,
+          industry: formData.businessCondition || null,
+          industry_category: formData.industry || null,
           industry_detail: formData.industryDetail || null,
+          company_phone: formData.companyPhone || null,
           website: formData.website || null,
           summary: formData.summary || null,
         })
@@ -248,7 +242,7 @@ function EditCompanyInfoContent() {
             {/* 업태 */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                업태 <span className="text-red-500">*</span>
+                업태 <span className="text-gray-500">(선택)</span>
               </label>
               <div className="relative">
                 <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -275,7 +269,7 @@ function EditCompanyInfoContent() {
             {/* 업종 1단계 */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                업종 <span className="text-red-500">*</span>
+                업종 <span className="text-gray-500">(선택)</span>
               </label>
               <div className="relative">
                 <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -303,7 +297,7 @@ function EditCompanyInfoContent() {
             {formData.industry && industryDetailOptions.length > 0 && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  업종 상세 <span className="text-red-500">*</span>
+                  업종 상세 <span className="text-gray-500">(선택)</span>
                 </label>
                 <div className="relative">
                   <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -328,10 +322,33 @@ function EditCompanyInfoContent() {
               </div>
             )}
 
+            {/* 대표번호 */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                대표번호 <span className="text-gray-500">(선택)</span>
+              </label>
+              <div className="relative">
+                <Users className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="tel"
+                  value={formData.companyPhone}
+                  onChange={(e) => handleChange('companyPhone', e.target.value)}
+                  placeholder="02-1234-5678 또는 010-1234-5678"
+                  className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-colors ${
+                    errors.companyPhone ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                />
+              </div>
+              {errors.companyPhone && (
+                <p className="mt-1 text-sm text-red-600">{errors.companyPhone}</p>
+              )}
+              <p className="mt-1 text-xs text-gray-500">하이픈(-)을 포함하여 입력해주세요</p>
+            </div>
+
             {/* 홈페이지 주소 */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                홈페이지 주소 <span className="text-gray-500">(선택)</span>
+                홈페이지 주소 <span className="text-red-500">*</span>
               </label>
               <div className="relative">
                 <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />

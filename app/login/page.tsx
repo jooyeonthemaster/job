@@ -32,6 +32,38 @@ export default function LoginPage() {
 
   const isPerson = activeTab === 'jobseeker';
 
+  // ✅ URL 파라미터 및 localStorage에서 에러 메시지 체크
+  useEffect(() => {
+    // URL 파라미터 체크
+    const urlParams = new URLSearchParams(window.location.search);
+    const errorParam = urlParams.get('error');
+
+    if (errorParam === 'already_registered_as_jobseeker') {
+      setError('이미 개인 회원으로 가입된 계정입니다. 개인 회원 탭에서 로그인해주세요.');
+      setActiveTab('jobseeker');
+    } else if (errorParam === 'already_registered_as_company') {
+      setError('이미 기업 회원으로 가입된 계정입니다. 기업 회원 탭에서 로그인해주세요.');
+      setActiveTab('company');
+    }
+
+    // localStorage 체크 (회원가입 및 로그인 에러 모두)
+    const signupError = localStorage.getItem('signup_error');
+    const loginError = localStorage.getItem('login_error');
+
+    if (signupError && !errorParam) {
+      setError(signupError);
+      localStorage.removeItem('signup_error');
+    } else if (loginError && !errorParam) {
+      setError(loginError);
+      localStorage.removeItem('login_error');
+    }
+
+    // URL 정리 (에러 파라미터 제거)
+    if (errorParam) {
+      window.history.replaceState(null, '', window.location.pathname);
+    }
+  }, []);
+
   // Google OAuth Implicit Flow 처리 (hash fragment)
   useEffect(() => {
     const handleOAuthCallback = async () => {
@@ -72,6 +104,28 @@ export default function LoginPage() {
         try {
           if (savedTab === 'company') {
             console.log('[Login] 기업 회원 OAuth 처리 시작');
+
+            // ✅ 먼저 개인 회원으로 가입되어 있는지 체크
+            const { data: existingJobseeker } = await supabase
+              .from('users')
+              .select('id, email, full_name')
+              .eq('id', currentUser.id)
+              .maybeSingle();
+
+            if (existingJobseeker) {
+              console.warn('[Login] ⚠️ 이미 개인 회원으로 가입된 계정:', existingJobseeker.email);
+
+              // 로그아웃
+              await supabase.auth.signOut();
+
+              // localStorage 정리
+              localStorage.removeItem('login_oauth_tab');
+              localStorage.setItem('login_error', '이미 개인 회원으로 가입된 계정입니다. 개인 회원 탭에서 로그인해주세요.');
+
+              // 로그인 페이지로 리다이렉트 (새로고침)
+              window.location.href = '/login?error=already_registered_as_jobseeker';
+              return;
+            }
 
             // ✅ 1. 즉시 localStorage 설정 (AuthContext보다 먼저 실행됨)
             localStorage.setItem('pending_user_type', 'company');
@@ -150,6 +204,28 @@ export default function LoginPage() {
             }
           } else {
             console.log('[Login] 개인 회원 OAuth 처리 시작');
+
+            // ✅ 먼저 기업 회원으로 가입되어 있는지 체크
+            const { data: existingCompany } = await supabase
+              .from('companies')
+              .select('id, email, name')
+              .eq('id', currentUser.id)
+              .maybeSingle();
+
+            if (existingCompany) {
+              console.warn('[Login] ⚠️ 이미 기업 회원으로 가입된 계정:', existingCompany.email);
+
+              // 로그아웃
+              await supabase.auth.signOut();
+
+              // localStorage 정리
+              localStorage.removeItem('login_oauth_tab');
+              localStorage.setItem('login_error', '이미 기업 회원으로 가입된 계정입니다. 기업 회원 탭에서 로그인해주세요.');
+
+              // 로그인 페이지로 리다이렉트 (새로고침)
+              window.location.href = '/login?error=already_registered_as_company';
+              return;
+            }
 
             // 먼저 metadata 업데이트
             const { error: updateError } = await supabase.auth.updateUser({

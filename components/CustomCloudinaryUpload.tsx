@@ -4,7 +4,7 @@ import { useState, useRef, DragEvent } from 'react';
 import { Camera, Upload, X, CheckCircle, AlertCircle, Image as ImageIcon, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-export type ImageType = 'profile' | 'logo' | 'banner';
+export type ImageType = 'profile' | 'logo' | 'banner' | 'general';
 
 interface CustomCloudinaryUploadProps {
   onUploadSuccess: (url: string, publicId: string) => void;

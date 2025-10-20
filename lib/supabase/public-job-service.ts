@@ -31,6 +31,7 @@ export interface PublicJob {
     name: string;
     name_en: string | null;
     logo: string | null;
+    company_image: string | null;
     industry: string | null;
     location: string | null;
   };
@@ -73,6 +74,7 @@ export async function getActiveJobs(): Promise<{
           name,
           name_en,
           logo,
+          company_image,
           industry,
           location
         )
@@ -129,7 +131,7 @@ function transformToJobCardFormat(job: PublicJob): JobCardType {
       name: job.company.name,
       nameEn: job.company.name_en || job.company.name,
       logo: job.company.logo || '',
-      bannerImage: '', // 현재 DB에 없음
+      bannerImage: job.company.company_image || '',
       industry: job.company.industry || 'Technology',
       location: job.company.location || job.location,
       employeeCount: '100+',
@@ -197,6 +199,7 @@ export async function getFeaturedJobs(limit: number = 6): Promise<JobCardType[]>
           name,
           name_en,
           logo,
+          company_image,
           industry,
           location
         )
@@ -296,6 +299,7 @@ export async function getPremiumJobs(limit: number = 3): Promise<PublicJob[]> {
           name,
           name_en,
           logo,
+          company_image,
           industry,
           location
         )

@@ -192,6 +192,31 @@ export const ProfileTab = ({ company }: ProfileTabProps) => {
           </div>
         </div>
       </div>
+
+      {/* 복지 정보 */}
+      <div className="bg-white rounded-xl p-6 shadow-sm">
+        <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+          <Building2 className="w-5 h-5 text-primary-600" />
+          복지 정보
+        </h2>
+        <div>
+          <label className="text-sm text-gray-500 mb-2 block">제공 복지</label>
+          {company.basic_benefits && company.basic_benefits.length > 0 ? (
+            <div className="flex flex-wrap gap-2">
+              {company.basic_benefits.map((benefit: any, idx: number) => (
+                <span
+                  key={idx}
+                  className="px-3 py-1.5 bg-primary-50 text-primary-700 rounded-lg text-sm font-medium"
+                >
+                  {benefit.title || benefit}
+                </span>
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-500">등록된 복지 정보가 없습니다</p>
+          )}
+        </div>
+      </div>
     </div>
   );
 };

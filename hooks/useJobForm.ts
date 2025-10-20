@@ -95,13 +95,19 @@ export function useJobForm() {
     setFormData(initialFormData);
   }, []);
 
+  // 폼 데이터 전체 설정 (수정 시 사용)
+  const setFormDataBulk = useCallback((data: Partial<JobFormData>) => {
+    setFormData(prev => ({ ...prev, ...data }));
+  }, []);
+
   return {
     formData,
     updateField,
     addArrayItem,
     removeArrayItem,
     updateArrayItem,
-    resetForm
+    resetForm,
+    setFormDataBulk
   };
 }
 

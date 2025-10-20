@@ -3,12 +3,11 @@
 import { useState, useEffect } from 'react';
 import Header from '@/components/Header';
 import OptimizedImage from '@/components/OptimizedImage';
-import { getAllCompanies } from '@/lib/firebase/company-service';
-import { 
-  Search, 
-  Building2, 
-  Star, 
-  Users, 
+import { getAllCompanies } from '@/lib/supabase/company-service';
+import {
+  Search,
+  Building2,
+  Users,
   Filter,
   MapPin,
   Briefcase,
@@ -37,7 +36,7 @@ export default function CompaniesPage() {
   const [selectedIndustry, setSelectedIndustry] = useState('all');
   const [selectedSize, setSelectedSize] = useState('all');
   const [selectedLocation, setSelectedLocation] = useState('all');
-  const [sortBy, setSortBy] = useState('rating');
+  const [sortBy, setSortBy] = useState('openPositions');
 
   // Firebase에서 기업 데이터 가져오기
   useEffect(() => {
@@ -63,7 +62,7 @@ export default function CompaniesPage() {
   const filteredCompanies = companies.filter((company) => {
     const matchesSearch = 
       company.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      company.nameEn?.toLowerCase().includes(searchTerm.toLowerCase());
+      company.name_en?.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesIndustry = 
       selectedIndustry === 'all' || 
@@ -75,23 +74,19 @@ export default function CompaniesPage() {
 
     const matchesSize = 
       selectedSize === 'all' ||
-      (selectedSize === 'startup' && parseInt(company.employeeCount) < 100) ||
-      (selectedSize === 'small' && company.employeeCount?.includes('100-300')) ||
-      (selectedSize === 'medium' && company.employeeCount?.includes('300-1,000')) ||
-      (selectedSize === 'large' && company.employeeCount?.includes('1,000-3,000')) ||
-      (selectedSize === 'enterprise' && company.employeeCount?.includes('10,000+'));
+      (selectedSize === 'startup' && company.employee_count?.includes('1-50')) ||
+      (selectedSize === 'small' && company.employee_count?.includes('50-300')) ||
+      (selectedSize === 'medium' && company.employee_count?.includes('300-1,000')) ||
+      (selectedSize === 'large' && company.employee_count?.includes('1,000-5,000')) ||
+      (selectedSize === 'enterprise' && company.employee_count?.includes('5,000+'));
 
     return matchesSearch && matchesIndustry && matchesLocation && matchesSize;
   });
 
   const sortedCompanies = [...filteredCompanies].sort((a, b) => {
     switch (sortBy) {
-      case 'rating':
-        return (b.rating || 0) - (a.rating || 0);
       case 'openPositions':
         return (b.openPositions || 0) - (a.openPositions || 0);
-      case 'reviewCount':
-        return (b.reviewCount || 0) - (a.reviewCount || 0);
       case 'name':
         return (a.name || '').localeCompare(b.name || '');
       default:
@@ -184,9 +179,7 @@ export default function CompaniesPage() {
                 onChange={(e) => setSortBy(e.target.value)}
                 className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-primary-500"
               >
-                <option value="rating">평점순</option>
                 <option value="openPositions">채용공고순</option>
-                <option value="reviewCount">리뷰순</option>
                 <option value="name">이름순</option>
               </select>
             </div>
@@ -237,17 +230,6 @@ export default function CompaniesPage() {
                           {company.name}
                         </h3>
                         <p className="text-sm text-gray-500">{company.nameEn}</p>
-                        <div className="flex items-center gap-2 mt-1">
-                          <div className="flex items-center">
-                            <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                            <span className="text-sm font-medium text-gray-900 ml-1">
-                              {company.rating || 'N/A'}
-                            </span>
-                          </div>
-                          <span className="text-sm text-gray-500">
-                            ({company.reviewCount || 0} 리뷰)
-                          </span>
-                        </div>
                       </div>
                     </div>
 
@@ -264,7 +246,7 @@ export default function CompaniesPage() {
                       </div>
                       <div className="flex items-center gap-2 text-sm">
                         <Users className="w-4 h-4 text-gray-400" />
-                        <span className="text-gray-600">직원 {company.employeeCount}명</span>
+                        <span className="text-gray-600">직원 {company.employee_count}</span>
                       </div>
                       <div className="flex items-center gap-2 text-sm">
                         <Clock className="w-4 h-4 text-gray-400" />
@@ -273,21 +255,21 @@ export default function CompaniesPage() {
                     </div>
 
                     {/* Tech Stack */}
-                    {company.techStack && company.techStack.length > 0 && (
+                    {company.tech_stack && company.tech_stack.length > 0 && (
                       <div className="mb-4">
                         <p className="text-xs font-medium text-gray-700 mb-2">기술 스택</p>
                         <div className="flex flex-wrap gap-1">
-                          {company.techStack.slice(0, 4).map((tech: string) => (
+                          {company.tech_stack.slice(0, 4).map((tech: any) => (
                             <span 
-                              key={tech} 
+                              key={tech.tech_name} 
                               className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded"
                             >
-                              {tech}
+                              {tech.tech_name}
                             </span>
                           ))}
-                          {company.techStack.length > 4 && (
+                          {company.tech_stack.length > 4 && (
                             <span className="px-2 py-1 bg-gray-50 text-gray-500 text-xs rounded">
-                              +{company.techStack.length - 4}
+                              +{company.tech_stack.length - 4}
                             </span>
                           )}
                         </div>
@@ -295,21 +277,21 @@ export default function CompaniesPage() {
                     )}
 
                     {/* Benefits */}
-                    {company.benefits && company.benefits.length > 0 && (
+                    {company.basic_benefits && company.basic_benefits.length > 0 && (
                       <div className="mb-4">
                         <p className="text-xs font-medium text-gray-700 mb-2">복지</p>
                         <div className="flex flex-wrap gap-1">
-                          {company.benefits.slice(0, 3).map((benefit: string) => (
+                          {company.basic_benefits.slice(0, 3).map((benefit: any, idx: number) => (
                             <span 
-                              key={benefit} 
+                              key={idx} 
                               className="px-2 py-1 bg-primary-50 text-primary-700 text-xs rounded"
                             >
-                              {benefit}
+                              {benefit.title}
                             </span>
                           ))}
-                          {company.benefits.length > 3 && (
+                          {company.basic_benefits.length > 3 && (
                             <span className="px-2 py-1 bg-primary-50 text-primary-600 text-xs rounded">
-                              +{company.benefits.length - 3}
+                              +{company.basic_benefits.length - 3}
                             </span>
                           )}
                         </div>

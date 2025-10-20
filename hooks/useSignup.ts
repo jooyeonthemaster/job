@@ -107,6 +107,28 @@ export const useSignup = (activeTab: SignupTab) => {
   const handleCompanyOAuth = async (user: any) => {
     console.log('[Signup] 기업 회원 OAuth 처리 시작');
 
+    // ✅ 1. 먼저 개인 회원으로 가입되어 있는지 체크
+    const { data: existingJobseeker } = await supabase
+      .from('users')
+      .select('id, email, full_name')
+      .eq('id', user.id)
+      .maybeSingle();
+
+    if (existingJobseeker) {
+      console.warn('[Signup] ⚠️ 이미 개인 회원으로 가입된 계정:', existingJobseeker.email);
+
+      // 로그아웃
+      await supabase.auth.signOut();
+
+      // localStorage 정리
+      localStorage.removeItem(OAUTH_TAB_KEY);
+      localStorage.setItem('signup_error', '이미 개인 회원으로 가입된 계정입니다. 개인 회원 계정으로 로그인해주세요.');
+
+      // 로그인 페이지로 리다이렉트
+      window.location.href = '/login?error=already_registered_as_jobseeker';
+      return;
+    }
+
     // metadata 업데이트
     const { error: metadataError } = await supabase.auth.updateUser({
       data: { user_type: 'company' }
@@ -149,7 +171,7 @@ export const useSignup = (activeTab: SignupTab) => {
       });
       console.log('[Signup] companies 레코드 생성 완료');
     } else {
-      console.log('[Signup] companies 레코드 이미 존재함');
+      console.log('[Signup] companies 레코드 이미 존재함 (재로그인)');
     }
 
     // 정리 및 리다이렉트
@@ -162,6 +184,28 @@ export const useSignup = (activeTab: SignupTab) => {
   // 개인 회원 OAuth 처리
   const handleJobseekerOAuth = async (user: any) => {
     console.log('[Signup] 개인 회원 OAuth 처리 시작');
+
+    // ✅ 1. 먼저 기업 회원으로 가입되어 있는지 체크
+    const { data: existingCompany } = await supabase
+      .from('companies')
+      .select('id, email, name')
+      .eq('id', user.id)
+      .maybeSingle();
+
+    if (existingCompany) {
+      console.warn('[Signup] ⚠️ 이미 기업 회원으로 가입된 계정:', existingCompany.email);
+
+      // 로그아웃
+      await supabase.auth.signOut();
+
+      // localStorage 정리
+      localStorage.removeItem(OAUTH_TAB_KEY);
+      localStorage.setItem('signup_error', '이미 기업 회원으로 가입된 계정입니다. 기업 회원 계정으로 로그인해주세요.');
+
+      // 로그인 페이지로 리다이렉트
+      window.location.href = '/login?error=already_registered_as_company';
+      return;
+    }
 
     // metadata 업데이트
     const { error: metadataError } = await supabase.auth.updateUser({
@@ -201,7 +245,7 @@ export const useSignup = (activeTab: SignupTab) => {
       });
       console.log('[Signup] users 레코드 생성 완료');
     } else {
-      console.log('[Signup] users 레코드 이미 존재함');
+      console.log('[Signup] users 레코드 이미 존재함 (재로그인)');
     }
 
     // 정리 및 리다이렉트

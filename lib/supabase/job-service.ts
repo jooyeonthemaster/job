@@ -36,29 +36,33 @@ export async function createJob(
     const vatAmount = selectedPrice.price * 0.1;
     const totalAmount = selectedPrice.price + vatAmount;
 
-    // 3. jobs 테이블에 메타데이터 저장
+    // 3. 임시저장 시 빈 값 처리 (null로 변환)
+    const salaryMin = formData.salaryMin ? parseInt(formData.salaryMin) : null;
+    const salaryMax = formData.salaryMax ? parseInt(formData.salaryMax) : null;
+    const deadline = formData.deadline || null;
+
+    // 4. jobs 테이블에 메타데이터 저장
     const { data: job, error: jobError } = await supabase
       .from('jobs')
       .insert({
         company_id: companyId,
 
         // 기본 정보
-        title: formData.title,
-        title_en: formData.titleEn,
-        department: formData.department,
-        location: formData.location,
+        title: formData.title || '(제목 없음)',
+        title_en: formData.titleEn || '(No title)',
+        department: formData.department || '미정',
+        location: formData.location || '미정',
         employment_type: formData.employmentType,
         experience_level: formData.experienceLevel,
-        education: '학력무관',
 
-        // 급여
-        salary_min: parseInt(formData.salaryMin),
-        salary_max: parseInt(formData.salaryMax),
+        // 급여 (빈 값이면 null)
+        salary_min: salaryMin,
+        salary_max: salaryMax,
         salary_currency: 'KRW',
         salary_negotiable: formData.salaryNegotiable,
 
         // 상세 정보 (에디터 HTML 저장)
-        description: editorContent,
+        description: editorContent || '',
 
         // 언어/비자
         visa_sponsorship: formData.visaSponsorship,
@@ -78,10 +82,12 @@ export async function createJob(
         payment_billing_contact_name: '박윤미',
         payment_billing_contact_phone: '010-8014-5573',
 
-        // 메타 정보
-        deadline: formData.deadline,
+        // 메타 정보 (deadline 빈 값이면 null)
+        deadline: deadline,
         status: isDraft ? 'draft' : 'pending_approval', // 임시저장 or 승인대기
         posted_at: new Date().toISOString(),
+        views: 0,
+        applicants: 0,
       })
       .select()
       .single();
@@ -107,21 +113,23 @@ export async function createJob(
       }
     }
 
-    // 5. 채용 담당자 저장
-    if (formData.managerName || formData.managerEmail) {
-      const { error: managerError } = await supabase
-        .from('job_manager')
-        .insert({
-          job_id: job.id,
-          name: formData.managerName || company.name,
-          position: formData.managerPosition || '',
-          email: formData.managerEmail || company.email || '',
-          phone: formData.managerPhone || company.phone || '',
-        });
+    // 5. 채용 담당자 저장 (name과 email이 NOT NULL이므로 기본값 제공)
+    const managerName = formData.managerName?.trim() || company.manager_name || company.name || '담당자';
+    const managerEmail = formData.managerEmail?.trim() || company.email || 'contact@company.com';
 
-      if (managerError) {
-        console.error('Manager error:', managerError);
-      }
+    const { error: managerError } = await supabase
+      .from('job_manager')
+      .insert({
+        job_id: job.id,
+        name: managerName,
+        position: formData.managerPosition || '',
+        email: managerEmail,
+        phone: formData.managerPhone || company.manager_phone || '',
+      });
+
+    if (managerError) {
+      console.error('Manager error:', managerError);
+      // 에러가 나도 공고는 저장되었으므로 계속 진행
     }
 
     return { success: true, jobId: job.id };
@@ -195,30 +203,88 @@ export async function updateJob(
   try {
     const updates: any = {};
 
+    // 기본 정보
     if (formData.title) updates.title = formData.title;
     if (formData.titleEn) updates.title_en = formData.titleEn;
     if (formData.department) updates.department = formData.department;
     if (formData.location) updates.location = formData.location;
     if (formData.employmentType) updates.employment_type = formData.employmentType;
     if (formData.experienceLevel) updates.experience_level = formData.experienceLevel;
-    if (formData.salaryMin) updates.salary_min = parseInt(formData.salaryMin);
-    if (formData.salaryMax) updates.salary_max = parseInt(formData.salaryMax);
-    if (formData.salaryNegotiable !== undefined) updates.salary_negotiable = formData.salaryNegotiable;
-    if (editorContent) updates.description = editorContent;
-    if (formData.visaSponsorship !== undefined) updates.visa_sponsorship = formData.visaSponsorship;
+    
+    // 급여 (빈 값 처리)
+    if (formData.salaryMin) {
+      updates.salary_min = parseInt(formData.salaryMin);
+    }
+    if (formData.salaryMax) {
+      updates.salary_max = parseInt(formData.salaryMax);
+    }
+    if (formData.salaryNegotiable !== undefined) {
+      updates.salary_negotiable = formData.salaryNegotiable;
+    }
+    
+    // 상세 정보
+    if (editorContent !== undefined) updates.description = editorContent;
+    
+    // 언어/비자
+    if (formData.visaSponsorship !== undefined) {
+      updates.visa_sponsorship = formData.visaSponsorship;
+    }
     if (formData.koreanLevel) updates.korean_level = formData.koreanLevel;
     if (formData.englishLevel) updates.english_level = formData.englishLevel;
-    if (formData.deadline) updates.deadline = formData.deadline;
+    
+    // 마감일 (빈 값 처리)
+    if (formData.deadline) {
+      updates.deadline = formData.deadline;
+    }
 
     updates.updated_at = new Date().toISOString();
 
-    const { error } = await supabase
+    // jobs 테이블 업데이트
+    const { error: jobError } = await supabase
       .from('jobs')
       .update(updates)
       .eq('id', jobId);
 
-    if (error) {
-      throw new Error(error.message);
+    if (jobError) {
+      throw new Error(jobError.message);
+    }
+
+    // 근무 조건 업데이트
+    if (formData.probation || formData.workHours || formData.startDate) {
+      const { error: wcError } = await supabase
+        .from('job_work_conditions')
+        .upsert({
+          job_id: jobId,
+          probation: formData.probation || null,
+          work_hours: formData.workHours || null,
+          start_date: formData.startDate || null,
+        }, {
+          onConflict: 'job_id'
+        });
+
+      if (wcError) {
+        console.error('Work conditions update error:', wcError);
+      }
+    }
+
+    // 담당자 정보 업데이트 (name과 email이 NOT NULL이므로 값이 있을 때만)
+    if (formData.managerName && formData.managerName.trim() && 
+        formData.managerEmail && formData.managerEmail.trim()) {
+      const { error: mgrError } = await supabase
+        .from('job_manager')
+        .upsert({
+          job_id: jobId,
+          name: formData.managerName.trim(),
+          position: formData.managerPosition || '',
+          email: formData.managerEmail.trim(),
+          phone: formData.managerPhone || '',
+        }, {
+          onConflict: 'job_id'
+        });
+
+      if (mgrError) {
+        console.error('Manager update error:', mgrError);
+      }
     }
 
     return { success: true };

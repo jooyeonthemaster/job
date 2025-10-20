@@ -13,24 +13,51 @@ import {
   Image as ImageIcon,
   Code,
   Heart,
-  Briefcase
+  Briefcase,
+  CheckCircle,
+  Circle
 } from 'lucide-react';
 import Link from 'next/link';
 
 function EditCompanyProfileContent() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
+  const [company, setCompany] = useState<any>(null);
 
   const sections = [
-    { id: 'business', title: '사업자 정보', icon: Building2, description: '사업자등록번호, 기업명, 대표자명 등', link: '/company-dashboard/edit/business' },
-    { id: 'company-info', title: '기업 기본 정보', icon: Briefcase, description: '기업 형태, 규모, 업종 등', link: '/company-dashboard/edit/company-info' },
-    { id: 'location', title: '위치 정보', icon: MapPin, description: '회사 주소 및 위치', link: '/company-dashboard/edit/location' },
-    { id: 'images', title: '로고 & 배너', icon: ImageIcon, description: '기업 로고 및 배너 이미지', link: '/company-dashboard/edit/images' },
-    { id: 'introduction', title: '회사 소개', icon: FileText, description: '회사 설명, 비전, 미션 등', link: '/company-dashboard/edit/introduction' },
-    { id: 'techstack', title: '기술 스택', icon: Code, description: '사용 중인 기술 스택', link: '/company-dashboard/edit/techstack' },
-    { id: 'benefits', title: '복지 정보', icon: Heart, description: '제공하는 복지 혜택', link: '/company-dashboard/edit/benefits' },
-    { id: 'manager', title: '담당자 정보', icon: Users, description: '채용 담당자 연락처', link: '/company-dashboard/edit/manager' }
+    { id: 'business', title: '사업자 정보', icon: Building2, description: '사업자등록번호, 기업명, 대표자명, 개업일자', link: '/company-dashboard/edit/business' },
+    { id: 'company-info', title: '기업 기본 정보', icon: Briefcase, description: '기업 형태, 규모, 업태, 업종, 홈페이지', link: '/company-dashboard/edit/company-info' },
+    { id: 'location', title: '주소 정보', icon: MapPin, description: '회사 주소 및 상세 주소', link: '/company-dashboard/edit/location' },
+    { id: 'images', title: '로고 & 회사 이미지', icon: ImageIcon, description: '기업 로고 및 회사 전경 이미지', link: '/company-dashboard/edit/images' },
+    { id: 'summary', title: '한 줄 소개', icon: FileText, description: '기업을 한 줄로 소개 (최대 200자)', link: '/company-dashboard/edit/summary' },
+    { id: 'basic-benefits', title: '복지 정보', icon: Heart, description: '제공하는 복지 (간단한 태그)', link: '/company-dashboard/edit/basic-benefits' },
+    { id: 'manager', title: '담당자 정보', icon: Users, description: '채용 담당 부서 및 담당자 연락처', link: '/company-dashboard/edit/manager' }
   ];
+
+  // 각 섹션의 완성 여부 체크
+  const checkSectionCompletion = (sectionId: string): boolean => {
+    if (!company) return false;
+
+    switch (sectionId) {
+      case 'business':
+        return !!(company.registration_number && company.name && company.ceo_name && company.established);
+      case 'company-info':
+        return !!(company.company_type && company.employee_count && company.website);
+      case 'location':
+        return !!(company.location && company.address);
+      case 'images':
+        return !!(company.logo || company.company_image);
+      case 'summary':
+        return !!(company.summary && company.summary.length >= 20);
+      case 'basic-benefits':
+        // basic_benefits는 { title: string }[] 구조
+        return !!(company.basic_benefits && company.basic_benefits.length > 0);
+      case 'manager':
+        return !!(company.manager_department && company.manager_name);
+      default:
+        return false;
+    }
+  };
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -42,16 +69,28 @@ function EditCompanyProfileContent() {
           return;
         }
 
-        const { data: company, error: companyError } = await supabase
+        const { data: companyData, error: companyError } = await supabase
           .from('companies')
-          .select('id')
+          .select('*')
           .eq('id', user.id)
           .single();
 
-        if (companyError || !company) {
+        if (companyError || !companyData) {
           router.push('/signup/company');
           return;
         }
+
+        // 복지 정보 조회 (온보딩과 동일)
+        const { data: benefitsData } = await supabase
+          .from('company_benefits')
+          .select('title')
+          .eq('company_id', user.id)
+          .eq('category', 'basic');
+
+        setCompany({
+          ...companyData,
+          basic_benefits: benefitsData || []
+        });
       } catch (error) {
         console.error('Error checking auth:', error);
         router.push('/login/company');
@@ -95,30 +134,73 @@ function EditCompanyProfileContent() {
 
           <h1 className="text-3xl font-bold text-gray-900 mb-2">기업 정보 수정</h1>
           <p className="text-gray-600">기업 정보를 최신 상태로 유지해주세요</p>
+          
+          {company && (
+            <div className="mt-4 flex items-center gap-3">
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary-50 rounded-lg">
+                <CheckCircle className="w-4 h-4 text-primary-600" />
+                <span className="text-sm font-medium text-primary-900">
+                  {sections.filter(s => checkSectionCompletion(s.id)).length} / {sections.length} 항목 완료
+                </span>
+              </div>
+              <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-primary-500 to-green-500 transition-all duration-500"
+                  style={{ width: `${(sections.filter(s => checkSectionCompletion(s.id)).length / sections.length) * 100}%` }}
+                />
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Edit Sections Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {sections.map((section) => {
             const Icon = section.icon;
+            const isCompleted = checkSectionCompletion(section.id);
 
             return (
               <Link
                 key={section.id}
                 href={section.link}
-                className="group bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 p-6 border border-gray-100 hover:border-primary-300"
+                className={`group bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 p-6 border-2 ${
+                  isCompleted
+                    ? 'border-green-200 bg-green-50/30'
+                    : 'border-gray-100 hover:border-primary-300'
+                }`}
               >
                 <div className="flex items-start gap-4">
-                  <div className="w-14 h-14 bg-primary-100 rounded-xl flex items-center justify-center group-hover:bg-primary-600 transition-colors">
-                    <Icon className="w-7 h-7 text-primary-600 group-hover:text-white transition-colors" />
+                  <div className={`w-14 h-14 rounded-xl flex items-center justify-center transition-colors ${
+                    isCompleted
+                      ? 'bg-green-100 group-hover:bg-green-600'
+                      : 'bg-primary-100 group-hover:bg-primary-600'
+                  }`}>
+                    <Icon className={`w-7 h-7 transition-colors ${
+                      isCompleted
+                        ? 'text-green-600 group-hover:text-white'
+                        : 'text-primary-600 group-hover:text-white'
+                    }`} />
                   </div>
                   <div className="flex-1">
-                    <h3 className="text-lg font-bold text-gray-900 group-hover:text-primary-600 transition-colors mb-1">
-                      {section.title}
-                    </h3>
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className="text-lg font-bold text-gray-900 group-hover:text-primary-600 transition-colors">
+                        {section.title}
+                      </h3>
+                      {isCompleted ? (
+                        <CheckCircle className="w-5 h-5 text-green-600" />
+                      ) : (
+                        <Circle className="w-5 h-5 text-gray-300" />
+                      )}
+                    </div>
                     <p className="text-sm text-gray-600">
                       {section.description}
                     </p>
+                    {isCompleted && (
+                      <p className="text-xs text-green-600 font-medium mt-2">✓ 입력 완료</p>
+                    )}
+                    {!isCompleted && (
+                      <p className="text-xs text-orange-600 font-medium mt-2">→ 입력 필요</p>
+                    )}
                   </div>
                   <ArrowLeft className="w-5 h-5 text-gray-400 group-hover:text-primary-600 transition-colors transform rotate-180" />
                 </div>

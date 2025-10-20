@@ -3,7 +3,7 @@
 import { useMemo } from 'react';
 import { JobFormData } from '@/types/job-form.types';
 
-export function useJobFormValidation(formData: JobFormData) {
+export function useJobFormValidation(formData: JobFormData, editorContent?: string) {
   
   const validateForm = useMemo(() => (): string[] => {
     const errors: string[] = [];
@@ -34,20 +34,9 @@ export function useJobFormValidation(formData: JobFormData) {
       errors.push('최소 연봉은 최대 연봉보다 작아야 합니다');
     }
 
-    // 상세 정보 검증
-    if (!formData.description.trim()) {
-      errors.push('포지션 설명을 입력해주세요');
-    }
-
-    const validMainTasks = formData.mainTasks.filter(t => t.trim());
-    if (validMainTasks.length === 0) {
-      errors.push('최소 1개 이상의 주요 업무를 입력해주세요');
-    }
-
-    const validRequirements = formData.requirements.filter(r => r.trim());
-    if (validRequirements.length === 0) {
-      errors.push('최소 1개 이상의 자격 요건을 입력해주세요');
-    }
+    // 상세 내용 검증 (에디터 컨텐츠로 대체)
+    // mainTasks, requirements, description은 더 이상 별도 필드가 아님
+    // 모두 에디터에서 자유롭게 작성
 
     // 마감일 검증
     if (!formData.deadline) {

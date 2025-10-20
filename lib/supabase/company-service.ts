@@ -293,13 +293,12 @@ export const uploadCompanySignupFiles = async (
  * 기업 프로필 조회
  */
 export const getCompanyProfile = async (companyId: string) => {
+  // 먼저 기업 기본 정보 조회
   const { data, error } = await supabase
     .from('companies')
     .select(`
       *,
-      basic_benefits:company_basic_benefits(benefit_tag),
       tech_stack:company_tech_stack(tech_name),
-      benefits:company_benefits(*),
       stats:company_stats(*),
       recruiters:company_recruiters(*),
       offices:company_offices(*)
@@ -309,7 +308,25 @@ export const getCompanyProfile = async (companyId: string) => {
 
   if (error) throw error;
 
-  return data;
+  // 복지 정보 조회 (온보딩과 동일)
+  const { data: basicBenefitsData } = await supabase
+    .from('company_benefits')
+    .select('title')
+    .eq('company_id', companyId)
+    .eq('category', 'basic');
+
+  // 상세 복지 조회 (대시보드 추가용)
+  const { data: detailedBenefitsData } = await supabase
+    .from('company_benefits')
+    .select('*')
+    .eq('company_id', companyId)
+    .neq('category', 'basic');
+
+  return {
+    ...data,
+    basic_benefits: basicBenefitsData || [],
+    benefits: detailedBenefitsData || []
+  };
 };
 
 /**
@@ -430,4 +447,104 @@ export const calculateProfileCompletion = (company: any): number => {
   const totalCount = optionalFields.length;
 
   return Math.round((filledCount / totalCount) * 100);
+};
+
+// =====================================================
+// 공개 조회 (기업 목록 페이지용)
+// =====================================================
+
+/**
+ * 모든 기업 목록 조회 (필터링 가능)
+ * - profile_completed = true인 기업만 조회
+ * - status = 'active'인 기업만 조회
+ */
+export const getAllCompanies = async (filters?: {
+  industry?: string;
+  location?: string;
+  employeeCount?: string;
+}) => {
+  let query = supabase
+    .from('companies')
+    .select('*')
+    .eq('profile_completed', true)
+    .eq('status', 'active')
+    .order('created_at', { ascending: false });
+
+  // 필터 적용
+  if (filters?.industry) {
+    query = query.eq('industry', filters.industry);
+  }
+  if (filters?.location) {
+    query = query.ilike('location', `%${filters.location}%`);
+  }
+  if (filters?.employeeCount) {
+    query = query.eq('employee_count', filters.employeeCount);
+  }
+
+  const { data, error } = await query;
+
+  if (error) throw error;
+
+  // 채용공고 수 + 복지 정보 계산 (각 기업별)
+  const companiesWithJobs = await Promise.all(
+    (data || []).map(async (company) => {
+      // 채용공고 수
+      const { count } = await supabase
+        .from('jobs')
+        .select('id', { count: 'exact', head: true })
+        .eq('company_id', company.id)
+        .eq('status', 'active');
+
+      // 복지 정보 (온보딩과 동일)
+      const { data: benefitsData } = await supabase
+        .from('company_benefits')
+        .select('title')
+        .eq('company_id', company.id)
+        .eq('category', 'basic');
+
+      return {
+        ...company,
+        openPositions: count || 0,
+        basic_benefits: benefitsData || [],
+        // 기본값 설정 (리뷰 시스템 미구현)
+        rating: 0,
+        reviewCount: 0
+      };
+    })
+  );
+
+  return companiesWithJobs;
+};
+
+/**
+ * ID로 기업 상세 조회 (공개용)
+ * - getCompanyProfile과 동일하지만 alias로 제공
+ */
+export const getCompanyById = async (companyId: string) => {
+  const profile = await getCompanyProfile(companyId);
+  
+  // 기본값 설정 (리뷰 시스템 미구현)
+  return {
+    ...profile,
+    rating: 0,
+    reviewCount: 0,
+    reviews: [],
+    news: []
+  };
+};
+
+/**
+ * 기업의 채용공고 목록 조회
+ */
+export const getCompanyJobs = async (companyId: string) => {
+  const { data, error } = await supabase
+    .from('jobs')
+    .select('*')
+    .eq('company_id', companyId)
+    .eq('status', 'active')
+    .order('posted_at', { ascending: false });
+
+  if (error) throw error;
+
+  return data || [];
 };

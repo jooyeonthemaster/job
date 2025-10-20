@@ -38,26 +38,38 @@ export const useCompanyAuth = (): UseCompanyAuthResult => {
           return;
         }
 
-        // 2. Companies 테이블에서 기업 정보 가져오기
+        // 2. Companies 테이블에서 기업 정보 가져오기 (온보딩과 동일하게)
         console.log('[useCompanyAuth] Companies 테이블에서 정보 조회 중...');
+        
+        // 먼저 기업 정보 조회
         const { data: companyData, error: companyError } = await supabase
           .from('companies')
           .select('*')
           .eq('id', user.id)
           .single();
 
-        console.log('[useCompanyAuth] 기업 데이터:', companyData);
-        console.log('[useCompanyAuth] 기업 데이터 에러:', companyError);
-
         if (companyError || !companyData) {
-          // 기업 정보가 없으면 온보딩으로
           console.log('[useCompanyAuth] 기업 정보 없음 -> /signup/company로 리다이렉트');
           router.push('/signup/company');
           return;
         }
 
+        // 복지 정보 조회 (company_benefits 테이블, category = 'basic')
+        const { data: benefitsData } = await supabase
+          .from('company_benefits')
+          .select('title')
+          .eq('company_id', user.id)
+          .eq('category', 'basic');
+
+        // 복지 정보 합치기
+        const companyWithBenefits = {
+          ...companyData,
+          basic_benefits: benefitsData || []
+        };
+
         console.log('[useCompanyAuth] 로딩 완료! 기업명:', companyData.name);
-        setCompany(companyData as Company);
+        console.log('[useCompanyAuth] 복지 정보:', benefitsData?.length || 0, '개');
+        setCompany(companyWithBenefits as Company);
       } catch (err: any) {
         console.error('[useCompanyAuth] 예외 발생:', err);
         setError(err.message || '인증 처리 중 오류가 발생했습니다.');

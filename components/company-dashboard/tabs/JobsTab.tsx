@@ -71,9 +71,15 @@ export const JobsTab = ({ jobs, loading, onDeleteJob }: JobsTabProps) => {
                     <span className={`px-3 py-1 rounded-full text-xs font-medium ${
                       job.status === 'active'
                         ? 'bg-green-100 text-green-700'
-                        : 'bg-gray-100 text-gray-700'
+                        : job.status === 'pending_approval'
+                        ? 'bg-yellow-100 text-yellow-700'
+                        : job.status === 'draft'
+                        ? 'bg-gray-100 text-gray-700'
+                        : 'bg-red-100 text-red-700'
                     }`}>
-                      {job.status === 'active' ? '모집중' : '마감'}
+                      {job.status === 'active' ? '모집중' : 
+                       job.status === 'pending_approval' ? '승인대기' :
+                       job.status === 'draft' ? '임시저장' : '마감'}
                     </span>
                   </div>
 

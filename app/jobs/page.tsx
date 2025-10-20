@@ -26,6 +26,8 @@ interface JobData {
   created_at: string;
   companies: {
     name: string;
+    logo: string | null;
+    company_image: string | null;
   } | null;
 }
 
@@ -75,6 +77,8 @@ export default function JobsPage() {
     return {
       id: job.id,
       company: job.companies?.name || '회사명',
+      logo: job.companies?.logo || null,
+      companyImage: job.companies?.company_image || null,
       position: job.title || '',
       location: job.location || '',
       experience: getExperienceLabel(job.experience_level),
@@ -99,7 +103,9 @@ export default function JobsPage() {
           .select(`
             *,
             companies (
-              name
+              name,
+              logo,
+              company_image
             )
           `)
           .eq('status', 'active')
@@ -116,7 +122,9 @@ export default function JobsPage() {
           .select(`
             *,
             companies (
-              name
+              name,
+              logo,
+              company_image
             )
           `)
           .eq('status', 'active')
@@ -133,7 +141,9 @@ export default function JobsPage() {
           .select(`
             *,
             companies (
-              name
+              name,
+              logo,
+              company_image
             )
           `)
           .eq('status', 'active')

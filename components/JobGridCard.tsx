@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import {
   MapPin,
   Briefcase,
@@ -15,6 +16,8 @@ interface JobGridCardProps {
   job: {
     id: number;
     company: string;
+    logo?: string | null;
+    companyImage?: string | null;
     position: string;
     location: string;
     experience: string;
@@ -89,15 +92,25 @@ export default function JobGridCard({ job, size = 'medium' }: JobGridCardProps) 
           )}
         </div>
         
-        {/* Company Logo Placeholder */}
+        {/* Company Logo */}
         <div className={cn(
-          "flex items-center justify-center rounded-lg bg-gradient-to-br from-gray-100 to-gray-200 mb-3",
+          "flex items-center justify-center rounded-lg bg-gradient-to-br from-gray-100 to-gray-200 mb-3 overflow-hidden",
           size === 'small' ? 'w-10 h-10' : size === 'medium' ? 'w-12 h-12' : 'w-14 h-14'
         )}>
-          <Building2 className={cn(
-            "text-gray-500",
-            size === 'small' ? 'w-5 h-5' : size === 'medium' ? 'w-6 h-6' : 'w-7 h-7'
-          )} />
+          {job.logo ? (
+            <Image
+              src={job.logo}
+              alt={job.company}
+              width={size === 'small' ? 40 : size === 'medium' ? 48 : 56}
+              height={size === 'small' ? 40 : size === 'medium' ? 48 : 56}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <Building2 className={cn(
+              "text-gray-500",
+              size === 'small' ? 'w-5 h-5' : size === 'medium' ? 'w-6 h-6' : 'w-7 h-7'
+            )} />
+          )}
         </div>
         
         {/* Main Content */}
@@ -146,7 +159,7 @@ export default function JobGridCard({ job, size = 'medium' }: JobGridCardProps) 
         {/* Hover Content - Extended Info (Absolute Overlay) */}
         {isHovered && (
           <div className={cn(
-            "absolute -left-[1px] -right-[1px] top-full -mt-[1px] bg-white rounded-b-xl border-x border-b border-primary-400 shadow-xl transition-all duration-200",
+            "absolute -left-[1px] -right-[1px] top-full -mt-[1px] bg-white rounded-b-xl border-x border-b border-primary-400 shadow-xl transition-all duration-200 overflow-hidden",
             sizeClasses[size]
           )}>
             <div className="space-y-2">
@@ -160,6 +173,21 @@ export default function JobGridCard({ job, size = 'medium' }: JobGridCardProps) 
                   <span>{job.salary}</span>
                 </div>
               )}
+
+              {/* Company Image */}
+              <div className="relative h-24 -mx-5 mb-3 overflow-hidden">
+                {job.companyImage ? (
+                  <Image
+                    src={job.companyImage}
+                    alt={`${job.company} 전경`}
+                    fill
+                    sizes="(max-width: 768px) 100vw, 300px"
+                    className="object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-r from-gray-100 via-gray-50 to-gray-100" />
+                )}
+              </div>
 
               {/* Skills */}
               {size !== 'small' && job.skills.length > 0 && (

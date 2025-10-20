@@ -8,6 +8,500 @@
 
 ## 📋 최근 주요 변경 사항
 
+### 2025-10-21
+
+#### 🔧 빌드 에러 수정 (3개) - TypeScript 타입 정의 보완
+**[FIX]** 타입 불일치로 인한 빌드 실패 해결
+
+**변경 파일 (3개)**:
+- `components/CustomCloudinaryUpload.tsx` (Line 7)
+- `app/page.tsx` (Lines 65-78)
+- `types/company-dashboard.types.ts` (Line 51)
+
+**에러 1: ImageType 타입 확장**
+```
+./app/company-dashboard/edit/images/page.tsx:130:17
+Type error: Type '"general"' is not assignable to type 'ImageType | undefined'.
+```
+- **원인**: `ImageType`에 `'general'` 타입이 정의되지 않음
+- **해결**: `export type ImageType = 'profile' | 'logo' | 'banner' | 'general'`로 확장
+
+**에러 2: Job 타입 필드 불일치**
+```
+./app/page.tsx:65:5
+Type error: Object literal may only specify known properties, and 'koreanLevel' does not exist in type 'Job'.
+```
+- **원인**: `koreanLevel` 필드 사용, 하지만 Job 타입은 `languageRequirements` 객체 필요
+- **해결**:
+  ```typescript
+  languageRequirements: {
+    korean: publicJob.korean_level || 'NONE',
+    english: 'NONE'
+  }
+  ```
+- **추가**: `benefits`, `description`, `requirements` 등 누락된 필수 필드 추가
+
+**에러 3: Company 타입 필드 누락**
+```
+./components/company-dashboard/tabs/ProfileTab.tsx:204:20
+Type error: Property 'basic_benefits' does not exist on type 'Company'.
+```
+- **원인**: Company 타입에 `basic_benefits` 필드가 정의되지 않음
+- **해결**: `basic_benefits?: any[]` 필드 추가
+
+**영향**:
+- ✅ 빌드 성공
+- ✅ 모든 TypeScript 타입 검증 통과
+- ✅ 기존 기능 100% 유지 (타입 정의만 보완)
+
+---
+
+#### 🗑️ 기업 목록 페이지 평점/리뷰 UI 제거
+**[DELETE]** 수집하지 않는 평점/리뷰 데이터 표시 제거
+
+**변경 파일**:
+- `app/companies/page.tsx` (기존: 380줄 → 변경 후: 366줄)
+
+**변경 내용**:
+1. **평점/리뷰 UI 제거**:
+   - 회사 카드에서 별점(Star) 아이콘 및 평점 숫자 제거
+   - 리뷰 개수 표시 제거 (예: "(1250 리뷰)")
+
+2. **정렬 옵션 정리**:
+   - "평점순" 옵션 제거
+   - "리뷰순" 옵션 제거
+   - 남은 옵션: "채용공고순", "이름순"
+   - 기본 정렬: "채용공고순"으로 변경
+
+3. **정렬 로직 정리**:
+   - `rating`, `reviewCount` 관련 정렬 코드 제거
+   - 불필요한 `Star` 아이콘 import 제거
+
+**이유**:
+- 평점/리뷰 데이터를 수집하지 않음
+- 존재하지 않는 데이터를 표시하면 사용자 혼란 야기
+- 실제 DB에 저장된 데이터만 표시하도록 개선
+
+**영향**:
+- 기업 카드가 더 간결해짐
+- 실제 수집하는 정보만 표시
+- 정렬 옵션이 의미 있는 데이터 기준으로만 제공됨
+
+---
+
+#### 🚀 기업 공개 기능 구현 (DB 업데이트 추가)
+**[ADD]** 기업 목록 등록 API 및 자동 공개 기능 추가
+
+**변경 파일 (2개)**:
+- `app/api/companies/publish/route.ts` (신규)
+- `components/company-dashboard/CompanyProfileChecklist.tsx`
+
+**변경 내용**:
+1. **기업 공개 API 생성** (`/api/companies/publish`):
+   - POST 요청으로 기업 ID 받아서 DB 업데이트
+   - `profile_completed = true`, `status = 'active'` 설정
+   - Service Role Key 사용으로 RLS 우회
+
+2. **모달 버튼 기능 추가**:
+   - Link → button으로 변경
+   - `handlePublishCompany` 함수로 API 호출
+   - 로딩 상태 표시: "등록 중..."
+   - 성공 시 자동으로 `/companies` 페이지로 이동
+
+**문제 해결**:
+- **기존 문제**: "기업 목록에 등록하기" 버튼이 단순히 `/companies`로 이동만 하고 DB 업데이트 안 함
+- **원인**: `getAllCompanies`는 `profile_completed=true`이고 `status='active'`인 기업만 조회
+- **해결**: 버튼 클릭 시 API 호출로 DB 업데이트 후 페이지 이동
+
+**영향**:
+- 기업 목록에 등록하기 버튼이 실제로 기업을 공개 목록에 추가
+- `/companies` 페이지에서 해당 기업 표시됨
+
+---
+
+#### 🔄 기업 대시보드 버튼 UI/UX 개선
+**[UPDATE]** 기업 공개 모달 및 버튼 텍스트/링크 수정
+
+**변경 파일 (2개)**:
+- `components/company-dashboard/CompanyProfileChecklist.tsx`
+- `components/company-dashboard/CompanyProfileCompleteBanner.tsx`
+
+**변경 내용**:
+1. **기업 공개하기 버튼 색상 변경**:
+   - 기존: 파란색 그라데이션 배경
+   - 변경: 흰색 배경 + 초록 테두리 (`bg-white border-2 border-green-600`)
+
+2. **기업 공개 모달 수정**:
+   - "현재 완성도: 80% / 60% 필요" 텍스트 제거
+   - 모달 버튼: "기업 정보 보기" → "기업 목록에 등록하기"
+   - 버튼 링크: `/companies/[id]` → `/companies`
+   - 버튼 색상: 파란색 → 초록색 (`bg-green-600`)
+   - `target="_blank"` 제거
+
+3. **CompanyProfileCompleteBanner 버튼**:
+   - 텍스트: "기업 정보 보기" → "기업 목록 보기"
+   - 색상: 파란색 → 초록색 (`bg-green-600`)
+
+**이유**:
+- 불필요한 완성도 퍼센트 정보 제거로 간결한 UI
+- "기업 목록에 등록하기"로 명확한 액션 표현
+- 기업 목록 페이지로 이동하여 공개된 상태 확인 가능
+
+**영향**:
+- 모달 헤더가 깔끔해짐
+- 사용자가 버튼 의도를 명확히 이해 가능
+- 기업 목록에서 자사 노출 여부 확인 가능
+
+---
+
+#### 🎨 복지 섹션 레이아웃 수정
+**[FIX]** 사이드바 복지 리스트 세로 배치로 가독성 개선
+
+**변경 파일 (1개)**:
+- `app/companies/[id]/page.tsx` (601줄, 동일)
+
+**변경 내용**:
+- 그리드 레이아웃(`grid sm:grid-cols-2 lg:grid-cols-3`) → 세로 리스트(`space-y-2`)로 변경
+- 아이콘 크기 조정: `w-5 h-5` → `w-4 h-4`
+- 텍스트 크기 조정: 기본 → `text-sm`
+- 제목 크기 조정: `text-xl` → `font-bold` (사이드바 스타일 통일)
+
+**이유**:
+- 사이드바 공간이 좁아서 3열 그리드가 텍스트를 세로로 찌그러뜨림
+- "사내 동호회" 같은 텍스트가 한 글자씩 세로로 나열됨
+
+**영향**:
+- 복지 항목이 가독성 좋게 세로로 나열
+- 사이드바 전체 스타일 통일
+
+---
+
+#### 🧹 기업 상세 페이지 레이아웃 재구성
+**[REFACTOR]** 담당자 정보 제거, 복지 섹션 사이드바로 이동, 불필요한 UI 제거
+
+**변경 파일 (1개)**:
+- `app/companies/[id]/page.tsx` (659줄 → 601줄)
+
+**변경 내용**:
+1. **팔로우 버튼 제거**: 헤더 액션 버튼에서 팔로우 기능 삭제
+2. **위치 카드 제거**: 사이드바의 "위치" 섹션 전체 삭제 (지도 포함)
+3. **더미 텍스트 제거**: 회사 전경 이미지 하단 설명 문구 삭제 ("쾌적한 업무 환경과...")
+4. **isFollowing state 제거**: 사용하지 않는 상태 변수 삭제
+5. **담당자 정보 카드 제거**: 사이드바에서 채용 담당자 정보 삭제
+6. **복지 섹션 이동**: 메인 컨텐츠 하단 → 사이드바로 이동
+7. **복지 중복 섹션 제거**: 메인 영역에 있던 복지 섹션 완전 삭제
+
+**이유**:
+- 팔로우 기능은 미구현 상태
+- 위치 정보는 헤더의 location으로 충분
+- "쾌적한 업무 환경..." 문구는 하드코딩된 더미 데이터
+- 담당자 정보는 사용자 요청으로 제거
+- 복지 정보는 사이드바에 컴팩트하게 표시
+
+**영향**:
+- 사이드바 구성: 기업 정보 → 복지 및 혜택 (2개만 표시)
+- 메인 컨텐츠: 회사 소개 → 기술 스택 → 회사 전경 → 채용공고
+- 페이지 구조 간소화 및 가독성 향상
+
+---
+
+#### 🔧 기업 상세 페이지 데이터 표시 완전 수정
+**[FIX]** 대시보드 입력 데이터가 실제로 표시되도록 필드 매핑 및 UI 추가
+
+**변경 파일 (1개)**:
+- `app/companies/[id]/page.tsx` (기존: 649줄 → 변경 후: 659줄)
+
+**변경 내용**:
+1. **헤더 섹션**: `companyDetail.slogan` → `company.summary`로 변경하여 한 줄 소개 표시
+2. **회사 전경**: `company.banner_image` → `company.company_image`로 변경하여 실제 업로드 이미지 표시
+3. **담당자 정보 추가**: sidebar에 "채용 담당자" 카드 신규 생성
+   - manager_department (부서)
+   - manager_name (담당자명)
+   - manager_email (이메일)
+   - manager_phone (전화번호)
+4. **회사 소개 정리**: vision, mission 필드 제거 (DB에 없음), description만 표시
+5. **companyDetail 객체 정리**: 사용하지 않는 slogan, vision, mission 필드 제거
+6. **openPositions 계산**: 실제 companyJobs.length 기반으로 계산
+
+**이유**:
+- 사용자 피드백: "너가 더미 데이터 내용과 섹션을 지우기만 했지, 실제로 기업이 입력한 데이터를 추가하지는 않은 것 같아"
+- 데이터는 fetch되지만 표시되지 않는 문제 발견
+- 필드명 불일치 (summary vs slogan, company_image vs banner_image)
+- 담당자 정보가 완전히 누락되어 있었음
+
+**문제 원인 분석**:
+- DB에서는 `summary` 필드로 저장되는데 코드는 `companyDetail.slogan` 참조
+- DB에서는 `company_image` 필드로 저장되는데 코드는 `banner_image` 참조
+- manager_* 필드들은 fetch되었으나 UI에 표시 안 됨
+- vision, mission 필드는 대시보드에서 입력받지 않는데 코드에 참조되어 있었음
+
+**영향**:
+- 기업이 대시보드에서 입력한 데이터가 모두 공개 페이지에 표시됨
+- 페이지가 더 이상 빈약하지 않고 실제 입력 정보로 채워짐
+- 담당자 연락 정보 제공으로 지원자가 문의 가능
+
+---
+
+#### 🐛 기업 상세 페이지 채용공고 섹션 안전성 강화
+**[FIX]** salary, applicants, tags 필드 조건부 렌더링 추가로 런타임 에러 방지
+
+**변경 파일 (1개)**:
+- `app/companies/[id]/page.tsx` (649줄)
+
+**변경 내용**:
+- job.salary?.min, job.salary?.max 옵셔널 체이닝 추가
+- job.applicants undefined 체크 추가
+- job.tags 배열 존재 여부 체크 추가
+- 데이터 없을 때 해당 필드만 숨김 처리
+
+**이유**:
+- 런타임 에러: `Cannot read properties of undefined (reading 'min')`
+- 일부 채용공고에 salary, applicants, tags 데이터가 없을 수 있음
+
+**영향**:
+- 데이터 불완전한 채용공고도 정상 표시
+- 런타임 에러 방지
+
+---
+
+#### 🎨 기업 상세 페이지를 단일 스크롤 페이지로 완전 재설계
+**[REFACTOR]** 탭 네비게이션 제거하고 섹션 기반 단일 페이지 레이아웃으로 전환
+
+**변경 파일 (1개)**:
+- `app/companies/[id]/page.tsx` (971줄 → 641줄, **-330줄 / 34% 감소**)
+
+**변경 내용**:
+
+1. **탭 네비게이션 완전 제거**
+   - Sticky 탭 바 제거 (347-367줄)
+   - activeTab state 제거
+   - 탭 클릭 핸들러 제거
+   ```typescript
+   // BEFORE: 탭 기반 네비게이션
+   <section className="bg-white border-b sticky top-16 z-30">
+     <button onClick={() => setActiveTab(tab.id)}>...</button>
+   </section>
+   {activeTab === 'overview' && <div>...</div>}
+
+   // AFTER: 단일 스크롤 페이지
+   <section className="py-8">
+     {/* Company Overview Section */}
+     {/* Benefits Section */}
+     {/* Jobs Section */}
+   </section>
+   ```
+
+2. **섹션 기반 레이아웃으로 전환**
+   - ✅ **기업 개요 섹션** (회사 소개, 위치, 통계)
+   - ✅ **복리후생 섹션** (basic_benefits 기반)
+   - ✅ **채용공고 섹션** (현재 모집중인 포지션)
+   - 모든 섹션이 한 페이지에 순차적으로 표시
+   - 위에서 아래로 스크롤하며 모든 정보 확인 가능
+
+3. **조건부 렌더링 모두 제거**
+   - `{activeTab === 'overview' && ...}` 제거
+   - `{activeTab === 'benefits' && ...}` 제거
+   - `{activeTab === 'jobs' && ...}` 제거
+   - 모든 섹션이 항상 표시 (데이터 없으면 빈 상태 UI)
+
+4. **불필요한 더미 데이터 제거**
+   - 리뷰, 뉴스, 기업문화 관련 모든 데이터 제거
+   - 헤더 섹션 리뷰 점수 표시 제거
+   - companyDetail 객체에서 reviews, news 필드 제거
+
+**이유**:
+- 사용자 요청: "탭 형태 말고 하나의 완성된 상세페이지 느낌으로 구현"
+- 일반적인 회사 상세 페이지 UX 패턴 (링크드인, 잡코리아 등과 유사)
+- 사용자가 전체 정보를 한눈에 파악하기 쉬움
+- 탭 전환 없이 스크롤만으로 모든 정보 접근 가능
+
+**영향**:
+- 탭 네비게이션 완전 제거 → 단일 스크롤 페이지
+- 코드 330줄 감소 (34% 감소)
+- UX 개선: 정보 탐색이 더 직관적
+- 모바일 친화적: 스크롤 기반 네비게이션
+- 유지보수성 향상: 조건부 렌더링 로직 제거
+
+---
+
+#### 🧹 기업 상세 페이지 하드코딩 더미 데이터 전면 제거 (이전 작업)
+**[REFACTOR]** 기업 상세 페이지의 모든 하드코딩 더미 데이터 제거 및 조건부 렌더링 적용
+
+**변경 파일 (1개)**:
+- `app/companies/[id]/page.tsx` (971줄 → 959줄)
+
+**변경 내용**:
+
+1. **companyDetail 객체 구조 변경 (187-236줄)**
+   - 모든 더미 fallback 값 제거
+   - 실제 DB 데이터만 사용하도록 수정
+   ```typescript
+   // BEFORE (더미 데이터 포함):
+   slogan: company.slogan || "혁신과 도전으로 더 나은 세상을 만들어갑니다"
+   vision: company.vision || "글로벌 시장을 선도하는 혁신 기업"
+
+   // AFTER (더미 데이터 제거):
+   slogan: company.slogan  // 데이터 없으면 undefined
+   vision: company.vision   // 데이터 없으면 undefined
+   ```
+
+2. **회사 헤더 섹션 조건부 렌더링 (287-328줄)**
+   - 영문 이름, 슬로건, 설립연도, 산업군 - 데이터 있을 때만 표시
+   ```typescript
+   {company.name_en && <span>{company.name_en}</span>}
+   {companyDetail.slogan && <p>{companyDetail.slogan}</p>}
+   {companyDetail.founded && <span>설립 {companyDetail.founded}년</span>}
+   ```
+
+3. **개요 탭 회사 소개 섹션 조건부 렌더링 (397-424줄)**
+   - 비전, 미션, 설명 - 하나라도 있을 때만 전체 섹션 표시
+   - 더미 텍스트 추가 제거
+   ```typescript
+   {(companyDetail.vision || companyDetail.mission || company.description) && (
+     <div className="bg-white rounded-xl shadow-sm p-6">...</div>
+   )}
+   ```
+
+4. **회사 정보 사이드바 조건부 렌더링 (470-515줄)**
+   - CEO, 설립연도, 직원수, 웹사이트, 매출, 투자 - 각 필드 개별 조건부 렌더링
+   ```typescript
+   {companyDetail.ceo && <div>대표: {companyDetail.ceo}</div>}
+   {companyDetail.website && <a href={companyDetail.website}>...</a>}
+   ```
+
+5. **기업문화 탭 대폭 수정 (545-612줄)**
+   - 하드코딩된 "핵심 가치" 배열 제거 (['혁신', '도전', ...])
+   - 하드코딩된 "일하는 방식" 텍스트 제거
+   - 하드코딩된 "직원들의 목소리" 후기 완전 제거
+   - 빈 상태 UI 추가
+   ```typescript
+   // BEFORE: 하드코딩된 더미 가치들
+   const dummyValues = ['혁신', '도전', '협업', ...]
+
+   // AFTER: DB 데이터만 표시, 없으면 빈 상태
+   {companyDetail.culture.values.length === 0 &&
+    companyDetail.culture.perks.length === 0 && (
+     <div>기업 문화 정보 준비중</div>
+   )}
+   ```
+
+6. **기업문화 사이드바 키워드 제거 (598-612줄)**
+   - 하드코딩된 키워드 배열 제거 (['자율성', '성장', '협업', ...])
+   - 실제 복지 데이터가 있을 때만 사이드바 표시
+
+7. **리뷰 탭 사이드바 통계 제거 (770-780줄)**
+   - 더미 "CEO 지지율 88%" 제거
+   - 더미 "성장 가능성 95%" 제거
+   - 하드코딩된 키워드 배열 제거 (['워라밸', '성장', ...])
+   - 실제 추천율 데이터만 표시
+
+8. **뉴스 탭 사이드바 통계 제거 (912-927줄)**
+   - 더미 "이번 달 12건" 제거
+   - 더미 언론사 리스트 제거 (['조선일보', '한국경제', ...])
+   - 실제 뉴스 개수만 표시
+
+9. **하단 CTA 섹션 조건부 렌더링 (934-956줄)**
+   - 하드코딩된 홍보 문구 제거 ("우리는 항상 열정적이고...")
+   - 채용공고가 있을 때만 CTA 섹션 표시
+   ```typescript
+   {companyDetail.openPositions > 0 && (
+     <section>채용공고 보기</section>
+   )}
+   ```
+
+**이유**:
+- 사용자 요청: "하드코딩 더미 데이터 전부 없애줘"
+- 대시보드에서 입력한 실제 데이터만 표시하도록 통일
+- 데이터 없는 경우 빈 상태 표시 또는 섹션 숨김 처리
+
+**영향**:
+- 기업 상세 페이지에서 더미 데이터 완전 제거
+- 실제 DB 데이터만 표시 (Graceful Degradation)
+- 데이터 없는 기업도 깔끔하게 표시됨
+- 12줄 코드 감소 (971줄 → 959줄)
+
+---
+
+#### 🎨 공고 카드 구조 통일 + 회사 전경 이미지 표시
+**[UPDATE/FIX]** 메인/Jobs 페이지 카드 구조 통일 및 회사 전경 이미지(company_image) 표시
+
+**변경 파일 (5개)**:
+- `components/JobCard.tsx` (148줄)
+- `components/JobGridCard.tsx` (194줄 → 222줄)
+- `app/jobs/page.tsx` (453줄)
+- `lib/supabase/public-job-service.ts` (234줄 → 324줄)
+- `app/page.tsx` (371줄)
+
+**변경 내용**:
+
+1. **JobCard (메인 페이지)**
+   - "지원자 0" 표시 제거 (Users 아이콘 import 제거)
+   - 회사 전경 이미지를 카드 하단에 표시 (h-32, 128px)
+   - 전경 이미지 없으면 그라데이션 배경으로 대체
+   ```typescript
+   // BEFORE: 조건부 렌더링
+   {job.company.bannerImage && <div>...</div>}
+
+   // AFTER: 항상 표시 (높이 유지)
+   <div className="h-32">
+     {job.company.bannerImage ? (
+       <Image src={job.company.bannerImage} ... />
+     ) : (
+       <div className="bg-gradient-to-r from-gray-100 via-gray-50 to-gray-100" />
+     )}
+   </div>
+   ```
+
+2. **JobGridCard (/jobs 페이지)**
+   - 회사 로고 이미지 표시 (logo 필드 추가)
+   - Hover 시 회사 전경 이미지를 펼침 영역 상단에 표시
+   - 급여 정보를 전경 이미지 위로 이동
+   ```typescript
+   // Hover 영역 순서
+   1. 급여 (DollarSign)
+   2. 회사 전경 이미지 (h-24, 96px)
+   3. 스킬 태그
+   4. 바로 지원 버튼
+   ```
+
+3. **DB 필드명 수정**
+   - `banner_image` → `company_image` (실제 DB 필드명과 일치)
+   - PublicJob 타입 업데이트
+   - Supabase 쿼리 3곳 수정 (getActiveJobs, getFeaturedJobs, getPremiumJobs)
+   ```typescript
+   // BEFORE
+   companies (id, name, name_en, logo, banner_image, ...)
+   bannerImage: job.company.banner_image
+
+   // AFTER
+   companies (id, name, name_en, logo, company_image, ...)
+   bannerImage: job.company.company_image
+   ```
+
+4. **app/jobs/page.tsx**
+   - JobData 인터페이스에 `company_image` 추가
+   - transformJobData에서 `companyImage` 전달
+   - Supabase 쿼리에 `company_image` 추가
+
+**이유**:
+- 메인 페이지와 /jobs 페이지 카드 구조가 달라 일관성 부족
+- DB에 업로드된 회사 전경 이미지(company_image)를 표시하지 않음
+- DB 필드명 불일치로 이미지가 null로 조회됨 (banner_image ≠ company_image)
+- 전경 이미지 없을 때 카드 높이가 달라 레이아웃 불안정
+
+**영향**:
+- 메인/Jobs 페이지 카드 구조 완전히 통일 ✅
+- 회사 전경 이미지가 모든 공고 카드에 표시 ✅
+- 전경 이미지 없어도 높이 유지 (그라데이션 배경) ✅
+- 광고 카드와 높이 일치 ✅
+- DB 쿼리 정상 작동 (company_image 필드 조회) ✅
+
+**디버깅 로그**:
+- 개발 중 추가한 디버깅 로그 모두 제거
+- `📊 Raw jobs from Supabase`, `🖼️ Company Image Debug` 제거
+
+---
+
 ### 2025-10-20
 
 #### 🎨 공고 카드 UI 정리 (마감 기한 중복 제거 + 조회수/지원자 아이콘 제거)

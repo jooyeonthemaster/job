@@ -1,12 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import JobCard from '@/components/JobCard';
 import CompanyCard from '@/components/CompanyCard';
 import { jobs as dummyJobs, companies } from '@/lib/data';
 import { getActiveJobs } from '@/lib/supabase/public-job-service';
 import { Job } from '@/types';
+import { useAuth } from '@/contexts/AuthContext_Supabase';
 import {
   ArrowRight,
   Sparkles,
@@ -19,33 +21,36 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 
 export default function Home() {
+  const router = useRouter();
+  const { isAuthenticated, userProfile } = useAuth();
   const [selectedCategory, setSelectedCategory] = useState('ai-match');
   const [topJobs, setTopJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
 
   // PublicJob → Job 변환 함수
-  const convertToJob = (publicJob: any): Job => ({
-    id: publicJob.id,
-    title: publicJob.title,
-    titleEn: publicJob.title_en,
-    companyId: publicJob.company.id,
-    company: {
-      id: publicJob.company.id,
-      name: publicJob.company.name,
-      nameEn: publicJob.company.name_en || publicJob.company.name,
-      logo: publicJob.company.logo || '',
-      bannerImage: '',
-      industry: publicJob.company.industry || 'Technology',
-      location: publicJob.company.location || publicJob.location,
-      employeeCount: '100+',
-      description: '',
-      rating: 0,
-      reviewCount: 0,
-      openPositions: 0,
-      benefits: [],
-      techStack: [],
-      established: ''
-    },
+  const convertToJob = (publicJob: any): Job => {
+    return {
+      id: publicJob.id,
+      title: publicJob.title,
+      titleEn: publicJob.title_en,
+      companyId: publicJob.company.id,
+      company: {
+        id: publicJob.company.id,
+        name: publicJob.company.name,
+        nameEn: publicJob.company.name_en || publicJob.company.name,
+        logo: publicJob.company.logo || '',
+        bannerImage: publicJob.company.company_image || '',
+        industry: publicJob.company.industry || 'Technology',
+        location: publicJob.company.location || publicJob.location,
+        employeeCount: '100+',
+        description: '',
+        rating: 0,
+        reviewCount: 0,
+        openPositions: 0,
+        benefits: [],
+        techStack: [],
+        established: ''
+      },
     location: publicJob.location,
     department: publicJob.department,
     employmentType: publicJob.employment_type,
@@ -57,20 +62,21 @@ export default function Home() {
       negotiable: publicJob.salary_negotiable || false
     },
     visaSponsorship: publicJob.visa_sponsorship || false,
-    koreanLevel: publicJob.korean_level || 'NONE',
+    languageRequirements: {
+      korean: publicJob.korean_level || 'NONE',
+      english: 'NONE'
+    },
     deadline: publicJob.deadline || '',
+    benefits: [],
+    postedAt: publicJob.posted_at,
     views: publicJob.views || 0,
     applicants: publicJob.applicants || 0,
-    postedAt: publicJob.posted_at,
-    isNew: false,
-    isFeatured: publicJob.posting_tier === 'premium',
     tags: [],
-    skills: [],
     description: '',
-    responsibilities: [],
     requirements: [],
     preferredQualifications: []
-  });
+  };
+  };
 
   // 실제 공고 로드 (display_position 기준)
   useEffect(() => {
@@ -94,6 +100,20 @@ export default function Home() {
 
   // 메인 페이지는 public이므로 AuthContext 로딩 상태를 무시
   // (AuthContext가 초기화 중이어도 페이지는 정상 표시)
+
+  // 광고 카드 클릭 핸들러
+  const handleAdClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (!isAuthenticated) {
+      router.push('/login/company');
+    } else if (userProfile?.userType === 'company') {
+      router.push('/company-dashboard/jobs/create');
+    } else {
+      // 개인 회원이면 기업 대시보드 접근 불가
+      alert('기업 회원만 접근할 수 있습니다.');
+      router.push('/login/company');
+    }
+  };
 
   const jobCategories = [
     { id: 'ai-match', label: 'AI 맞춤 채용공고', icon: Sparkles, color: 'primary', count: 125 },
@@ -150,7 +170,7 @@ export default function Home() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: 0.2 }}
             >
-              <Link href="/company-dashboard/jobs/create" className="block group h-full">
+              <button onClick={handleAdClick} className="block group h-full w-full text-left">
                 <div className="bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden h-full flex flex-col relative border-2 border-gray-100">
                   {/* 상단 그라데이션 액센트 */}
                   <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary-400 via-primary-600 to-cyan-500" />
@@ -210,7 +230,7 @@ export default function Home() {
                     </div>
                   </div>
                 </div>
-              </Link>
+              </button>
             </motion.div>
             </div>
           )}

@@ -46,11 +46,14 @@ export interface Company {
   manager_name?: string;
   manager_position?: string;
   manager_phone?: string;
-  
+
+  // 복지 정보
+  basic_benefits?: any[];
+
   // 상태 정보
   status: 'active' | 'pending' | 'inactive';
   profile_completed?: boolean;
-  
+
   // 메타데이터
   created_at?: string;
   updated_at?: string;
@@ -70,7 +73,7 @@ export interface Job {
   location: string;
   
   // 상태 정보
-  status: 'active' | 'closed';
+  status: 'active' | 'closed' | 'pending_approval' | 'draft';
   deadline: string;
   
   // 통계 정보
@@ -80,9 +83,18 @@ export interface Job {
   // 태그
   tags?: string[];
   
+  // 과금 정보
+  posting_tier?: string;
+  payment_status?: string;
+  
+  // 노출 위치
+  display_position?: string | null;
+  display_priority?: number | null;
+  
   // 메타데이터
   created_at: string;
   updated_at?: string;
+  posted_at?: string;
 }
 
 /**
