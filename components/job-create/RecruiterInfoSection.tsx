@@ -1,8 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { User, Mail, Phone, Briefcase } from 'lucide-react';
+import { User, Mail, Briefcase } from 'lucide-react';
 import FormInput from '@/components/ui/form/FormInput';
+import PhoneInput from '@/components/ui/form/PhoneInput';
 import { supabase } from '@/lib/supabase/config';
 
 interface RecruiterInfo {
@@ -163,14 +164,11 @@ export default function RecruiterInfoSection({
               error={errors.recruiterEmail}
             />
 
-            {/* 전화번호 */}
-            <FormInput
+            {/* 전화번호 (3개 입력칸) */}
+            <PhoneInput
               label="전화번호"
-              type="tel"
               value={formData.recruiterPhone}
               onChange={(value) => onUpdate('recruiterPhone', value)}
-              placeholder="예: 02-1234-5678"
-              icon={Phone}
               error={errors.recruiterPhone}
             />
           </div>
