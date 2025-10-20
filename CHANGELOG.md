@@ -10,6 +10,58 @@
 
 ### 2025-10-20
 
+#### 🐛 메인 페이지 null company 에러 수정
+**[FIX]** 회사 정보 없는 공고로 인한 TypeError 방지
+
+**변경 파일 (1개)**:
+- `lib/supabase/public-job-service.ts` (244줄 → 248줄)
+
+**에러**:
+```
+TypeError: Cannot read properties of null (reading 'id')
+at transformToJobCardFormat (lib\supabase\public-job-service.ts:125:23)
+```
+
+**원인**:
+- Supabase 조인 시 `job.companies`가 `null`인 경우 발생
+- 회사가 삭제되었거나 RLS 정책으로 차단된 공고
+- `transformToJobCardFormat`에서 `job.company.id` 접근 시 에러
+
+**해결**:
+```typescript
+// BEFORE: 필터링 없이 모든 공고 변환 → 1개라도 문제면 전체 에러
+const publicJobs = (jobs || []).map((job: any) => ({
+  ...job,
+  company: job.companies
+})) as PublicJob[];
+
+// AFTER: 회사 정보 없는 공고 필터링 → 정상 공고만 표시
+const publicJobs = (jobs || [])
+  .filter((job: any) => {
+    if (!job.companies) {
+      console.warn('⚠️ Job without company data (skipped):', {
+        id: job.id,
+        title: job.title,
+        company_id: job.company_id
+      });
+      return false;
+    }
+    return true;
+  })
+  .map((job: any) => ({
+    ...job,
+    company: job.companies
+  })) as PublicJob[];
+```
+
+**개선 효과**:
+- 부분 장애 허용 (graceful degradation)
+- 문제 있는 공고만 제외, 나머지는 정상 표시
+- 디버깅을 위한 경고 로그 추가
+- 사용자는 정상 공고를 계속 볼 수 있음
+
+---
+
 #### 🎉 /jobs 페이지 활성화 + 그리드 편집기 완전 리뉴얼
 **[ADD/REFACTOR]** 실제 /jobs 페이지 구조 기반 그리드 레이아웃 관리 시스템
 
