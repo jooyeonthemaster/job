@@ -10,6 +10,83 @@
 
 ### 2025-10-20
 
+#### 🎉 /jobs 페이지 활성화 + 그리드 편집기 완전 리뉴얼
+**[ADD/REFACTOR]** 실제 /jobs 페이지 구조 기반 그리드 레이아웃 관리 시스템
+
+**변경 파일 (3개)**:
+- `app/jobs/page.tsx` (신규: 550줄, Firebase → Supabase 마이그레이션)
+- `components/admin/JobGridLayoutEditor.tsx` (640줄 → 820줄, 완전 재작성)
+- `components/admin/JobGridLayoutEditor.tsx.old` (기존 파일 백업)
+
+**주요 변경사항**:
+
+**1. /jobs 페이지 재구현 (404 에러 해결)**
+- Firebase 비활성화 파일 → Supabase 버전으로 마이그레이션
+- **3개 섹션 구조 유지**:
+  - Top: 프리미엄/탑 공고 (4열 그리드, 최대 20개, `size="large"`)
+  - Middle: 추천 공고 (5열 그리드, 최대 25개, `size="medium"`)
+  - Bottom: 일반 공고 (6열 그리드, 최대 30개, `size="small"`)
+- DB 쿼리: `display_position`, `display_priority`로 정렬
+- JobGridCard 컴포넌트 활용 (기존 컴포넌트 재사용)
+
+**2. 그리드 레이아웃 편집기 완전 리뉴얼**
+- **실제 /jobs 페이지 미리보기** 형태로 변경
+- 3개 섹션 각각 독립 편집:
+  ```typescript
+  const [topSlots, setTopSlots] = useState<GridSlot[]>([]);      // 20개 (4x5)
+  const [middleSlots, setMiddleSlots] = useState<GridSlot[]>([]); // 25개 (5x5)
+  const [bottomSlots, setBottomSlots] = useState<GridSlot[]>([]); // 30개 (6x5)
+  ```
+- **금액대별 그리드 차이 시각화**:
+  - Top: 큰 카드 (`h-32`), 4열
+  - Middle: 중간 카드 (`h-28`), 5열
+  - Bottom: 작은 카드 (`h-24`), 6열
+- 클릭-할당 워크플로우 개선
+- 슬롯에서 공고 제거 기능 (클릭하면 미할당으로)
+- 검색 기능 유지
+
+**기술 구현**:
+```typescript
+// 섹션별 슬롯 클릭 핸들러
+const handleSlotClick = (
+  section: 'top' | 'middle' | 'bottom',
+  slotIndex: number
+) => {
+  // 기존 위치에서 제거 (모든 섹션 검색)
+  // 현재 슬롯 공고를 미할당으로
+  // 선택된 공고를 새 슬롯에 할당
+};
+
+// 일괄 저장 (75개 슬롯)
+await Promise.all([
+  ...topSlots.map(updatePosition),
+  ...middleSlots.map(updatePosition),
+  ...bottomSlots.map(updatePosition)
+]);
+```
+
+**UI 개선**:
+- 섹션별 헤더 (이모지 + 색상 구분)
+  - Top: 🔥 + 초록 그라데이션
+  - Middle: ⭐ + 중간 초록 그라데이션
+  - Bottom: 📋 + 어두운 초록 그라데이션
+- 슬롯 크기가 실제 /jobs 페이지와 동일
+- 미할당 공고 사이드바 (30% 너비)
+- 빈 슬롯: 점선 테두리, 슬롯 번호 표시
+
+**이유**:
+- 사용자 요구: "실제 /jobs 페이지에서 보이는 것처럼" 편집 필요
+- 기존 16개 슬롯은 실제 구조와 달라서 혼란
+- 금액대별로 그리드가 다르므로 (4/5/6열) 섹션별 편집 필수
+- /jobs 페이지 404 에러 해결 필요
+
+**영향**:
+- `/jobs` 페이지 활성화 (헤더 "채용공고" 탭 정상 작동)
+- 관리자가 실제 페이지와 동일한 구조로 공고 배치 가능
+- 기존 개별 할당 모달은 그대로 유지 (하위 호환성)
+
+---
+
 #### ⚡ 그리드 레이아웃 편집기 성능 최적화
 **[UPDATE]** 페이지네이션 대비 및 검색 기능 추가
 

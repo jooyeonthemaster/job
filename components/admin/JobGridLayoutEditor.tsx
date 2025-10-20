@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X, Save, RotateCcw, Sparkles, TrendingUp, Grid3x3, Eye } from 'lucide-react';
+import { X, Save, RotateCcw, ChevronLeft, ChevronRight, Search } from 'lucide-react';
 import { type JobWithCompany } from '@/lib/supabase/admin-service';
 import { supabase } from '@/lib/supabase/config';
 
@@ -22,24 +22,31 @@ export default function JobGridLayoutEditor({
   onClose,
   onSuccess
 }: JobGridLayoutEditorProps) {
-  const [slots, setSlots] = useState<GridSlot[]>([]);
+  // 3개 섹션별 슬롯
+  const [topSlots, setTopSlots] = useState<GridSlot[]>([]);      // 20개 (4열 x 5행)
+  const [middleSlots, setMiddleSlots] = useState<GridSlot[]>([]); // 25개 (5열 x 5행)
+  const [bottomSlots, setBottomSlots] = useState<GridSlot[]>([]); // 30개 (6열 x 5행)
+
   const [unassignedJobs, setUnassignedJobs] = useState<JobWithCompany[]>([]);
   const [selectedJob, setSelectedJob] = useState<JobWithCompany | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
-  // 초기 데이터 로드
+  // 페이지네이션
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 75; // Top 20 + Middle 25 + Bottom 30
+
   useEffect(() => {
     if (isOpen) {
       loadData();
     }
-  }, [isOpen]);
+  }, [isOpen, currentPage]);
 
   const loadData = async () => {
     setLoading(true);
     try {
-      // 활성화되고 결제 완료된 공고만 DB에서 직접 필터링 (성능 최적화)
+      // 활성화되고 결제 완료된 공고만 DB에서 직접 필터링
       const { data: allJobs, error } = await supabase
         .from('jobs')
         .select(`
@@ -53,37 +60,36 @@ export default function JobGridLayoutEditor({
         `)
         .eq('status', 'active')
         .eq('payment_status', 'confirmed')
-        .order('created_at', { ascending: false })
-        .limit(100); // 최대 100개까지 (페이지네이션 대비)
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
 
       const activeJobs = (allJobs || []) as JobWithCompany[];
 
-      // 슬롯 초기화 (16개: top 4, middle 8, bottom 4)
-      const initialSlots: GridSlot[] = [];
-
-      // Top zone: 4 slots
-      for (let i = 0; i < 4; i++) {
-        initialSlots.push({
+      // Top 슬롯 초기화 (20개: 4열 x 5행)
+      const initialTopSlots: GridSlot[] = [];
+      for (let i = 0; i < 20; i++) {
+        initialTopSlots.push({
           position: 'top',
           priority: i + 1,
           job: null
         });
       }
 
-      // Middle zone: 8 slots (2 rows x 4 cols)
-      for (let i = 0; i < 8; i++) {
-        initialSlots.push({
+      // Middle 슬롯 초기화 (25개: 5열 x 5행)
+      const initialMiddleSlots: GridSlot[] = [];
+      for (let i = 0; i < 25; i++) {
+        initialMiddleSlots.push({
           position: 'middle',
           priority: i + 1,
           job: null
         });
       }
 
-      // Bottom zone: 4 slots
-      for (let i = 0; i < 4; i++) {
-        initialSlots.push({
+      // Bottom 슬롯 초기화 (30개: 6열 x 5행)
+      const initialBottomSlots: GridSlot[] = [];
+      for (let i = 0; i < 30; i++) {
+        initialBottomSlots.push({
           position: 'bottom',
           priority: i + 1,
           job: null
@@ -93,28 +99,42 @@ export default function JobGridLayoutEditor({
       // 기존 할당된 공고를 슬롯에 배치
       activeJobs.forEach(job => {
         if (job.display_position && job.display_priority) {
-          const slotIndex = initialSlots.findIndex(
+          let targetSlots: GridSlot[];
+
+          if (job.display_position === 'top') {
+            targetSlots = initialTopSlots;
+          } else if (job.display_position === 'middle') {
+            targetSlots = initialMiddleSlots;
+          } else {
+            targetSlots = initialBottomSlots;
+          }
+
+          const slotIndex = targetSlots.findIndex(
             slot =>
-              slot.position === job.display_position &&
               slot.priority === job.display_priority &&
               slot.job === null
           );
+
           if (slotIndex !== -1) {
-            initialSlots[slotIndex].job = job;
+            targetSlots[slotIndex].job = job;
           }
         }
       });
 
-      setSlots(initialSlots);
+      setTopSlots(initialTopSlots);
+      setMiddleSlots(initialMiddleSlots);
+      setBottomSlots(initialBottomSlots);
 
       // 할당 안 된 공고 목록
-      const assigned = initialSlots.filter(s => s.job !== null).map(s => s.job!.id);
-      setUnassignedJobs(activeJobs.filter(job => !assigned.includes(job.id)));
+      const allAssigned = [
+        ...initialTopSlots,
+        ...initialMiddleSlots,
+        ...initialBottomSlots
+      ]
+        .filter(s => s.job !== null)
+        .map(s => s.job!.id);
 
-      // 100개 이상이면 경고
-      if (activeJobs.length >= 100) {
-        console.warn('⚠️ 결제 완료 공고가 100개 이상입니다. 일부 공고가 표시되지 않을 수 있습니다.');
-      }
+      setUnassignedJobs(activeJobs.filter(job => !allAssigned.includes(job.id)));
     } catch (error) {
       console.error('Failed to load grid data:', error);
       alert('데이터 로딩에 실패했습니다.');
@@ -123,432 +143,368 @@ export default function JobGridLayoutEditor({
     }
   };
 
-  const handleSlotClick = (slotIndex: number) => {
+  const handleSlotClick = (section: 'top' | 'middle' | 'bottom', slotIndex: number) => {
     if (!selectedJob) return;
 
-    const newSlots = [...slots];
+    const allSlots = [...topSlots, ...middleSlots, ...bottomSlots];
+    let targetSlots: GridSlot[];
+    let setTargetSlots: React.Dispatch<React.SetStateAction<GridSlot[]>>;
 
-    // 기존에 선택한 공고가 다른 슬롯에 있으면 제거
-    const existingSlotIndex = newSlots.findIndex(s => s.job?.id === selectedJob.id);
-    if (existingSlotIndex !== -1) {
-      newSlots[existingSlotIndex].job = null;
+    if (section === 'top') {
+      targetSlots = [...topSlots];
+      setTargetSlots = setTopSlots;
+    } else if (section === 'middle') {
+      targetSlots = [...middleSlots];
+      setTargetSlots = setMiddleSlots;
+    } else {
+      targetSlots = [...bottomSlots];
+      setTargetSlots = setBottomSlots;
     }
 
-    // 현재 슬롯에 이미 공고가 있으면 unassigned로 이동
-    if (newSlots[slotIndex].job) {
-      setUnassignedJobs(prev => [...prev, newSlots[slotIndex].job!]);
+    // 기존 위치에서 제거
+    const existingTopIndex = topSlots.findIndex(s => s.job?.id === selectedJob.id);
+    const existingMiddleIndex = middleSlots.findIndex(s => s.job?.id === selectedJob.id);
+    const existingBottomIndex = bottomSlots.findIndex(s => s.job?.id === selectedJob.id);
+
+    if (existingTopIndex !== -1) {
+      const newTopSlots = [...topSlots];
+      newTopSlots[existingTopIndex].job = null;
+      setTopSlots(newTopSlots);
+    }
+    if (existingMiddleIndex !== -1) {
+      const newMiddleSlots = [...middleSlots];
+      newMiddleSlots[existingMiddleIndex].job = null;
+      setMiddleSlots(newMiddleSlots);
+    }
+    if (existingBottomIndex !== -1) {
+      const newBottomSlots = [...bottomSlots];
+      newBottomSlots[existingBottomIndex].job = null;
+      setBottomSlots(newBottomSlots);
     }
 
-    // 새 공고 할당
-    newSlots[slotIndex].job = selectedJob;
-    setSlots(newSlots);
+    // 현재 슬롯에 있는 공고를 미할당으로 이동
+    if (targetSlots[slotIndex].job) {
+      setUnassignedJobs(prev => [...prev, targetSlots[slotIndex].job!]);
+    }
 
-    // unassigned에서 제거
+    // 새 위치에 할당
+    targetSlots[slotIndex].job = selectedJob;
+    setTargetSlots(targetSlots);
+
+    // 선택된 공고를 미할당 목록에서 제거
     setUnassignedJobs(prev => prev.filter(j => j.id !== selectedJob.id));
     setSelectedJob(null);
   };
 
-  const handleRemoveFromSlot = (slotIndex: number, e: React.MouseEvent) => {
-    e.stopPropagation();
-    const newSlots = [...slots];
-    const removedJob = newSlots[slotIndex].job;
+  const handleRemoveFromSlot = (section: 'top' | 'middle' | 'bottom', slotIndex: number) => {
+    let targetSlots: GridSlot[];
+    let setTargetSlots: React.Dispatch<React.SetStateAction<GridSlot[]>>;
 
-    if (removedJob) {
-      newSlots[slotIndex].job = null;
-      setSlots(newSlots);
-      setUnassignedJobs(prev => [...prev, removedJob]);
+    if (section === 'top') {
+      targetSlots = [...topSlots];
+      setTargetSlots = setTopSlots;
+    } else if (section === 'middle') {
+      targetSlots = [...middleSlots];
+      setTargetSlots = setMiddleSlots;
+    } else {
+      targetSlots = [...bottomSlots];
+      setTargetSlots = setBottomSlots;
+    }
+
+    const job = targetSlots[slotIndex].job;
+    if (job) {
+      setUnassignedJobs(prev => [...prev, job]);
+      targetSlots[slotIndex].job = null;
+      setTargetSlots(targetSlots);
     }
   };
 
-  const handleSave = async () => {
+  const handleSaveAll = async () => {
     setSaving(true);
     try {
+      const allSlots = [
+        ...topSlots.map(s => ({ ...s, section: 'top' as const })),
+        ...middleSlots.map(s => ({ ...s, section: 'middle' as const })),
+        ...bottomSlots.map(s => ({ ...s, section: 'bottom' as const }))
+      ];
+
+      const changedSlots = allSlots.filter(slot => slot.job !== null);
+
       // 모든 공고의 위치를 일괄 업데이트
-      const updates = slots
-        .filter(slot => slot.job !== null)
-        .map(slot => ({
-          id: slot.job!.id,
-          display_position: slot.position,
-          display_priority: slot.priority,
-          display_assigned_at: new Date().toISOString(),
-        }));
-
-      // 할당 해제된 공고들
-      const unassigns = unassignedJobs.map(job => ({
-        id: job.id,
-        display_position: null,
-        display_priority: null,
-        display_assigned_at: null,
-      }));
-
-      // 일괄 업데이트
-      for (const update of [...updates, ...unassigns]) {
-        await supabase
+      const updatePromises = changedSlots.map(slot => {
+        return supabase
           .from('jobs')
           .update({
-            display_position: update.display_position,
-            display_priority: update.display_priority,
-            display_assigned_at: update.display_assigned_at,
-            updated_at: new Date().toISOString(),
+            display_position: slot.position,
+            display_priority: slot.priority
           })
-          .eq('id', update.id);
-      }
+          .eq('id', slot.job!.id);
+      });
 
-      alert('✅ 공고 배치가 저장되었습니다!');
+      // 할당 해제된 공고들의 display_position을 null로
+      const unassignPromises = unassignedJobs.map(job => {
+        return supabase
+          .from('jobs')
+          .update({
+            display_position: null,
+            display_priority: null
+          })
+          .eq('id', job.id);
+      });
+
+      await Promise.all([...updatePromises, ...unassignPromises]);
+
+      alert('레이아웃이 저장되었습니다!');
       onSuccess();
       onClose();
     } catch (error) {
       console.error('Failed to save layout:', error);
-      alert('저장에 실패했습니다.');
+      alert('저장에 실패했습니다: ' + (error as Error).message);
     } finally {
       setSaving(false);
     }
   };
 
+  const handleReset = () => {
+    if (confirm('현재 변경사항을 모두 취소하고 초기화하시겠습니까?')) {
+      loadData();
+      setSelectedJob(null);
+    }
+  };
+
   const getTierBadge = (tier: string) => {
     if (tier === 'premium') {
-      return (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-100 text-amber-700 text-xs font-medium rounded">
-          <Sparkles className="w-3 h-3" />
-          Premium
-        </span>
-      );
+      return <span className="px-1.5 py-0.5 bg-amber-100 text-amber-700 text-[10px] font-bold rounded">프리미엄</span>;
     } else if (tier === 'top') {
-      return (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-medium rounded">
-          <TrendingUp className="w-3 h-3" />
-          Top
-        </span>
-      );
+      return <span className="px-1.5 py-0.5 bg-blue-100 text-blue-700 text-[10px] font-bold rounded">탑</span>;
     } else {
-      return (
-        <span className="px-2 py-0.5 bg-gray-100 text-gray-700 text-xs font-medium rounded">
-          Standard
-        </span>
-      );
+      return <span className="px-1.5 py-0.5 bg-gray-100 text-gray-700 text-[10px] font-bold rounded">일반</span>;
     }
+  };
+
+  const renderSlot = (slot: GridSlot, section: 'top' | 'middle' | 'bottom', index: number, size: 'large' | 'medium' | 'small') => {
+    const hasJob = !!slot.job;
+    const isSelected = selectedJob?.id === slot.job?.id;
+
+    const sizeClasses = {
+      large: 'h-32',
+      medium: 'h-28',
+      small: 'h-24'
+    };
+
+    return (
+      <button
+        key={`${section}-${index}`}
+        onClick={() => hasJob ? handleRemoveFromSlot(section, index) : handleSlotClick(section, index)}
+        className={`
+          ${sizeClasses[size]} rounded-lg border-2 transition-all relative overflow-hidden
+          ${hasJob
+            ? 'bg-white border-gray-200 hover:border-red-400 hover:shadow-md'
+            : 'border-dashed border-gray-300 bg-gray-50 hover:border-primary-500 hover:bg-primary-50'
+          }
+          ${isSelected ? 'ring-2 ring-primary-500' : ''}
+        `}
+      >
+        {hasJob ? (
+          <div className="p-2 h-full flex flex-col">
+            <div className="flex items-start justify-between mb-1">
+              {getTierBadge(slot.job!.posting_tier)}
+              <span className="text-[10px] text-gray-400">#{slot.priority}</span>
+            </div>
+            <p className="text-xs font-medium text-gray-900 line-clamp-2 mb-1 text-left">
+              {slot.job!.title}
+            </p>
+            <p className="text-[10px] text-gray-600 line-clamp-1 text-left">
+              {slot.job!.companies?.name}
+            </p>
+            <div className="mt-auto pt-1">
+              <div className="text-[10px] text-red-600 font-medium opacity-0 group-hover:opacity-100">
+                클릭하여 제거
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="h-full flex flex-col items-center justify-center text-gray-400">
+            <span className="text-[10px] font-medium">#{slot.priority}</span>
+            <span className="text-[9px]">빈 슬롯</span>
+          </div>
+        )}
+      </button>
+    );
   };
 
   if (!isOpen) return null;
 
-  if (loading) {
-    return (
-      <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
-        <div className="bg-white rounded-xl p-8">
-          <div className="w-12 h-12 border-4 border-primary-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">레이아웃 로딩 중...</p>
-        </div>
-      </div>
-    );
-  }
-
-  const topSlots = slots.filter(s => s.position === 'top');
-  const middleSlots = slots.filter(s => s.position === 'middle');
-  const bottomSlots = slots.filter(s => s.position === 'bottom');
-
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 overflow-y-auto">
-      <div className="min-h-screen p-4 flex items-start justify-center">
-        <div className="bg-white rounded-xl w-full max-w-7xl my-8">
-          {/* Header */}
-          <div className="border-b border-gray-200 px-6 py-4 flex items-center justify-between sticky top-0 bg-white rounded-t-xl z-10">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-primary-600 to-cyan-600 rounded-lg flex items-center justify-center">
-                <Grid3x3 className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <h2 className="text-xl font-bold text-gray-900">공고 배치 에디터</h2>
-                <p className="text-sm text-gray-600">클릭하여 공고를 배치하세요</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={loadData}
-                className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors font-medium flex items-center gap-2"
-              >
-                <RotateCcw className="w-4 h-4" />
-                초기화
-              </button>
-              <button
-                onClick={handleSave}
-                disabled={saving}
-                className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium flex items-center gap-2 disabled:opacity-50"
-              >
-                <Save className="w-4 h-4" />
-                {saving ? '저장 중...' : '저장하기'}
-              </button>
-              <button
-                onClick={onClose}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <X className="w-5 h-5 text-gray-600" />
-              </button>
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-[95vw] max-h-[95vh] flex flex-col">
+        {/* Header */}
+        <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between sticky top-0 bg-white z-10">
+          <div>
+            <h2 className="text-xl font-bold text-gray-900">
+              채용공고 그리드 레이아웃 편집기
+            </h2>
+            <p className="text-sm text-gray-600 mt-1">
+              실제 /jobs 페이지에 표시되는 공고 위치를 관리합니다
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleReset}
+              disabled={saving}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 disabled:opacity-50 flex items-center gap-2"
+            >
+              <RotateCcw className="w-4 h-4" />
+              초기화
+            </button>
+            <button
+              onClick={handleSaveAll}
+              disabled={saving}
+              className="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 disabled:opacity-50 flex items-center gap-2"
+            >
+              {saving ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  저장 중...
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4" />
+                  모두 저장
+                </>
+              )}
+            </button>
+            <button
+              onClick={onClose}
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+
+        {loading ? (
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-center">
+              <div className="w-12 h-12 border-4 border-primary-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+              <p className="text-gray-600">레이아웃 로딩 중...</p>
             </div>
           </div>
-
-          {/* Content */}
-          <div className="flex gap-6 p-6">
-            {/* Grid Layout - 70% */}
-            <div className="flex-1 space-y-6">
-              {/* Top Zone */}
-              <div>
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-sm font-semibold text-gray-900">🔴 최상단 영역</h3>
-                  <span className="text-xs text-gray-500">Premium / Top 공고 전용</span>
+        ) : (
+          <div className="flex-1 overflow-hidden flex">
+            {/* 메인 그리드 영역 (70%) */}
+            <div className="flex-1 overflow-y-auto p-6">
+              {/* Top 섹션 - 4열 그리드 */}
+              <div className="mb-12">
+                <div className="bg-gradient-to-r from-emerald-700 to-emerald-600 rounded-xl p-4 mb-4">
+                  <h3 className="text-white font-bold text-lg flex items-center gap-2">
+                    <span>🔥</span>
+                    Top 섹션 (프리미엄/탑 공고)
+                    <span className="text-sm font-normal text-white/80">- 4열 그리드, 최대 20개</span>
+                  </h3>
                 </div>
                 <div className="grid grid-cols-4 gap-3">
-                  {topSlots.map((slot, index) => (
-                    <div
-                      key={`top-${index}`}
-                      onClick={() => handleSlotClick(slots.indexOf(slot))}
-                      className={`
-                        relative h-32 rounded-lg border-2 transition-all cursor-pointer
-                        ${slot.job
-                          ? slot.job.posting_tier === 'premium'
-                            ? 'bg-amber-50 border-amber-200 hover:border-amber-300'
-                            : slot.job.posting_tier === 'top'
-                            ? 'bg-blue-50 border-blue-200 hover:border-blue-300'
-                            : 'bg-gray-50 border-gray-200 hover:border-gray-300'
-                          : selectedJob
-                          ? 'border-dashed border-primary-300 bg-primary-50 hover:border-primary-400'
-                          : 'border-dashed border-gray-300 bg-white hover:border-gray-400'
-                        }
-                      `}
-                    >
-                      {slot.job ? (
-                        <div className="p-3 h-full flex flex-col">
-                          <div className="flex items-start justify-between mb-2">
-                            {getTierBadge(slot.job.posting_tier)}
-                            <button
-                              onClick={(e) => handleRemoveFromSlot(slots.indexOf(slot), e)}
-                              className="p-1 hover:bg-white/80 rounded transition-colors"
-                            >
-                              <X className="w-3 h-3 text-gray-500" />
-                            </button>
-                          </div>
-                          <p className="text-xs font-medium text-gray-900 line-clamp-2 mb-1">
-                            {slot.job.title}
-                          </p>
-                          <p className="text-xs text-gray-500 truncate">
-                            {slot.job.companies?.name}
-                          </p>
-                        </div>
-                      ) : (
-                        <div className="h-full flex items-center justify-center">
-                          <div className="text-center">
-                            <div className="w-8 h-8 rounded-full bg-gray-100 mx-auto mb-2 flex items-center justify-center">
-                              <span className="text-xs font-medium text-gray-400">{slot.priority}</span>
-                            </div>
-                            <p className="text-xs text-gray-400">
-                              {selectedJob ? '클릭하여 배치' : '빈 슬롯'}
-                            </p>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ))}
+                  {topSlots.map((slot, idx) => renderSlot(slot, 'top', idx, 'large'))}
                 </div>
               </div>
 
-              {/* Middle Zone */}
-              <div>
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-sm font-semibold text-gray-900">🔵 중단 영역</h3>
-                  <span className="text-xs text-gray-500">메인 공고 영역</span>
+              {/* Middle 섹션 - 5열 그리드 */}
+              <div className="mb-12">
+                <div className="bg-gradient-to-r from-emerald-800 to-emerald-700 rounded-xl p-4 mb-4">
+                  <h3 className="text-white font-bold text-lg flex items-center gap-2">
+                    <span>⭐</span>
+                    Middle 섹션 (추천 공고)
+                    <span className="text-sm font-normal text-white/80">- 5열 그리드, 최대 25개</span>
+                  </h3>
                 </div>
-                <div className="grid grid-cols-4 gap-3">
-                  {middleSlots.map((slot, index) => (
-                    <div
-                      key={`middle-${index}`}
-                      onClick={() => handleSlotClick(slots.indexOf(slot))}
-                      className={`
-                        relative h-32 rounded-lg border-2 transition-all cursor-pointer
-                        ${slot.job
-                          ? 'bg-gray-50 border-gray-200 hover:border-gray-300'
-                          : selectedJob
-                          ? 'border-dashed border-primary-300 bg-primary-50 hover:border-primary-400'
-                          : 'border-dashed border-gray-300 bg-white hover:border-gray-400'
-                        }
-                      `}
-                    >
-                      {slot.job ? (
-                        <div className="p-3 h-full flex flex-col">
-                          <div className="flex items-start justify-between mb-2">
-                            {getTierBadge(slot.job.posting_tier)}
-                            <button
-                              onClick={(e) => handleRemoveFromSlot(slots.indexOf(slot), e)}
-                              className="p-1 hover:bg-white/80 rounded transition-colors"
-                            >
-                              <X className="w-3 h-3 text-gray-500" />
-                            </button>
-                          </div>
-                          <p className="text-xs font-medium text-gray-900 line-clamp-2 mb-1">
-                            {slot.job.title}
-                          </p>
-                          <p className="text-xs text-gray-500 truncate">
-                            {slot.job.companies?.name}
-                          </p>
-                        </div>
-                      ) : (
-                        <div className="h-full flex items-center justify-center">
-                          <div className="text-center">
-                            <div className="w-8 h-8 rounded-full bg-gray-100 mx-auto mb-2 flex items-center justify-center">
-                              <span className="text-xs font-medium text-gray-400">{slot.priority}</span>
-                            </div>
-                            <p className="text-xs text-gray-400">
-                              {selectedJob ? '클릭하여 배치' : '빈 슬롯'}
-                            </p>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ))}
+                <div className="grid grid-cols-5 gap-3">
+                  {middleSlots.map((slot, idx) => renderSlot(slot, 'middle', idx, 'medium'))}
                 </div>
               </div>
 
-              {/* Bottom Zone */}
+              {/* Bottom 섹션 - 6열 그리드 */}
               <div>
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-sm font-semibold text-gray-900">⚪ 하단 영역</h3>
-                  <span className="text-xs text-gray-500">추가 공고 영역</span>
+                <div className="bg-gradient-to-r from-green-900 to-emerald-800 rounded-xl p-4 mb-4">
+                  <h3 className="text-white font-bold text-lg flex items-center gap-2">
+                    <span>📋</span>
+                    Bottom 섹션 (일반 공고)
+                    <span className="text-sm font-normal text-white/80">- 6열 그리드, 최대 30개</span>
+                  </h3>
                 </div>
-                <div className="grid grid-cols-4 gap-3">
-                  {bottomSlots.map((slot, index) => (
-                    <div
-                      key={`bottom-${index}`}
-                      onClick={() => handleSlotClick(slots.indexOf(slot))}
-                      className={`
-                        relative h-32 rounded-lg border-2 transition-all cursor-pointer
-                        ${slot.job
-                          ? 'bg-gray-50 border-gray-200 hover:border-gray-300'
-                          : selectedJob
-                          ? 'border-dashed border-primary-300 bg-primary-50 hover:border-primary-400'
-                          : 'border-dashed border-gray-300 bg-white hover:border-gray-400'
-                        }
-                      `}
-                    >
-                      {slot.job ? (
-                        <div className="p-3 h-full flex flex-col">
-                          <div className="flex items-start justify-between mb-2">
-                            {getTierBadge(slot.job.posting_tier)}
-                            <button
-                              onClick={(e) => handleRemoveFromSlot(slots.indexOf(slot), e)}
-                              className="p-1 hover:bg-white/80 rounded transition-colors"
-                            >
-                              <X className="w-3 h-3 text-gray-500" />
-                            </button>
-                          </div>
-                          <p className="text-xs font-medium text-gray-900 line-clamp-2 mb-1">
-                            {slot.job.title}
-                          </p>
-                          <p className="text-xs text-gray-500 truncate">
-                            {slot.job.companies?.name}
-                          </p>
-                        </div>
-                      ) : (
-                        <div className="h-full flex items-center justify-center">
-                          <div className="text-center">
-                            <div className="w-8 h-8 rounded-full bg-gray-100 mx-auto mb-2 flex items-center justify-center">
-                              <span className="text-xs font-medium text-gray-400">{slot.priority}</span>
-                            </div>
-                            <p className="text-xs text-gray-400">
-                              {selectedJob ? '클릭하여 배치' : '빈 슬롯'}
-                            </p>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ))}
+                <div className="grid grid-cols-6 gap-2.5">
+                  {bottomSlots.map((slot, idx) => renderSlot(slot, 'bottom', idx, 'small'))}
                 </div>
               </div>
             </div>
 
-            {/* Unassigned Jobs Sidebar - 30% */}
-            <div className="w-80 shrink-0">
-              <div className="sticky top-24">
-                <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
-                  <h3 className="text-sm font-semibold text-gray-900 mb-3">
-                    할당 대기 공고 ({unassignedJobs.length}개)
-                  </h3>
-
-                  {/* 검색창 */}
-                  <div className="mb-3">
-                    <input
-                      type="text"
-                      placeholder="공고 검색 (제목, 회사명)"
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                    />
-                  </div>
-
-                  <div className="space-y-2 max-h-[600px] overflow-y-auto">
-                    {unassignedJobs.filter(job => {
-                      if (!searchTerm) return true;
-                      const term = searchTerm.toLowerCase();
-                      return (
-                        job.title.toLowerCase().includes(term) ||
-                        job.companies?.name.toLowerCase().includes(term)
-                      );
-                    }).length === 0 ? (
-                      <p className="text-sm text-gray-500 text-center py-8">
-                        {searchTerm ? '검색 결과가 없습니다' : '모든 공고가 배치되었습니다'}
-                      </p>
-                    ) : (
-                      unassignedJobs.filter(job => {
-                        if (!searchTerm) return true;
-                        const term = searchTerm.toLowerCase();
-                        return (
-                          job.title.toLowerCase().includes(term) ||
-                          job.companies?.name.toLowerCase().includes(term)
-                        );
-                      }).map(job => (
-                        <button
-                          key={job.id}
-                          onClick={() => setSelectedJob(selectedJob?.id === job.id ? null : job)}
-                          className={`
-                            w-full text-left p-3 rounded-lg border-2 transition-all
-                            ${selectedJob?.id === job.id
-                              ? 'border-primary-500 bg-primary-50'
-                              : 'border-gray-200 bg-white hover:border-gray-300'
-                            }
-                          `}
-                        >
-                          <div className="flex items-start justify-between mb-2">
-                            {getTierBadge(job.posting_tier)}
-                          </div>
-                          <p className="text-sm font-medium text-gray-900 line-clamp-2 mb-1">
-                            {job.title}
-                          </p>
-                          <p className="text-xs text-gray-500 truncate">
-                            {job.companies?.name}
-                          </p>
-                        </button>
-                      ))
-                    )}
-                  </div>
+            {/* 사이드바 - 미할당 공고 (30%) */}
+            <div className="w-80 border-l border-gray-200 flex flex-col">
+              <div className="p-4 border-b border-gray-200">
+                <h3 className="text-sm font-bold text-gray-900 mb-3">
+                  할당 대기 공고 ({unassignedJobs.length}개)
+                </h3>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="제목, 회사명 검색..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  />
                 </div>
+              </div>
 
-                {selectedJob && (
-                  <div className="mt-4 p-4 bg-primary-50 border border-primary-200 rounded-lg">
-                    <p className="text-sm font-medium text-primary-900 mb-2">
-                      선택된 공고
-                    </p>
-                    <p className="text-sm text-primary-700">
-                      {selectedJob.title}
-                    </p>
+              <div className="flex-1 overflow-y-auto p-4 space-y-2">
+                {unassignedJobs
+                  .filter(job => {
+                    if (!searchTerm) return true;
+                    const term = searchTerm.toLowerCase();
+                    return (
+                      job.title.toLowerCase().includes(term) ||
+                      job.companies?.name.toLowerCase().includes(term)
+                    );
+                  })
+                  .map(job => (
                     <button
-                      onClick={() => setSelectedJob(null)}
-                      className="mt-3 w-full px-3 py-2 bg-white text-primary-600 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
+                      key={job.id}
+                      onClick={() => setSelectedJob(selectedJob?.id === job.id ? null : job)}
+                      className={`
+                        w-full text-left p-3 rounded-lg border-2 transition-all
+                        ${selectedJob?.id === job.id
+                          ? 'border-primary-500 bg-primary-50'
+                          : 'border-gray-200 bg-white hover:border-gray-300'
+                        }
+                      `}
                     >
-                      선택 취소
+                      <div className="flex items-start justify-between mb-2">
+                        {getTierBadge(job.posting_tier)}
+                      </div>
+                      <p className="text-sm font-medium text-gray-900 line-clamp-2 mb-1">
+                        {job.title}
+                      </p>
+                      <p className="text-xs text-gray-600 line-clamp-1">
+                        {job.companies?.name}
+                      </p>
                     </button>
-                  </div>
+                  ))}
+
+                {unassignedJobs.filter(job => {
+                  if (!searchTerm) return true;
+                  const term = searchTerm.toLowerCase();
+                  return (
+                    job.title.toLowerCase().includes(term) ||
+                    job.companies?.name.toLowerCase().includes(term)
+                  );
+                }).length === 0 && (
+                  <p className="text-sm text-gray-500 text-center py-8">
+                    {searchTerm ? '검색 결과가 없습니다' : '모든 공고가 배치되었습니다'}
+                  </p>
                 )}
               </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
