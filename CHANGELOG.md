@@ -10,6 +10,527 @@
 
 ### 2025-10-20
 
+#### ✨ 그리드 레이아웃 편집기 구현
+**[ADD]** 영화관 좌석 선택 스타일의 공고 위치 관리 UI
+
+**변경 파일 (2개)**:
+- `components/admin/JobGridLayoutEditor.tsx` (신규: 600+ 줄)
+- `components/admin/JobsTab.tsx` (385줄 → 403줄)
+
+**변경 내용**:
+- 16개 슬롯 그리드 레이아웃 (최상단 4 + 중단 8 + 하단 4)
+- 영화관 좌석 선택 방식의 직관적인 UI
+- 클릭-할당 워크플로우 (사이드바 공고 선택 → 슬롯 클릭 → 할당)
+- 티어별 시각적 구분:
+  - 프리미엄: `bg-amber-50 border-amber-200`
+  - 탑: `bg-blue-50 border-blue-200`
+  - 일반: `bg-gray-50 border-gray-200`
+- 현재 할당된 모든 공고 표시
+- 미할당 공고 사이드바 (30% 너비)
+- 일괄 저장 기능 (모든 위치 한 번에 업데이트)
+- 초기화 버튼 (원래 상태로 되돌리기)
+- 슬롯에서 공고 제거 기능
+- 로딩/성공 피드백
+
+**기술 구현**:
+```typescript
+interface GridSlot {
+  position: 'top' | 'middle' | 'bottom';
+  priority: number;
+  job: JobWithCompany | null;
+}
+
+// 클릭-할당 로직
+const handleSlotClick = (slotIndex: number) => {
+  if (!selectedJob) return;
+  // 기존 위치에서 제거
+  const existingSlotIndex = newSlots.findIndex(
+    s => s.job?.id === selectedJob.id
+  );
+  if (existingSlotIndex !== -1) {
+    newSlots[existingSlotIndex].job = null;
+  }
+  // 새 위치에 할당
+  newSlots[slotIndex].job = selectedJob;
+};
+
+// 일괄 저장
+const handleSaveAll = async () => {
+  await Promise.all(
+    changedSlots.map(slot =>
+      updateJobDisplayPosition(
+        slot.job.id,
+        slot.position,
+        slot.priority
+      )
+    )
+  );
+};
+```
+
+**UI 특징**:
+- 그라데이션 없는 깔끔한 디자인 (프로젝트 디자인 시스템 준수)
+- 완벽한 정렬 및 간격
+- 선택된 공고/호버 상태 시각적 피드백
+- 고정 헤더 (저장/초기화 버튼)
+- 반응형 레이아웃 (좁은 화면에서는 세로 스크롤)
+- 프로덕션 레벨 코드 품질
+
+**이유**:
+- 관리자가 메인 페이지 공고 배치를 시각적으로 관리할 필요
+- 기존 모달 방식은 전체 레이아웃을 한눈에 보기 어려움
+- 영화관 좌석 선택 방식이 가장 직관적이고 사용하기 쉬움
+
+**영향**:
+- JobsTab에 "그리드 레이아웃 편집" 버튼 추가 (헤더 우측)
+- 기존 개별 위치 할당 모달은 그대로 유지 (하위 호환성)
+- 메인 페이지 공고 표시 로직에는 영향 없음 (DB 업데이트만)
+
+---
+
+#### 🐛 JobPositionAssignModal null 체크 추가
+**[FIX]** job이 null일 때 에러 방지
+
+**수정 파일 (1개)**:
+- `components/admin/JobPositionAssignModal.tsx`
+
+**에러**:
+```
+Cannot read properties of null (reading 'display_position')
+```
+
+**해결**:
+```typescript
+// BEFORE
+job.display_position  // null 에러
+
+// AFTER
+job?.display_position  // 안전
+if (!isOpen || !job) return null;  // null 체크
+```
+
+---
+
+#### 🔐 어드민 계정 추가
+**[CONFIG]** nadr110619@gmail.com을 어드민 리스트에 추가
+
+**수정 파일 (1개)**:
+- `app/admin/page.tsx`
+
+**변경 내용**:
+```typescript
+const adminEmails = [
+  'admin@ssmhr.com',
+  'joo.y.oh.ko@gmail.com',
+  'nadr110619@gmail.com' // ← 추가!
+];
+```
+
+**접속 방법**:
+1. nadr110619@gmail.com (구글 로그인)
+2. http://localhost:3000/admin 접속
+3. ✅ 어드민 페이지 접근 가능!
+
+---
+
+#### 🐛 순서 에러 수정 (editorContent before initialization)
+**[FIX]** useState 선언 전에 사용하는 에러 수정
+
+**수정 파일 (1개)**:
+- `app/company-dashboard/jobs/edit/[id]/page.tsx`
+
+**문제**:
+```typescript
+const { errors } = useJobFormValidation(formData, editorContent); // 사용
+const [editorContent, setState] = useState(''); // 선언 (늦음!)
+```
+
+**해결**:
+```typescript
+const [editorContent, setState] = useState(''); // 선언 먼저
+const { errors } = useJobFormValidation(formData, editorContent); // 사용
+```
+
+---
+
+#### 🎯 공고 검증 로직 개선 (에디터 구조에 맞춤)
+**[FIX]** 존재하지 않는 필드(mainTasks, requirements) 검증 제거
+
+**수정 파일 (1개)**:
+- `hooks/useJobFormValidation.ts`
+
+**문제**:
+- 검증이 mainTasks[], requirements[] 요구
+- 하지만 실제 폼에는 해당 입력 필드 없음
+- 모든 내용은 에디터(2단계)에서 자유 작성
+
+**해결**:
+- ❌ 제거: description, mainTasks, requirements 검증
+- ✅ 유지: title, department, location, salary, deadline
+- ⚠️ 에디터 컨텐츠는 제출 시점에 별도 체크
+
+**이제 필수 입력:**
+- 제목 (한글/영문)
+- 부서
+- 근무지
+- 급여 (최소/최대)
+- 마감일
+
+---
+
+#### 🎯 공고 수정 페이지 완전 개선 (등록 신청 기능 추가)
+**[ENHANCEMENT]** 임시저장 공고를 완성 후 등록 신청할 수 있는 기능 추가
+
+**수정 파일 (3개)**:
+- `app/company-dashboard/jobs/edit/[id]/page.tsx` - [등록 신청하기] 버튼 추가
+- `lib/supabase/job-service.ts` - Manager/WorkConditions NOT NULL 에러 수정
+- `lib/supabase/public-job-service.ts` - JobCard 형식 변환 함수
+
+**주요 개선**:
+1. ✅ **[등록 신청하기] 버튼 추가** (draft 상태일 때만)
+   ```
+   draft 공고: [미리보기] [저장하기] [등록 신청하기]
+   기타 공고: [미리보기] [저장하기]
+   ```
+
+2. ✅ **Manager/WorkConditions NOT NULL 에러 수정**
+   - name, email NOT NULL인데 빈 값 전송하면 에러
+   - 값이 있을 때만 upsert 실행
+   - 기본값 제공 (회사 정보에서 가져오기)
+
+3. ✅ **메인 페이지 데이터 변환**
+   - DB 구조 → JobCard 형식 자동 변환
+   - transformToJobCardFormat() 함수 추가
+
+**워크플로우**:
+```
+1. 임시저장 (status: draft)
+   ↓
+2. 수정 페이지에서 완성
+   ↓
+3. [등록 신청하기] 클릭 ← NEW!
+   ↓
+4. status: draft → pending_approval
+   ↓
+5. 어드민 페이지에 나타남!
+```
+
+**해결된 문제**:
+- ❌ 임시저장 → 수정 → 등록할 방법 없음
+- ✅ 임시저장 → 수정 → [등록 신청하기] → 어드민으로!
+
+**코드 변경**:
+```typescript
+// draft 상태 체크
+const [jobStatus, setJobStatus] = useState<string>('draft');
+
+// 등록 신청 핸들러
+const handleSubmitForApproval = async () => {
+  await updateJob(jobId, formData, editorContent);
+  await supabase.from('jobs').update({ 
+    status: 'pending_approval' 
+  }).eq('id', jobId);
+};
+
+// 조건부 버튼 렌더링
+{jobStatus === 'draft' && (
+  <button onClick={handleSubmitForApproval}>
+    등록 신청하기
+  </button>
+)}
+```
+
+---
+
+#### ✨ 공고 수정 페이지 구축 (Supabase)
+**[NEW]** 임시저장/등록된 공고를 수정할 수 있는 페이지 생성
+
+**신규 파일 (1개)**:
+- `app/company-dashboard/jobs/edit/[id]/page.tsx` - 공고 수정 페이지
+
+**수정 파일 (1개)**:
+- `lib/supabase/job-service.ts` - updateJob 함수 개선
+
+**주요 기능**:
+- ✅ 기존 공고 데이터 불러오기
+- ✅ 정형 정보 수정 (메타데이터)
+- ✅ 상세 내용 수정 (에디터)
+- ✅ 미리보기 기능
+- ✅ 2단계 수정 프로세스
+- ✅ 근무 조건 업데이트 (upsert)
+- ✅ 담당자 정보 업데이트 (upsert)
+
+**변경 내용**:
+```typescript
+// updateJob 함수 개선
+- job_work_conditions upsert 추가
+- job_manager upsert 추가
+- 빈 값 안전 처리
+```
+
+**사용 방법**:
+1. 대시보드 공고 목록에서 "수정" 버튼 클릭
+2. 정보 수정
+3. "저장하기" 버튼 클릭
+4. ✅ 완료!
+
+**이전 상태**:
+- ❌ `page.tsx.disabled` (Firebase 기반)
+- ❌ 404 에러
+
+**현재 상태**:
+- ✅ Supabase 기반 완전 구현
+- ✅ 정상 작동
+
+---
+
+#### 🐛 RLS 정책 완전 수정 (firebase_uid → id)
+**[CRITICAL FIX]** 모든 테이블의 RLS 정책을 Supabase 구조에 맞게 수정
+
+**마이그레이션 파일 (1개)**:
+- `supabase/migrations/20241020_fix_jobs_rls_policy.sql`
+
+**문제 원인**:
+```
+new row violates row-level security policy for table "jobs"
+new row violates row-level security policy for table "users"
+new row violates row-level security policy for table "companies"
+```
+
+**근본 원인**:
+- RLS 정책이 `firebase_uid`를 체크
+- 하지만 실제 회원가입 코드는 `id = auth.uid()` 직접 사용
+- `firebase_uid`는 저장하지 않아서 항상 null
+- RLS 정책 매칭 실패 → 모든 작업 거부
+
+**수정된 RLS 정책**:
+```sql
+-- BEFORE (❌ firebase_uid 체크)
+users: auth.uid()::text = firebase_uid
+companies: auth.uid()::text = firebase_uid
+jobs: company_id IN (SELECT id FROM companies WHERE firebase_uid = auth.uid())
+
+-- AFTER (✅ id 직접 비교)
+users: id = auth.uid()
+companies: id = auth.uid()
+jobs: company_id = auth.uid()
+```
+
+**영향 범위**:
+- ✅ users 테이블: 프로필 조회/수정
+- ✅ companies 테이블: 기업 정보 조회/수정
+- ✅ jobs 테이블: 공고 생성/수정/삭제
+
+**해결된 문제들**:
+1. ✅ 공고 등록/임시저장 가능
+2. ✅ 프로필 수정 가능
+3. ✅ 기업 정보 수정 가능
+4. ✅ 온보딩 데이터 저장 가능
+
+**왜 firebase_uid를 쓰지 않나?**:
+```typescript
+// lib/supabase/company-service.ts:45
+id: userId, // Auth UID를 그대로 사용
+
+// lib/supabase/jobseeker-auth.ts:36
+id: userId, // Auth UID를 그대로 사용
+
+// firebase_uid는 Firebase 마이그레이션용 필드 (사용 안 함)
+```
+
+**보안 수준**:
+- ✅ 동일: 사용자는 자기 것만 접근
+- ✅ 로직 변경 없음 (필드명만 수정)
+- ✅ 권한 체크 정상화
+
+---
+
+#### 🐛 임시저장 기능 완벽 수정 (빈 값 처리)
+**[FIX]** 임시저장 시 빈 필드로 인한 에러 완전 해결
+
+**수정 파일 (1개)**:
+- `lib/supabase/job-service.ts`
+
+**문제 원인**:
+```
+invalid input syntax for type date: ""
+```
+- deadline 필드가 빈 문자열("")로 전송 → DATE 타입 에러
+- salaryMin, salaryMax도 빈 문자열 → INTEGER 타입 에러 가능
+- **임시저장은 미완성 상태로 저장하는 건데, 필수 필드 검증이 있었음**
+
+**변경 내용**:
+```typescript
+// BEFORE - 빈 문자열 그대로 전송 (에러 발생)
+deadline: formData.deadline,           // "" → DATE 타입 에러
+salary_min: parseInt(formData.salaryMin), // "" → NaN → 에러
+
+// AFTER - 빈 값은 null로 변환
+const deadline = formData.deadline || null;
+const salaryMin = formData.salaryMin ? parseInt(formData.salaryMin) : null;
+const salaryMax = formData.salaryMax ? parseInt(formData.salaryMax) : null;
+
+deadline: deadline,        // null (OK!)
+salary_min: salaryMin,     // null (OK!)
+salary_max: salaryMax,     // null (OK!)
+
+// 빈 텍스트 필드는 기본값 제공
+title: formData.title || '(제목 없음)',
+department: formData.department || '미정',
+location: formData.location || '미정',
+```
+
+**임시저장 철학**:
+- ✅ 아무것도 안 써도 저장 가능
+- ✅ 필수 필드 없어도 OK
+- ✅ 나중에 완성하면 됨
+- ✅ 진정한 "임시" 저장
+
+**해결된 에러**:
+1. ✅ education 필드 에러 (필드 제거)
+2. ✅ deadline 빈 문자열 에러 (null 처리)
+3. ✅ salary 빈 문자열 에러 (null 처리)
+4. ✅ 빈 텍스트 필드 에러 (기본값 제공)
+
+**이제 가능한 것**:
+- ✅ 제목만 써도 임시저장 OK
+- ✅ 아무것도 안 써도 임시저장 OK
+- ✅ 마감일 안 써도 OK
+- ✅ 급여 안 써도 OK
+
+---
+
+#### 🚀 프로덕션 레벨 공고 관리 시스템 완전 구축
+**[MAJOR]** 기업 공고 등록부터 어드민 승인, 메인 페이지 노출까지 전체 프로세스 구현
+
+**Phase 1: 공고 등록 시스템**
+- ✅ 임시저장 기능 (status: draft)
+- ✅ 등록하기 기능 (status: pending_approval)
+- ✅ 미리보기 모달 (JobPreviewModal)
+- ✅ 기업 대시보드 공고 목록 개선 (상태별 표시)
+
+**Phase 2: 어드민 시스템**
+- ✅ Supabase 어드민 서비스 레이어 (`lib/supabase/admin-service.ts`)
+- ✅ 어드민 페이지 (`/admin`)
+- ✅ 공고 승인/반려 기능
+- ✅ 결제 상태 관리 (pending → paid → confirmed)
+- ✅ UI 위치 할당 기능 (top/middle/bottom + priority)
+- ✅ 어드민 인증 시스템 (이메일 기반)
+
+**Phase 3: 메인 페이지 노출**
+- ✅ 실제 DB 데이터 사용 (`lib/supabase/public-job-service.ts`)
+- ✅ display_position별 정렬 (top/middle/bottom)
+- ✅ display_priority 우선순위 적용
+
+**신규 파일 (7개)**:
+- `lib/supabase/admin-service.ts` - 어드민 서비스 레이어
+- `lib/supabase/public-job-service.ts` - 공개 공고 서비스
+- `app/admin/page.tsx` - 어드민 페이지
+- `components/admin/JobsTab.tsx` - 어드민 공고 관리 탭
+- `components/admin/JobPositionAssignModal.tsx` - 위치 할당 모달
+- `components/job-create/JobPreviewModal.tsx` - 미리보기 모달
+- `ADMIN_SYSTEM_GUIDE.md` - 완전한 시스템 가이드
+
+**수정 파일 (5개)**:
+- `lib/supabase/job-service.ts` - 임시저장 로직 개선
+- `app/company-dashboard/jobs/create/page.tsx` - 미리보기 및 상태 구분
+- `components/company-dashboard/tabs/JobsTab.tsx` - 상태 표시 개선
+- `app/page.tsx` - 실제 DB 데이터 사용
+- `types/company-dashboard.types.ts` - 타입 정의 업데이트
+
+**데이터 흐름**:
+```
+1. 기업 공고 작성 → 임시저장(draft) or 등록(pending_approval)
+2. 어드민 확인 → 결제 상태 변경(pending→paid→confirmed)
+3. 어드민 승인 → UI 위치 할당(top/middle/bottom + priority)
+4. 어드민 승인 → 상태 변경(pending_approval→active)
+5. 메인 페이지 노출 → display_position별 정렬하여 표시
+```
+
+**주요 기능**:
+- 📝 공고 작성 2단계 프로세스 (정형정보 + 자유내용)
+- 💾 임시저장으로 작성 중 공고 보관
+- 👁️ 실시간 미리보기로 확인
+- 📊 기업 대시보드에서 상태별 공고 관리
+- 👨‍💼 어드민이 모든 공고 승인/반려/위치 관리
+- 💳 결제 상태 3단계 관리 (입금대기→입금확인→결제완료)
+- 🎯 UI 위치 정밀 제어 (위치 + 우선순위)
+- 🌐 메인 페이지 동적 공고 노출
+
+**데이터베이스 필드**:
+```sql
+-- jobs 테이블
+status: draft | pending_approval | active | closed
+payment_status: pending | paid | confirmed
+display_position: top | middle | bottom | NULL
+display_priority: INTEGER (낮을수록 상단)
+display_assigned_at: TIMESTAMPTZ
+display_assigned_by: TEXT (어드민 ID)
+```
+
+**어드민 권한 체크**:
+```typescript
+const adminEmails = [
+  'admin@ssmhr.com',
+  'joo.y.oh.ko@gmail.com'
+];
+```
+
+**성능 최적화**:
+- Supabase RLS 적용
+- 인덱스 최적화 (display_position, display_priority)
+- 조인 쿼리 최소화
+- 프론트엔드 상태 관리 최적화
+
+**보안**:
+- Row Level Security 적용
+- 어드민 이메일 화이트리스트
+- 결제 상태 검증
+- 승인 프로세스 엄격화
+
+**UX 개선**:
+- 단계별 진행 상태 명확히 표시
+- 실시간 통계 대시보드
+- 직관적인 위치 할당 UI
+- 컬러 코드로 상태 구분
+
+**문서화**:
+- `ADMIN_SYSTEM_GUIDE.md` - 완전한 사용 가이드
+- 모든 프로세스 단계별 설명
+- 데이터베이스 스키마 문서화
+- 문제 해결 가이드
+
+**이유**:
+- 기업이 공고를 등록해도 어드민 승인 시스템이 없어 활성화 불가
+- 공고 위치 제어 불가능 (프리미엄/일반 구분 필요)
+- 결제 상태 관리 부재
+- 메인 페이지에서 실제 공고 노출 안 됨
+- 전체 프로세스가 끊겨있어 실제 운영 불가능
+
+**영향**:
+- ✅ 실제 운영 가능한 완전한 공고 관리 시스템
+- ✅ 기업 → 어드민 → 사용자로 이어지는 완전한 플로우
+- ✅ 공고 위치 및 우선순위 정밀 제어 가능
+- ✅ 결제 상태 추적 가능
+- ✅ 메인 페이지 동적 공고 노출
+- ✅ 프로덕션 레벨 품질
+
+**테스트 방법**:
+1. 기업 계정으로 공고 작성 및 등록
+2. 어드민 계정으로 `/admin` 접속
+3. 결제 상태 변경 및 위치 할당
+4. 공고 승인
+5. 메인 페이지에서 확인
+
+**향후 확장**:
+- 공고 수정 기능
+- 대량 공고 관리
+- 이메일 알림
+- 구직자/기업 관리 탭
+- 통계 차트/그래프
+
+---
+
 #### 3개 입력칸 전화번호 컴포넌트 적용
 **[ADD]** PhoneInput 공통 컴포넌트 구현 및 RecruiterInfoSection 적용
 

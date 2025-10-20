@@ -1,0 +1,399 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { RefreshCw, Eye, Briefcase, Star, Zap, CheckCircle, XCircle, Grid3x3 } from 'lucide-react';
+import Link from 'next/link';
+import {
+  getAllJobs,
+  getJobStats,
+  updateJobStatus,
+  updatePaymentStatus,
+  type JobWithCompany,
+  type JobStats
+} from '@/lib/supabase/admin-service';
+import JobPositionAssignModal from './JobPositionAssignModal';
+import JobGridLayoutEditor from './JobGridLayoutEditor';
+
+export default function JobsTab() {
+  const [jobs, setJobs] = useState<JobWithCompany[]>([]);
+  const [stats, setStats] = useState<JobStats>({
+    total: 0,
+    pending_approval: 0,
+    active: 0,
+    draft: 0,
+    closed: 0,
+    pendingPayment: 0,
+    paid: 0,
+    confirmed: 0,
+    pendingAssignment: 0,
+  });
+  const [loading, setLoading] = useState(true);
+  const [selectedJob, setSelectedJob] = useState<JobWithCompany | null>(null);
+  const [showPositionModal, setShowPositionModal] = useState(false);
+  const [showGridEditor, setShowGridEditor] = useState(false);
+
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      const [jobsData, statsData] = await Promise.all([
+        getAllJobs(),
+        getJobStats()
+      ]);
+      setJobs(jobsData);
+      setStats(statsData);
+    } catch (error) {
+      console.error('Failed to load jobs:', error);
+      alert('데이터 로딩에 실패했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const handlePaymentStatusChange = async (jobId: string, newStatus: 'pending' | 'paid' | 'confirmed') => {
+    console.log('🔄 결제 상태 변경 시도:', { jobId, newStatus });
+    try {
+      await updatePaymentStatus(jobId, newStatus);
+      console.log('✅ DB 업데이트 완료');
+      await loadData();
+      console.log('✅ 데이터 리로드 완료');
+      alert(`결제 상태가 "${newStatus === 'pending' ? '입금 대기' : newStatus === 'paid' ? '입금 확인' : '결제 완료'}"로 변경되었습니다.`);
+    } catch (error) {
+      console.error('❌ Failed to update payment status:', error);
+      alert('결제 상태 업데이트에 실패했습니다: ' + (error as Error).message);
+    }
+  };
+
+  const handleApproveJob = async (jobId: string) => {
+    if (!confirm('이 공고를 승인하시겠습니까?')) return;
+
+    try {
+      await updateJobStatus(jobId, 'active');
+      alert('공고가 승인되었습니다.');
+      await loadData();
+    } catch (error) {
+      console.error('Failed to approve job:', error);
+      alert('공고 승인에 실패했습니다.');
+    }
+  };
+
+  const handleRejectJob = async (jobId: string) => {
+    if (!confirm('이 공고를 반려하시겠습니까?')) return;
+
+    try {
+      await updateJobStatus(jobId, 'closed');
+      alert('공고가 반려되었습니다.');
+      await loadData();
+    } catch (error) {
+      console.error('Failed to reject job:', error);
+      alert('공고 반려에 실패했습니다.');
+    }
+  };
+
+  const handlePositionAssign = (job: JobWithCompany) => {
+    setSelectedJob(job);
+    setShowPositionModal(true);
+  };
+
+  const getTierBadge = (tier: string) => {
+    if (tier === 'premium') {
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-1 bg-gradient-to-r from-secondary-500 to-pink-500 text-white text-xs font-medium rounded-full">
+          <Zap className="w-3 h-3" />
+          프리미엄
+        </span>
+      );
+    } else if (tier === 'top') {
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-1 bg-primary-100 text-primary-700 text-xs font-medium rounded-full">
+          <Star className="w-3 h-3" />
+          최상단
+        </span>
+      );
+    } else {
+      return <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded-full">일반</span>;
+    }
+  };
+
+  const getStatusBadge = (status: string) => {
+    const statusConfig: Record<string, { label: string; color: string }> = {
+      active: { label: '활성', color: 'green' },
+      pending_approval: { label: '승인대기', color: 'yellow' },
+      draft: { label: '임시저장', color: 'gray' },
+      closed: { label: '마감', color: 'red' }
+    };
+
+    const config = statusConfig[status] || { label: status, color: 'gray' };
+
+    return (
+      <span className={`px-2 py-1 bg-${config.color}-100 text-${config.color}-700 text-xs font-medium rounded-full`}>
+        {config.label}
+      </span>
+    );
+  };
+
+  const getPaymentStatusBadge = (status: string) => {
+    const statusConfig: Record<string, { label: string; color: string }> = {
+      confirmed: { label: '결제완료', color: 'green' },
+      paid: { label: '입금확인', color: 'blue' },
+      pending: { label: '입금대기', color: 'yellow' }
+    };
+
+    const config = statusConfig[status] || { label: status, color: 'gray' };
+
+    return (
+      <span className={`px-2 py-1 bg-${config.color}-100 text-${config.color}-700 text-xs font-medium rounded-full`}>
+        {config.label}
+      </span>
+    );
+  };
+
+  const getDisplayPositionBadge = (position: string | null) => {
+    if (position === 'top') {
+      return <span className="px-2 py-1 bg-red-100 text-red-700 text-xs font-medium rounded-full">최상단 영역</span>;
+    } else if (position === 'middle') {
+      return <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded-full">중단 영역</span>;
+    } else if (position === 'bottom') {
+      return <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded-full">하단 영역</span>;
+    } else {
+      return <span className="px-2 py-1 bg-orange-100 text-orange-700 text-xs font-medium rounded-full">미할당</span>;
+    }
+  };
+
+  return (
+    <>
+      <JobPositionAssignModal
+        isOpen={showPositionModal}
+        onClose={() => setShowPositionModal(false)}
+        job={selectedJob as any}
+        onSuccess={loadData}
+      />
+
+      <JobGridLayoutEditor
+        isOpen={showGridEditor}
+        onClose={() => setShowGridEditor(false)}
+        onSuccess={loadData}
+      />
+
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-bold text-gray-900">공고 관리</h2>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setShowGridEditor(true)}
+              className="px-4 py-2 bg-gradient-to-r from-primary-600 to-secondary-600 text-white rounded-lg hover:from-primary-700 hover:to-secondary-700 text-sm font-medium flex items-center gap-2 shadow-md transition-all"
+            >
+              <Grid3x3 className="w-4 h-4" />
+              그리드 레이아웃 편집
+            </button>
+            <button
+              onClick={loadData}
+              className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 text-sm font-medium flex items-center gap-2"
+              disabled={loading}
+            >
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+              새로고침
+            </button>
+          </div>
+        </div>
+
+        {/* 통계 */}
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-9 gap-4">
+          <div className="bg-white rounded-xl shadow-sm p-4 text-center">
+            <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
+            <p className="text-xs text-gray-600">전체</p>
+          </div>
+          <div className="bg-white rounded-xl shadow-sm p-4 text-center">
+            <p className="text-2xl font-bold text-yellow-600">{stats.pending_approval}</p>
+            <p className="text-xs text-gray-600">승인대기</p>
+          </div>
+          <div className="bg-white rounded-xl shadow-sm p-4 text-center">
+            <p className="text-2xl font-bold text-green-600">{stats.active}</p>
+            <p className="text-xs text-gray-600">활성</p>
+          </div>
+          <div className="bg-white rounded-xl shadow-sm p-4 text-center">
+            <p className="text-2xl font-bold text-gray-600">{stats.draft}</p>
+            <p className="text-xs text-gray-600">임시저장</p>
+          </div>
+          <div className="bg-white rounded-xl shadow-sm p-4 text-center">
+            <p className="text-2xl font-bold text-yellow-600">{stats.pendingPayment}</p>
+            <p className="text-xs text-gray-600">입금대기</p>
+          </div>
+          <div className="bg-white rounded-xl shadow-sm p-4 text-center">
+            <p className="text-2xl font-bold text-blue-600">{stats.paid}</p>
+            <p className="text-xs text-gray-600">입금확인</p>
+          </div>
+          <div className="bg-white rounded-xl shadow-sm p-4 text-center">
+            <p className="text-2xl font-bold text-green-600">{stats.confirmed}</p>
+            <p className="text-xs text-gray-600">결제완료</p>
+          </div>
+          <div className="bg-white rounded-xl shadow-sm p-4 text-center">
+            <p className="text-2xl font-bold text-orange-600">{stats.pendingAssignment}</p>
+            <p className="text-xs text-gray-600">위치미할당</p>
+          </div>
+          <div className="bg-white rounded-xl shadow-sm p-4 text-center">
+            <p className="text-2xl font-bold text-red-600">{stats.closed}</p>
+            <p className="text-xs text-gray-600">마감</p>
+          </div>
+        </div>
+
+        {/* 공고 목록 */}
+        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+          {loading ? (
+            <div className="p-8 text-center">
+              <div className="w-12 h-12 border-4 border-primary-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+              <p className="text-gray-600">공고 로딩 중...</p>
+            </div>
+          ) : jobs.length === 0 ? (
+            <div className="p-8 text-center">
+              <Briefcase className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+              <p className="text-gray-600">등록된 공고가 없습니다</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50 border-b border-gray-200">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">공고 정보</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">상태</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">노출 위치</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">결제 정보</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">결제 상태</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">UI 위치</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">액션</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {jobs.map((job) => (
+                    <tr key={job.id} className="hover:bg-gray-50">
+                      {/* 공고 정보 */}
+                      <td className="px-4 py-4">
+                        <div className="flex items-center gap-3">
+                          {job.companies?.logo && (
+                            <img 
+                              src={job.companies.logo} 
+                              alt={job.companies.name} 
+                              className="w-10 h-10 rounded-lg object-cover" 
+                            />
+                          )}
+                          <div>
+                            <p className="font-medium text-gray-900">{job.title}</p>
+                            <p className="text-sm text-gray-500">{job.companies?.name}</p>
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* 상태 */}
+                      <td className="px-4 py-4">
+                        {getStatusBadge(job.status)}
+                      </td>
+
+                      {/* 노출 위치 */}
+                      <td className="px-4 py-4">
+                        {getTierBadge(job.posting_tier)}
+                      </td>
+
+                      {/* 결제 정보 */}
+                      <td className="px-4 py-4">
+                        <div className="text-sm">
+                          <p className="font-medium text-gray-900">
+                            {job.posting_total_amount?.toLocaleString()}원
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {job.posting_duration}일
+                          </p>
+                        </div>
+                      </td>
+
+                      {/* 결제 상태 */}
+                      <td className="px-4 py-4">
+                        <select
+                          value={job.payment_status}
+                          onChange={(e) => handlePaymentStatusChange(job.id, e.target.value as 'pending' | 'paid' | 'confirmed')}
+                          className="text-xs border border-gray-300 rounded px-2 py-1"
+                        >
+                          <option value="pending">입금 대기</option>
+                          <option value="paid">입금 확인</option>
+                          <option value="confirmed">결제 완료</option>
+                        </select>
+                      </td>
+
+                      {/* UI 위치 */}
+                      <td className="px-4 py-4">
+                        {job.display_position ? (
+                          <div className="space-y-2">
+                            {getDisplayPositionBadge(job.display_position)}
+                            <div className="text-xs text-gray-500">
+                              우선순위: {job.display_priority}
+                            </div>
+                            <button
+                              onClick={() => handlePositionAssign(job)}
+                              className="mt-2 px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded hover:bg-gray-200"
+                            >
+                              위치 변경
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="space-y-2">
+                            {job.payment_status === 'confirmed' ? (
+                              <button
+                                onClick={() => handlePositionAssign(job)}
+                                className="w-full px-3 py-2 bg-primary-600 text-white text-xs font-medium rounded-lg hover:bg-primary-700 transition-colors"
+                              >
+                                위치 할당하기
+                              </button>
+                            ) : (
+                              <span className="text-xs text-gray-400">결제 완료 후 할당 가능</span>
+                            )}
+                          </div>
+                        )}
+                      </td>
+
+                      {/* 액션 */}
+                      <td className="px-4 py-4">
+                        <div className="flex items-center gap-2">
+                          <Link
+                            href={`/jobs/${job.id}`}
+                            target="_blank"
+                            className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors inline-flex items-center"
+                            title="공고 보기"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </Link>
+
+                          {job.status === 'pending_approval' && (
+                            <>
+                              <button
+                                onClick={() => handleApproveJob(job.id)}
+                                className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                                title="승인"
+                              >
+                                <CheckCircle className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => handleRejectJob(job.id)}
+                                className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                title="반려"
+                              >
+                                <XCircle className="w-4 h-4" />
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </div>
+    </>
+  );
+}
+
+
