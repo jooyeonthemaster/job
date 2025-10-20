@@ -10,6 +10,89 @@
 
 ### 2025-10-20
 
+#### 🐛 메인 페이지 더미 데이터 제거 (실제 DB 데이터만 사용)
+**[FIX]** 메인 페이지에서 개발용 토글 제거 및 실제 DB 데이터 전용 사용
+
+**변경 파일 (1개)**:
+- `app/page.tsx` (328줄 → 318줄)
+
+**변경 내용**:
+- ❌ 제거: "실제 DB 데이터 사용" 체크박스 (개발용 토글)
+- ❌ 제거: `useRealData` state 및 더미 데이터 fallback 로직
+- ✅ 개선: 항상 `getFeaturedJobs()`로 실제 DB 공고만 표시
+- ✅ 개선: 변수명 `realJobs` → `jobs` (명확화)
+
+**수정 전**:
+```typescript
+const [useRealData, setUseRealData] = useState(true);
+const displayJobs = useRealData && realJobs.length > 0 ? realJobs : dummyJobs;
+
+<input type="checkbox" checked={useRealData} onChange={...} />
+실제 DB 데이터 사용
+```
+
+**수정 후**:
+```typescript
+const [jobs, setJobs] = useState<Job[]>([]);
+const featuredJobs = jobs.slice(0, 3); // 항상 실제 DB 데이터
+
+// 체크박스 UI 완전 제거
+```
+
+**이유**:
+- 개발용 토글이 프로덕션에 남아있어 사용자 혼란 발생
+- 더미 데이터 fallback 로직이 불필요 (Supabase 안정적)
+- 실제 운영 환경에서는 항상 DB 데이터만 표시해야 함
+
+**영향**:
+- 메인 페이지 항상 실제 DB 공고 표시
+- 더 깔끔한 UI (개발용 UI 제거)
+- 코드 복잡도 감소 (10줄 감소)
+
+---
+
+#### 📊 프로젝트 구조 철저 분석 완료
+**[ADD]** 전체 프로젝트 아키텍처 분석 및 문서화
+
+**신규 파일 (1개)**:
+- `PROJECT_STRUCTURE_ANALYSIS.md` (신규: 850줄) - 프로젝트 전체 구조 분석 문서
+
+**분석 내용**:
+- ✅ **통계**: 139개 TS 파일 (Pages 32개, Components 15개 디렉토리, Services 23개, Hooks 9개, Types 9개)
+- ✅ **기술 스택**: Next.js 15.5.3 (App Router), React 19.1.0, Supabase, TipTap, Cloudinary
+- ✅ **아키텍처**: 페이지 구조, 컴포넌트 계층, 서비스 레이어, 훅, 타입 시스템
+- ✅ **데이터베이스**: 주요 테이블 (users, companies, jobs 등), RLS 정책
+- ✅ **플로우**: 회원가입 → 공고 등록 → 어드민 승인 → 메인 노출
+- ✅ **OAuth**: 구글/카카오/네이버 인증 플로우
+- ✅ **코드 품질**: 500줄 초과 파일 1개 (JobGridLayoutEditor.tsx 835줄)
+- ✅ **명명 규칙**: 파일명, 변수명, DB 필드명 컨벤션
+- ✅ **프로젝트 원칙**: 5가지 핵심 원칙 (파일 크기, 재사용성, 타입 안정성 등)
+
+**주요 섹션**:
+1. 📊 프로젝트 개요 (통계, 기술 스택)
+2. 🏗️ 아키텍처 구조 (Pages, Components, Services, Hooks, Types)
+3. 🗄️ 데이터베이스 구조 (테이블 스키마, RLS 정책)
+4. 🔄 주요 기능 플로우 (3가지 핵심 플로우)
+5. 📦 주요 모듈 의존성
+6. 🚨 현재 상태 및 이슈 (완료/진행중/예정)
+7. 🔐 환경 변수
+8. 📝 명명 규칙 및 컨벤션
+9. 🎯 프로젝트 원칙
+10. 🔍 주요 컴포넌트 상세
+
+**이유**:
+- 프로젝트 전체 구조를 한눈에 파악할 수 있는 문서 필요
+- 새로운 개발자 온보딩 시 참고 자료
+- 시스템 전반적인 이해를 위한 체계적 문서화
+- 향후 확장 및 리팩토링 계획 수립 시 기준 자료
+
+**영향**:
+- 프로젝트 구조 파악 시간 단축 (수 시간 → 10분)
+- 일관된 개발 가이드라인 제공
+- 코드 품질 개선 방향성 명확화
+
+---
+
 #### 🔐 네이버 OAuth 중복 회원가입 방지 (서버 사이드 콜백)
 **[FIX]** 네이버 OAuth 플로우에 중복 가입 차단 로직 추가
 

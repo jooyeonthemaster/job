@@ -1,10 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Header from '@/components/Header';
 import JobCard from '@/components/JobCard';
 import CompanyCard from '@/components/CompanyCard';
-import { jobs, companies } from '@/lib/data';
+import { jobs as dummyJobs, companies } from '@/lib/data';
+import { getFeaturedJobs } from '@/lib/supabase/public-job-service';
+import { Job } from '@/types';
 import {
   ArrowRight,
   Sparkles,
@@ -18,7 +20,25 @@ import { motion } from 'framer-motion';
 
 export default function Home() {
   const [selectedCategory, setSelectedCategory] = useState('ai-match');
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [loading, setLoading] = useState(true);
 
+  // 실제 공고 로드
+  useEffect(() => {
+    const loadJobs = async () => {
+      try {
+        const fetchedJobs = await getFeaturedJobs(6);
+        setJobs(fetchedJobs);
+      } catch (error) {
+        console.error('Failed to load jobs:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadJobs();
+  }, []);
+
+  // 표시할 공고 (항상 실제 DB 데이터 사용)
   const featuredJobs = jobs.slice(0, 3);
   const topCompanies = companies.slice(0, 6);
 
@@ -55,18 +75,24 @@ export default function Home() {
             </Link>
           </div>
 
-          <div className="grid lg:grid-cols-3 gap-6">
-            {/* Featured Jobs - 앞 2개만 표시 */}
-            {featuredJobs.slice(0, 2).map((job, index) => (
-              <motion.div
-                key={job.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: index * 0.1 }}
-              >
-                <JobCard job={job} />
-              </motion.div>
-            ))}
+          {loading ? (
+            <div className="text-center py-12">
+              <div className="w-12 h-12 border-4 border-primary-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+              <p className="text-gray-600">공고를 불러오는 중...</p>
+            </div>
+          ) : (
+            <div className="grid lg:grid-cols-3 gap-6">
+              {/* Featured Jobs - 앞 2개만 표시 */}
+              {featuredJobs.slice(0, 2).map((job: any, index: number) => (
+                <motion.div
+                  key={job.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: index * 0.1 }}
+                >
+                  <JobCard job={job} />
+                </motion.div>
+              ))}
 
             {/* Premium Advertisement Banner */}
             <motion.div
@@ -136,7 +162,8 @@ export default function Home() {
                 </div>
               </Link>
             </motion.div>
-          </div>
+            </div>
+          )}
 
           <div className="lg:hidden mt-8 text-center">
             <Link
