@@ -1,17 +1,12 @@
 {
   "permissions": {
     "allow": [
-      "Read(//c/Users/jooye/.claude/**)",
-      "Bash(git add app/page.tsx lib/supabase/public-job-service.ts components/JobCard.tsx app/jobs/[id]/page.tsx components/JobGridCard.tsx CHANGELOG.md)",
-      "Bash(git commit -m \"$(cat <<''EOF''\n[FIX/ADD]: 메인 페이지 에러 수정 + 회사 로고 + 공고 상세 페이지 + UI 정리\n\n1. 메인 페이지 null company 에러 수정\n   - lib/supabase/public-job-service.ts: companies null 체크 추가\n   - app/page.tsx: PublicJob → Job 타입 변환 함수 추가\n   - 회사 정보 없는 공고 필터링 (graceful degradation)\n\n2. 회사 로고 이미지 표시\n   - components/JobCard.tsx: logo 있으면 이미지, 없으면 Building 아이콘\n   - Image 컴포넌트로 최적화된 로고 표시\n\n3. 공고 상세 페이지 추가\n   - app/jobs/[id]/page.tsx 신규 생성 (437줄)\n   - Supabase 기반 공고 상세 조회\n   - 회사 배너, 공고 정보, 상세 설명, 필수/우대 요건 표시\n   - 저장/공유 기능, 지원하기 버튼 (준비 중)\n\n4. 공고 카드 UI 정리\n   - components/JobGridCard.tsx: 마감 기한 중복 제거\n   - 조회수/지원자 아이콘 제거 (호버 시 Stats 섹션 삭제)\n   - 사용하지 않는 import 제거 (Users, Eye, Clock, Star)\n\n5. 디버깅 로그 제거\n   - app/page.tsx, lib/supabase/public-job-service.ts 콘솔 로그 정리\n\nFiles: \n- app/page.tsx (318→363줄)\n- lib/supabase/public-job-service.ts (244→234줄)\n- components/JobCard.tsx (139→148줄)\n- app/jobs/[id]/page.tsx (신규: 437줄)\n- components/JobGridCard.tsx (216→194줄)\n- CHANGELOG.md (업데이트)\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
-      "Bash(psql \"$DATABASE_URL\" -c \"SELECT id, name, logo, banner_image FROM companies WHERE name = ''asdf'' LIMIT 1;\")",
-      "Bash(tree -L 2 -d app/ components/ lib/)",
-      "Bash(npm run build)",
-      "Bash(npx tsc --noEmit \"app/companies/[id]/page.tsx\")",
-      "Bash(psql \"$DATABASE_URL\" -c \"\\d companies\")",
-      "Bash(psql \"$DATABASE_URL\")",
-      "Bash(psql \"$DATABASE_URL\" -c \"SELECT id, name, profile_completed, status FROM companies WHERE id = ''0096c1c7-b070-4a23-9fcf-ff46f1027bd9'';\")",
-      "Bash(git add .)"
+      "Bash(git push origin feature/job-posting-wysiwyg-editor)",
+      "Bash(vercel --prod)",
+      "Bash(vercel ls)",
+      "Bash(powershell -Command:*)",
+      "Bash(npm run build:*)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []

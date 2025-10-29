@@ -46,7 +46,9 @@ export default function JobCard({ job }: JobCardProps) {
         <div className="p-6 flex-1">
           {/* Company Info */}
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center shrink-0 overflow-hidden">
+            <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 overflow-hidden font-bold text-sm ${
+              job.company.logo ? 'bg-gradient-to-br from-gray-100 to-gray-200' : 'bg-gradient-to-br from-primary-500 to-primary-600 text-white'
+            }`}>
               {job.company.logo ? (
                 <Image
                   src={job.company.logo}
@@ -54,9 +56,21 @@ export default function JobCard({ job }: JobCardProps) {
                   width={40}
                   height={40}
                   className="w-full h-full object-cover"
+                  onError={(e) => {
+                    // 이미지 로드 실패 시 회사 이름 첫 글자 표시
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                    const parent = target.parentElement;
+                    if (parent) {
+                      parent.classList.add('bg-gradient-to-br', 'from-primary-500', 'to-primary-600', 'text-white');
+                      parent.classList.remove('from-gray-100', 'to-gray-200');
+                      parent.textContent = job.company.name.charAt(0);
+                    }
+                  }}
                 />
               ) : (
-                <Building2 className="w-5 h-5 text-gray-500" />
+                // 로고 없을 때 회사 이름 첫 글자
+                <span>{job.company.name.charAt(0)}</span>
               )}
             </div>
             <div>

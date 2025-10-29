@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Header from '@/components/Header';
 import JobGridCard from '@/components/JobGridCard';
 import { supabase } from '@/lib/supabase/config';
+import { jobs as dummyJobs } from '@/lib/data';
 import {
   Search,
   Filter,
@@ -40,29 +41,40 @@ export default function JobsPage() {
   const [selectedLocation, setSelectedLocation] = useState('all');
   const [selectedExperience, setSelectedExperience] = useState('all');
 
+  // 경험 레벨 라벨 변환
+  const getExperienceLabel = (level: string) => {
+    const labels: Record<string, string> = {
+      'ENTRY': '신입',
+      'JUNIOR': '1-3년',
+      'MID': '3-5년',
+      'SENIOR': '5-10년',
+      'EXECUTIVE': '10년+',
+      'entry': '신입',
+      'junior': '1-3년',
+      'mid': '3-5년',
+      'senior': '5-10년',
+      'executive': '10년+'
+    };
+    return labels[level] || level;
+  };
+
+  // 고용 형태 라벨 변환
+  const getEmploymentTypeLabel = (type: string) => {
+    const labels: Record<string, string> = {
+      'FULL_TIME': '정규직',
+      'CONTRACT': '계약직',
+      'PART_TIME': '파트타임',
+      'INTERNSHIP': '인턴',
+      'full_time': '정규직',
+      'contract': '계약직',
+      'part_time': '파트타임',
+      'internship': '인턴'
+    };
+    return labels[type] || type;
+  };
+
   // Supabase 데이터를 JobGridCard 형식으로 변환
   const transformJobData = (job: JobData) => {
-    const getExperienceLabel = (level: string) => {
-      const labels: Record<string, string> = {
-        'entry': '신입',
-        'junior': '1-3년',
-        'mid': '3-5년',
-        'senior': '5-10년',
-        'executive': '10년+'
-      };
-      return labels[level] || level;
-    };
-
-    const getEmploymentTypeLabel = (type: string) => {
-      const labels: Record<string, string> = {
-        'full_time': '정규직',
-        'contract': '계약직',
-        'part_time': '파트타임',
-        'internship': '인턴'
-      };
-      return labels[type] || type;
-    };
-
     const getDaysUntilDeadline = () => {
       // 임시로 30일 후로 설정 (실제로는 deadline 필드가 있어야 함)
       return 'D-30';
@@ -90,6 +102,41 @@ export default function JobsPage() {
       isHot: false, // 조회수 기반 로직 추가 필요
       applicants: 0,
       views: 0
+    };
+  };
+
+  // 더미 데이터를 JobGridCard 형식으로 변환
+  const transformDummyJobData = (job: any) => {
+    const getDaysUntilDeadline = () => {
+      if (!job.deadline) return 'D-30';
+      const deadline = new Date(job.deadline);
+      const today = new Date();
+      const daysLeft = Math.floor((deadline.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+      return daysLeft > 0 ? `D-${daysLeft}` : '마감';
+    };
+
+    const isNew = () => {
+      const postedDate = new Date(job.postedAt);
+      const daysSincePosted = Math.floor((new Date().getTime() - postedDate.getTime()) / (1000 * 60 * 60 * 24));
+      return daysSincePosted <= 7;
+    };
+
+    return {
+      id: job.id,
+      company: job.company.name,
+      logo: job.company.logo,
+      companyImage: job.company.bannerImage,
+      position: job.title,
+      location: job.location,
+      experience: getExperienceLabel(job.experienceLevel),
+      salary: `${Math.floor(job.salary.min / 10000)}만-${Math.floor(job.salary.max / 10000)}만원`,
+      type: getEmploymentTypeLabel(job.employmentType),
+      skills: job.tags || [],
+      deadline: getDaysUntilDeadline(),
+      isNew: isNew(),
+      isHot: job.views > 500,
+      applicants: job.applicants || 0,
+      views: job.views || 0
     };
   };
 
@@ -154,11 +201,23 @@ export default function JobsPage() {
 
         if (bottomError) throw bottomError;
 
-        setTopJobs((topData || []).map(transformJobData));
-        setMiddleJobs((middleData || []).map(transformJobData));
-        setBottomJobs((bottomData || []).map(transformJobData));
+        // 실제 DB 데이터 변환
+        const transformedTopJobs = (topData || []).map(transformJobData);
+        const transformedMiddleJobs = (middleData || []).map(transformJobData);
+        const transformedBottomJobs = (bottomData || []).map(transformJobData);
+
+        // 더미 데이터 변환
+        const transformedDummyJobs = dummyJobs.map(transformDummyJobData);
+
+        // 실제 DB + 더미 데이터 병합 (더미는 Top 섹션에 추가 - "지금 당장 주목해야 할 채용공고")
+        setTopJobs([...transformedTopJobs, ...transformedDummyJobs]);
+        setMiddleJobs(transformedMiddleJobs);
+        setBottomJobs(transformedBottomJobs);
       } catch (error) {
         console.error('Error fetching jobs:', error);
+        // 에러 시에도 더미 데이터는 Top 섹션에 표시
+        const transformedDummyJobs = dummyJobs.map(transformDummyJobData);
+        setTopJobs(transformedDummyJobs);
       } finally {
         setLoading(false);
       }

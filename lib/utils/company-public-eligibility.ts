@@ -107,3 +107,5 @@ export const checkCompanyPublicEligibility = (company: Company | null): CompanyE
   };
 };
 
+
+

@@ -94,8 +94,9 @@ export default function JobGridCard({ job, size = 'medium' }: JobGridCardProps) 
         
         {/* Company Logo */}
         <div className={cn(
-          "flex items-center justify-center rounded-lg bg-gradient-to-br from-gray-100 to-gray-200 mb-3 overflow-hidden",
-          size === 'small' ? 'w-10 h-10' : size === 'medium' ? 'w-12 h-12' : 'w-14 h-14'
+          "flex items-center justify-center rounded-lg mb-3 overflow-hidden font-bold",
+          size === 'small' ? 'w-10 h-10 text-sm' : size === 'medium' ? 'w-12 h-12 text-base' : 'w-14 h-14 text-lg',
+          job.logo ? 'bg-gradient-to-br from-gray-100 to-gray-200' : 'bg-gradient-to-br from-primary-500 to-primary-600 text-white'
         )}>
           {job.logo ? (
             <Image
@@ -104,12 +105,21 @@ export default function JobGridCard({ job, size = 'medium' }: JobGridCardProps) 
               width={size === 'small' ? 40 : size === 'medium' ? 48 : 56}
               height={size === 'small' ? 40 : size === 'medium' ? 48 : 56}
               className="w-full h-full object-cover"
+              onError={(e) => {
+                // 이미지 로드 실패 시 회사 이름 첫 글자 표시
+                const target = e.target as HTMLImageElement;
+                target.style.display = 'none';
+                const parent = target.parentElement;
+                if (parent) {
+                  parent.classList.add('bg-gradient-to-br', 'from-primary-500', 'to-primary-600', 'text-white');
+                  parent.classList.remove('from-gray-100', 'to-gray-200');
+                  parent.textContent = job.company.charAt(0);
+                }
+              }}
             />
           ) : (
-            <Building2 className={cn(
-              "text-gray-500",
-              size === 'small' ? 'w-5 h-5' : size === 'medium' ? 'w-6 h-6' : 'w-7 h-7'
-            )} />
+            // 로고 없을 때 회사 이름 첫 글자
+            <span>{job.company.charAt(0)}</span>
           )}
         </div>
         

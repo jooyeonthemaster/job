@@ -78,15 +78,20 @@ export default function Home() {
   };
   };
 
-  // 실제 공고 로드 (display_position 기준)
+  // 실제 공고 로드 (display_position 기준) + 더미 데이터 병합
   useEffect(() => {
     const loadJobs = async () => {
       try {
         const { topJobs: fetchedTopJobs } = await getActiveJobs();
         const converted = fetchedTopJobs.map(convertToJob);
-        setTopJobs(converted);
+
+        // 실제 DB 데이터 + 더미 데이터 병합
+        const allJobs = [...converted, ...dummyJobs];
+        setTopJobs(allJobs);
       } catch (error) {
         console.error('Failed to load jobs:', error);
+        // 에러 시에도 더미 데이터는 표시
+        setTopJobs(dummyJobs);
       } finally {
         setLoading(false);
       }
@@ -94,7 +99,7 @@ export default function Home() {
     loadJobs();
   }, []);
 
-  // 표시할 공고 (Top 포지션 공고 중 최대 2개)
+  // 표시할 공고 (실제 DB + 더미 데이터 중 최대 2개)
   const featuredJobs = topJobs.slice(0, 2);
   const topCompanies = companies.slice(0, 6);
 

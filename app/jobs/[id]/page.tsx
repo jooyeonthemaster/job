@@ -247,22 +247,14 @@ export default function JobDetailPage() {
               </div>
 
               {/* Stats */}
-              <div className="flex items-center gap-6 pt-6 border-t">
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <Eye className="w-4 h-4" />
-                  조회수 {job.views || 0}
-                </div>
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <Users className="w-4 h-4" />
-                  지원자 {job.applicants || 0}
-                </div>
-                {job.visa_sponsorship && (
+              {job.visa_sponsorship && (
+                <div className="flex items-center gap-6 pt-6 border-t">
                   <div className="flex items-center gap-2 text-sm text-primary-600">
                     <Globe className="w-4 h-4" />
                     비자 지원
                   </div>
-                )}
-              </div>
+                </div>
+              )}
             </div>
 
             {/* Job Description */}
