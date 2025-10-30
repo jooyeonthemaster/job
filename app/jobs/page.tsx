@@ -275,15 +275,8 @@ export default function JobsPage() {
       {/* Hero Section */}
       <section className="bg-gradient-to-r from-primary-50 to-secondary-50 py-12">
         <div className="container mx-auto px-4 lg:px-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            외국인 인재를 위한 채용정보
-          </h1>
-          <p className="text-lg text-gray-600 mb-8">
-            한국 최고의 기업들이 당신을 기다립니다
-          </p>
-
           {/* Search Bar */}
-          <div className="bg-white rounded-xl shadow-sm p-2 flex items-center max-w-3xl">
+          <div className="bg-white rounded-xl shadow-sm p-2 flex items-center max-w-3xl mb-4">
             <div className="flex-1 flex items-center px-4">
               <Search className="w-5 h-5 text-gray-400 mr-3" />
               <input
@@ -296,6 +289,10 @@ export default function JobsPage() {
               검색하기
             </button>
           </div>
+
+          <p className="text-lg text-gray-600">
+            한국 최고의 기업들이 당신을 기다립니다
+          </p>
         </div>
       </section>
 
@@ -357,8 +354,11 @@ export default function JobsPage() {
       {/* Job Grid Sections */}
       <section className="py-12">
         <div className="container mx-auto px-4 lg:px-8">
-          {/* Top 20 Jobs - 4열 그리드 */}
-          <div className="mb-16">
+          <div className="flex gap-6">
+            {/* 메인 컨텐츠 */}
+            <div className="flex-1">
+              {/* Top 20 Jobs - 4열 그리드 */}
+              <div className="mb-16">
             <div className="relative bg-gradient-to-r from-emerald-700 to-emerald-600 rounded-2xl p-6 mb-8 overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-br from-emerald-900/30 via-transparent to-green-900/20"></div>
               <div className="relative flex items-center justify-between">
@@ -513,8 +513,31 @@ export default function JobsPage() {
                   </div>
                 ))
               )}
+              </div>
             </div>
           </div>
+
+          {/* 사이드바 - 배너 광고 */}
+          <aside className="hidden xl:block w-[160px] shrink-0">
+            <div className="sticky top-20 space-y-4">
+              {/* 배너 광고 1 */}
+              <div className="w-[160px] h-[600px] bg-gradient-to-br from-gray-50 to-gray-100 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center cursor-pointer hover:border-primary-400 hover:bg-gradient-to-br hover:from-primary-50 hover:to-blue-50 transition-all duration-300">
+                <div className="text-center">
+                  <div className="text-xs font-semibold text-gray-400">광고 배너</div>
+                  <div className="text-[10px] text-gray-400 mt-0.5">160x600</div>
+                </div>
+              </div>
+
+              {/* 배너 광고 2 */}
+              <div className="w-[160px] h-[600px] bg-gradient-to-br from-gray-50 to-gray-100 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center cursor-pointer hover:border-primary-400 hover:bg-gradient-to-br hover:from-primary-50 hover:to-blue-50 transition-all duration-300">
+                <div className="text-center">
+                  <div className="text-xs font-semibold text-gray-400">광고 배너</div>
+                  <div className="text-[10px] text-gray-400 mt-0.5">160x600</div>
+                </div>
+              </div>
+            </div>
+          </aside>
+        </div>
         </div>
       </section>
     </div>
