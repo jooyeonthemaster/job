@@ -4,19 +4,19 @@ import { PostingPrice, PostingTier } from '@/types/job-form.types';
 
 export const POSTING_PRICES: Record<PostingTier, PostingPrice> = {
   standard: {
-    price: 100000,
+    price: 300000,
     duration: 30,
     label: '중상단 (일반)',
     desc: '일반 채용공고 목록'
   },
   top: {
-    price: 1000000,
+    price: 500000,
     duration: 30,
     label: '최상단',
     desc: '채용공고 목록 최상단 고정'
   },
   premium: {
-    price: 1300000,
+    price: 2000000,
     duration: 60,
     label: '첫 페이지 최상단 (프리미엄)',
     desc: '메인 페이지 + 목록 최상단 고정'

@@ -88,7 +88,17 @@ export const signUpCompany = async (
 export const checkBusinessNumberDuplicate = async (
   registrationNumber: string
 ): Promise<boolean> => {
+  // 빈 값이면 중복 아님 (선택 필드)
+  if (!registrationNumber || registrationNumber.trim() === '') {
+    return false;
+  }
+
   const cleaned = registrationNumber.replace(/-/g, '');
+
+  // 빈 값이면 중복 아님
+  if (cleaned === '') {
+    return false;
+  }
 
   const { data, error } = await supabase
     .from('companies')
@@ -455,7 +465,7 @@ export const calculateProfileCompletion = (company: any): number => {
 
 /**
  * 모든 기업 목록 조회 (필터링 가능)
- * - profile_completed = true인 기업만 조회
+ * - profile_completed = true 또는 created_by_admin = true인 기업 조회
  * - status = 'active'인 기업만 조회
  */
 export const getAllCompanies = async (filters?: {
@@ -466,8 +476,8 @@ export const getAllCompanies = async (filters?: {
   let query = supabase
     .from('companies')
     .select('*')
-    .eq('profile_completed', true)
     .eq('status', 'active')
+    .or('profile_completed.eq.true,created_by_admin.eq.true')
     .order('created_at', { ascending: false });
 
   // 필터 적용

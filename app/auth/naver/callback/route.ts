@@ -89,7 +89,28 @@ export async function GET(request: NextRequest) {
       console.log('[Naver Callback] 기존 사용자 확인:', existingUser.id);
       supabaseUserId = existingUser.id;
       userEmail = existingUser.email!;
-      userPassword = existingUser.user_metadata?.naver_temp_password || `naver_${id}_temp`;
+
+      // ✅ 재로그인 시 비밀번호 재설정 (기존 비밀번호를 모르므로)
+      userPassword = `naver_${id}_temp`;
+
+      console.log('[Naver Callback] 기존 사용자 비밀번호 재설정 중...');
+      const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
+        existingUser.id,
+        {
+          password: userPassword,
+          user_metadata: {
+            ...existingUser.user_metadata,
+            naver_temp_password: userPassword,  // metadata도 업데이트
+          }
+        }
+      );
+
+      if (updateError) {
+        console.error('[Naver Callback] 비밀번호 재설정 실패:', updateError);
+        throw updateError;
+      }
+
+      console.log('[Naver Callback] 비밀번호 재설정 완료');
 
       // ✅ 중복 회원 유형 체크 (기존 사용자)
       if (userType === 'company') {
@@ -193,11 +214,24 @@ export async function GET(request: NextRequest) {
         .single();
 
       const redirectPath = companyData?.profile_completed ? '/company-dashboard' : '/signup/company';
-      
-      // 클라이언트에서 로그인 처리하도록 리다이렉트 (이메일/비밀번호 전달)
-      const response = NextResponse.redirect(
-        `${origin}/auth/naver/login?email=${encodeURIComponent(userEmail)}&password=${encodeURIComponent(userPassword)}&redirect=${encodeURIComponent(redirectPath)}`
-      );
+
+      // ✅ 보안 개선: URL 대신 httpOnly 쿠키로 세션 정보 전달
+      const response = NextResponse.redirect(`${origin}/auth/naver/login`);
+
+      // 세션 쿠키 설정 (5분 유효, 일회성)
+      response.cookies.set('naver_login_session', JSON.stringify({
+        email: userEmail,
+        password: userPassword,
+        redirect: redirectPath
+      }), {
+        httpOnly: true,  // JavaScript 접근 불가 (XSS 방지)
+        secure: process.env.NODE_ENV === 'production',  // HTTPS only
+        sameSite: 'lax',  // CSRF 방지
+        maxAge: 300,  // 5분
+        path: '/'
+      });
+
+      // OAuth 쿠키 정리
       response.cookies.delete('naver_oauth_type');
       response.cookies.delete('naver_oauth_state');
       return response;
@@ -237,11 +271,24 @@ export async function GET(request: NextRequest) {
         .single();
 
       const redirectPath = userData?.onboarding_completed ? '/jobseeker-dashboard' : '/onboarding/job-seeker/quick';
-      
-      // 클라이언트에서 로그인 처리하도록 리다이렉트
-      const response = NextResponse.redirect(
-        `${origin}/auth/naver/login?email=${encodeURIComponent(userEmail)}&password=${encodeURIComponent(userPassword)}&redirect=${encodeURIComponent(redirectPath)}`
-      );
+
+      // ✅ 보안 개선: URL 대신 httpOnly 쿠키로 세션 정보 전달
+      const response = NextResponse.redirect(`${origin}/auth/naver/login`);
+
+      // 세션 쿠키 설정 (5분 유효, 일회성)
+      response.cookies.set('naver_login_session', JSON.stringify({
+        email: userEmail,
+        password: userPassword,
+        redirect: redirectPath
+      }), {
+        httpOnly: true,  // JavaScript 접근 불가 (XSS 방지)
+        secure: process.env.NODE_ENV === 'production',  // HTTPS only
+        sameSite: 'lax',  // CSRF 방지
+        maxAge: 300,  // 5분
+        path: '/'
+      });
+
+      // OAuth 쿠키 정리
       response.cookies.delete('naver_oauth_type');
       response.cookies.delete('naver_oauth_state');
       return response;

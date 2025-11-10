@@ -4,7 +4,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { TrendingUp, CheckCircle, ChevronRight, Edit3, Eye, AlertCircle, X, Users } from 'lucide-react';
+import { TrendingUp, ChevronRight, Edit3, Eye, AlertCircle, X, Users } from 'lucide-react';
 import type { Company } from '@/types/company-dashboard.types';
 import type { CompanyChecklistItem } from '@/lib/utils/company-profile-checklist';
 import { checkCompanyPublicEligibility, type CompanyEligibilityIssue } from '@/lib/utils/company-public-eligibility';
@@ -161,15 +161,6 @@ export default function CompanyProfileChecklist({
                   )}
                   <ChevronRight className="w-5 h-5" />
                 </button>
-
-                <Link
-                  href="/company-dashboard?tab=verification"
-                  className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-700 text-white rounded-xl hover:from-green-700 hover:to-emerald-800 transition-all shadow-lg hover:shadow-xl font-semibold"
-                >
-                  <CheckCircle className="w-5 h-5" />
-                  기업 인증하기
-                  <ChevronRight className="w-5 h-5" />
-                </Link>
               </div>
             </div>
           </div>

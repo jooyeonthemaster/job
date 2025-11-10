@@ -27,9 +27,9 @@ export async function createJob(
 
     // 2. 과금 정보 계산
     const POSTING_PRICES = {
-      standard: { price: 100000, duration: 30 },
-      top: { price: 1000000, duration: 30 },
-      premium: { price: 1300000, duration: 60 }
+      standard: { price: 300000, duration: 30 },
+      top: { price: 500000, duration: 30 },
+      premium: { price: 2000000, duration: 60 }
     };
 
     const selectedPrice = POSTING_PRICES[formData.postingTier];
@@ -63,6 +63,13 @@ export async function createJob(
 
         // 상세 정보 (에디터 HTML 저장)
         description: editorContent || '',
+
+        // ✨ 신규: JD, 경력 사항, 스킬
+        job_description: formData.jobDescription || null,
+        required_experience: formData.requiredExperience || null,
+        required_skills: formData.requiredSkills && formData.requiredSkills.length > 0
+          ? formData.requiredSkills.filter(s => s.trim())
+          : null,
 
         // 언어/비자
         visa_sponsorship: formData.visaSponsorship,
@@ -224,7 +231,20 @@ export async function updateJob(
     
     // 상세 정보
     if (editorContent !== undefined) updates.description = editorContent;
-    
+
+    // ✨ 신규: JD, 경력 사항, 스킬
+    if (formData.jobDescription !== undefined) {
+      updates.job_description = formData.jobDescription || null;
+    }
+    if (formData.requiredExperience !== undefined) {
+      updates.required_experience = formData.requiredExperience || null;
+    }
+    if (formData.requiredSkills !== undefined) {
+      updates.required_skills = formData.requiredSkills && formData.requiredSkills.length > 0
+        ? formData.requiredSkills.filter(s => s.trim())
+        : null;
+    }
+
     // 언어/비자
     if (formData.visaSponsorship !== undefined) {
       updates.visa_sponsorship = formData.visaSponsorship;

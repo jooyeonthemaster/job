@@ -33,7 +33,8 @@ export const completeOnboarding = async (
     const updateData: any = {
       full_name: data.fullName,
       desired_job_category: data.desired_job_category || null,  // ✅ 희망 근무 직군 추가
-      phone: data.phone,
+      phone_country_code: data.phone_country_code || '+82',     // ✅ 국가 코드 추가 (기본값: 한국)
+      phone: data.phone || null,                                // ✅ NULL 허용
       headline: data.headline,
       resume_file_url: data.resumeFileUrl,
       resume_file_name: data.resumeFileName,
@@ -42,9 +43,9 @@ export const completeOnboarding = async (
       updated_at: new Date().toISOString()
     };
 
-    // K-Work 확장 필드 추가 (NOT NULL 제약이 있는 필드는 기본값 설정)
+    // K-Work 확장 필드 추가 (NULL 허용으로 변경)
     updateData.phone_verified = data.phone_verified ?? false;
-    updateData.foreigner_number = data.foreigner_number || ''; // 빈 문자열 기본값
+    updateData.foreigner_number = data.foreigner_number || null;  // ✅ NULL 허용 (빈 문자열 → null)
     updateData.foreigner_number_verified = data.foreigner_number_verified ?? false;
     updateData.address = data.address || '';
     updateData.address_detail = data.address_detail || '';

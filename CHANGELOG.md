@@ -10,6 +10,58 @@
 
 ### 2025-11-10
 
+#### 🔧 [FIX] 관리자 API 인증 로직 수정 (JWT 직접 디코딩)
+
+**변경 파일**:
+- `app/api/admin/jobs/create/route.ts` (223줄 → 223줄)
+- `app/api/admin/companies/create/route.ts` (167줄 → 167줄)
+- `app/api/admin/profile-views/route.ts` (168줄 → 168줄)
+
+**변경 내용**:
+- `supabase.auth.getUser(token)` 방식에서 JWT 직접 디코딩 방식으로 변경
+- Authorization 헤더의 JWT 토큰에서 payload를 base64 디코딩하여 이메일 추출
+- 이메일 기반 관리자 권한 체크 로직 개선
+- 상세한 디버그 로깅 추가 (토큰 디코딩 성공/실패, 이메일 확인)
+
+**기존 코드 문제점**:
+```typescript
+// ❌ 작동하지 않음 - email signup 계정의 토큰을 ANON_KEY로 검증 불가
+const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+if (!adminEmails.includes(user.email || '')) { ... }
+```
+
+**개선된 코드**:
+```typescript
+// ✅ JWT 직접 디코딩으로 이메일 추출
+const base64Payload = token.split('.')[1];
+const payload = JSON.parse(Buffer.from(base64Payload, 'base64').toString());
+const userEmail = payload.email;
+
+if (!adminEmails.includes(userEmail || '')) { ... }
+```
+
+**이유**:
+- `admin@gmail.com` (이메일 회원가입) 계정이 프론트엔드 `/admin` 페이지는 접근 가능하지만 API 호출 시 "권한 없음" 에러 발생
+- Supabase의 `auth.getUser(token)`은 ANON_KEY를 사용하는 API Route에서 다른 사용자의 JWT 토큰을 제대로 검증하지 못함
+- Google OAuth 계정(`nadr110619@gmail.com`)은 정상 작동하지만 이메일 회원가입 계정은 실패하는 문제 해결
+
+**시도했지만 실패한 방법**:
+- ❌ 로그아웃/재로그인 반복: 토큰 갱신 문제가 아님
+- ❌ 브라우저 캐시 삭제: 클라이언트 캐싱 문제가 아님
+- ❌ adminEmails 배열에 추가: 배열은 정상이지만 이메일 추출이 실패함
+- ❌ 디버그 로그 추가: `user.email`이 undefined로 확인됨
+
+**영향**:
+- `admin@gmail.com` 계정이 이제 관리자 API를 정상적으로 사용 가능
+- 공고 등록, 회사 생성, 프로필 열람 내역 조회 모두 작동
+- 이메일 회원가입 방식과 Google OAuth 방식 모두 동일하게 동작
+
+**테스트 필요**:
+- `admin@gmail.com`으로 로그인 후 관리자 페이지에서 공고 등록 시도
+- 터미널에서 `🔍 [TOKEN] JWT 디코딩 성공` 및 `✅ [AUTH SUCCESS]` 로그 확인
+
+---
+
 #### ➕ [ADD] 관리자 계정 추가 (admin@gmail.com)
 
 **변경 파일**:

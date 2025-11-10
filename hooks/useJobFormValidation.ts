@@ -38,6 +38,18 @@ export function useJobFormValidation(formData: JobFormData, editorContent?: stri
     // mainTasks, requirements, description은 더 이상 별도 필드가 아님
     // 모두 에디터에서 자유롭게 작성
 
+    // ✨ 신규: JD, 경력 사항, 스킬 검증
+    if (!formData.jobDescription || !formData.jobDescription.trim()) {
+      errors.push('JD (Job Description)를 입력해주세요');
+    }
+    if (!formData.requiredExperience || !formData.requiredExperience.trim()) {
+      errors.push('필요 경력 사항을 입력해주세요');
+    }
+    if (!formData.requiredSkills || formData.requiredSkills.length === 0 ||
+        formData.requiredSkills.filter(s => s.trim()).length === 0) {
+      errors.push('필요 스킬을 최소 1개 이상 입력해주세요');
+    }
+
     // 마감일 검증
     if (!formData.deadline) {
       errors.push('마감일을 선택해주세요');

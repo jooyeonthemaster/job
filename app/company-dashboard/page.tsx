@@ -16,6 +16,7 @@ import { OverviewTab } from '@/components/company-dashboard/tabs/OverviewTab';
 import { ProfileTab } from '@/components/company-dashboard/tabs/ProfileTab';
 import { JobsTab } from '@/components/company-dashboard/tabs/JobsTab';
 import { ApplicantsTab } from '@/components/company-dashboard/tabs/ApplicantsTab';
+import { ViewedProfilesTab } from '@/components/company-dashboard/tabs/ViewedProfilesTab';
 import { VerificationTab } from '@/components/company-dashboard/tabs/VerificationTab';
 import { SettingsTab } from '@/components/company-dashboard/tabs/SettingsTab';
 
@@ -36,7 +37,7 @@ function CompanyDashboardContent() {
   // URL 파라미터에서 탭 확인
   useEffect(() => {
     const tab = searchParams.get('tab') as TabId;
-    if (tab && ['overview', 'profile', 'jobs', 'applicants', 'verification', 'settings'].includes(tab)) {
+    if (tab && ['overview', 'profile', 'jobs', 'applicants', 'viewed-profiles', 'verification', 'settings'].includes(tab)) {
       setActiveTab(tab);
     }
   }, [searchParams]);
@@ -119,6 +120,10 @@ function CompanyDashboardContent() {
 
           {activeTab === 'applicants' && (
             <ApplicantsTab />
+          )}
+
+          {activeTab === 'viewed-profiles' && (
+            <ViewedProfilesTab />
           )}
 
           {activeTab === 'verification' && (

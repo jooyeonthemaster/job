@@ -18,34 +18,97 @@ import {
   Building2,
   DollarSign,
   User,
-  Send
+  Send,
+  Mail
 } from 'lucide-react';
 import { getTalentById, type TalentProfile } from '@/lib/supabase/talent-service';
+import { supabase } from '@/lib/supabase/config';
 
 export default function TalentDetailPage() {
   const params = useParams();
   const router = useRouter();
   const [talent, setTalent] = useState<TalentProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isPrivateProfile, setIsPrivateProfile] = useState(false);
+  const [hasPaid, setHasPaid] = useState(false);
+  const [isCompany, setIsCompany] = useState(false);
+  const [checkingPayment, setCheckingPayment] = useState(true);
 
   useEffect(() => {
     const loadProfile = async () => {
       if (params?.id) {
         setLoading(true);
+        setIsPrivateProfile(false);
+        setCheckingPayment(true);
 
         try {
+          // 1. 프로필 로드
           const talentProfile = await getTalentById(params.id as string);
           if (talentProfile) {
             setTalent(talentProfile);
           } else {
-            console.error('Profile not found');
-            router.push('/talent');
+            // 프로필을 찾을 수 없는 경우 (비공개 or 삭제됨)
+            console.error('Profile not found or private');
+            setIsPrivateProfile(true);
+            setLoading(false);
+            setCheckingPayment(false);
+            return;
+          }
+
+          // 2. 현재 사용자 확인
+          const { data: { user } } = await supabase.auth.getUser();
+
+          if (!user) {
+            // 로그인하지 않은 경우 - 공개 정보만 표시
+            setIsCompany(false);
+            setHasPaid(false);
+            setCheckingPayment(false);
+            setLoading(false);
+            return;
+          }
+
+          // 3. 사용자 타입 확인
+          const { data: userData } = await supabase
+            .from('users')
+            .select('user_type')
+            .eq('id', user.id)
+            .single();
+
+          const isCompanyUser = userData?.user_type === 'company';
+          setIsCompany(isCompanyUser);
+
+          if (!isCompanyUser) {
+            // 기업이 아닌 경우 (구직자 또는 기타) - 공개 정보만 표시
+            setHasPaid(false);
+            setCheckingPayment(false);
+            setLoading(false);
+            return;
+          }
+
+          // 4. 기업인 경우 - 결제 여부 확인
+          const paymentResponse = await fetch('/api/payment/profile/check', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ talentId: params.id })
+          });
+
+          if (paymentResponse.ok) {
+            const paymentData = await paymentResponse.json();
+            setHasPaid(paymentData.hasPaid);
+
+            // 결제하지 않은 경우 결제 페이지로 리다이렉트
+            if (!paymentData.hasPaid) {
+              alert('프로필 상세 정보를 확인하려면 결제가 필요합니다.');
+              router.push(`/payment/profile/${params.id}`);
+              return;
+            }
           }
         } catch (error) {
           console.error('Error loading profile:', error);
-          router.push('/talent');
+          setIsPrivateProfile(true);
         } finally {
           setLoading(false);
+          setCheckingPayment(false);
         }
       }
     };
@@ -53,7 +116,8 @@ export default function TalentDetailPage() {
     loadProfile();
   }, [params?.id, router]);
 
-  if (loading || !talent) {
+  // 로딩 중
+  if (loading) {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
@@ -61,6 +125,45 @@ export default function TalentDetailPage() {
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
             <p className="text-gray-500">프로필을 불러오는 중...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // 비공개 프로필
+  if (isPrivateProfile || !talent) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <div className="container mx-auto px-4 lg:px-8 py-12">
+          <div className="max-w-2xl mx-auto">
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-12 text-center">
+              <div className="w-20 h-20 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <User className="w-10 h-10 text-yellow-600" />
+              </div>
+              <h1 className="text-2xl font-bold text-gray-900 mb-3">
+                비공개 프로필입니다
+              </h1>
+              <p className="text-gray-600 mb-8">
+                이 프로필은 인재풀에 공개되지 않았거나 존재하지 않는 프로필입니다.
+              </p>
+              <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg mb-6 text-left">
+                <p className="text-sm text-blue-900 font-medium mb-2">
+                  💡 인재풀 등록 안내
+                </p>
+                <p className="text-sm text-blue-800">
+                  구직자가 프로필을 100% 완성하고 인재풀에 등록하면, 기업들이 프로필을 보고 스카우트 제안을 보낼 수 있습니다.
+                </p>
+              </div>
+              <Link
+                href="/talent"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium"
+              >
+                <ArrowLeft className="w-5 h-5" />
+                인재 목록으로 돌아가기
+              </Link>
+            </div>
           </div>
         </div>
       </div>
@@ -143,6 +246,12 @@ export default function TalentDetailPage() {
                   <div className="flex items-center gap-1.5">
                     <Briefcase className="w-4 h-4 text-gray-400" />
                     <span>{talent.experience}년 경력</span>
+                  </div>
+                )}
+                {talent.email && (isCompany ? hasPaid : false) && (
+                  <div className="flex items-center gap-1.5">
+                    <Mail className="w-4 h-4 text-gray-400" />
+                    <span>{talent.email}</span>
                   </div>
                 )}
               </div>

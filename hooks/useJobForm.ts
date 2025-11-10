@@ -12,38 +12,43 @@ const initialFormData: JobFormData = {
   employmentType: 'FULL_TIME',
   experienceLevel: 'MID',
   deadline: '',
-  
+
   // 급여
   salaryMin: '',
   salaryMax: '',
   salaryNegotiable: true,
-  
+
   // 상세 정보
   description: '',
   mainTasks: [''],
   requirements: [''],
   preferredQualifications: [''],
-  
+
+  // ✨ 신규: JD, 경력 사항, 스킬
+  jobDescription: '',
+  requiredExperience: '',
+  requiredSkills: [],
+
   // 복지 및 태그
   benefits: [''],
   tags: [''],
-  
+
   // 비자 및 언어
   visaSponsorship: true,
   koreanLevel: 'INTERMEDIATE',
   englishLevel: 'FLUENT',
-  
+
   // 근무 조건
   probation: '3개월',
   workHours: '',
   startDate: '즉시 가능',
-  
+
   // 채용 담당자
   managerName: '',
   managerPosition: '',
   managerEmail: '',
   managerPhone: '',
-  
+
   // 공고 노출 위치
   postingTier: 'standard'
 };
@@ -60,7 +65,7 @@ export function useJobForm() {
   }, []);
 
   // 배열 필드 추가
-  const addArrayItem = useCallback((field: keyof Pick<JobFormData, 'mainTasks' | 'requirements' | 'preferredQualifications' | 'benefits' | 'tags'>) => {
+  const addArrayItem = useCallback((field: keyof Pick<JobFormData, 'mainTasks' | 'requirements' | 'preferredQualifications' | 'benefits' | 'tags' | 'requiredSkills'>) => {
     setFormData(prev => ({
       ...prev,
       [field]: [...prev[field], '']
@@ -69,7 +74,7 @@ export function useJobForm() {
 
   // 배열 필드 제거
   const removeArrayItem = useCallback((
-    field: keyof Pick<JobFormData, 'mainTasks' | 'requirements' | 'preferredQualifications' | 'benefits' | 'tags'>,
+    field: keyof Pick<JobFormData, 'mainTasks' | 'requirements' | 'preferredQualifications' | 'benefits' | 'tags' | 'requiredSkills'>,
     index: number
   ) => {
     setFormData(prev => ({
@@ -80,7 +85,7 @@ export function useJobForm() {
 
   // 배열 필드 업데이트
   const updateArrayItem = useCallback((
-    field: keyof Pick<JobFormData, 'mainTasks' | 'requirements' | 'preferredQualifications' | 'benefits' | 'tags'>,
+    field: keyof Pick<JobFormData, 'mainTasks' | 'requirements' | 'preferredQualifications' | 'benefits' | 'tags' | 'requiredSkills'>,
     index: number,
     value: string
   ) => {

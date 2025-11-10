@@ -49,7 +49,8 @@ function AdminJobCreateContent() {
         const adminEmails = [
           'admin@ssmhr.com',
           'joo.y.oh.ko@gmail.com',
-          'nadr110619@gmail.com'
+          'nadr110619@gmail.com',
+          'admin@gmail.com'
         ];
 
         if (!adminEmails.includes(user.email || '')) {

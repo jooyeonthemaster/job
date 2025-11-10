@@ -20,6 +20,7 @@ export const useJobseekerOnboarding = () => {
 
   const [formData, setFormData] = useState<JobseekerOnboardingFormData>({
     fullName: '',
+    phoneCountryCode: '+82',      // ✅ 기본값: 한국 국가 코드
     phone: '',
     phoneVerified: false,
     foreignerNumber: '',
@@ -187,11 +188,12 @@ export const useJobseekerOnboarding = () => {
       await completeOnboarding(user.id, {
         fullName: formData.fullName,
         desired_job_category: formData.desiredJobCategory,  // ✅ 희망 근무 직군 저장
-        phone: isKorean ? formData.phone.replace(/-/g, '') : '',
+        phone_country_code: formData.phoneCountryCode,      // ✅ 국가 코드 저장
+        phone: formData.phone ? formData.phone.replace(/\D/g, '') : '',  // ✅ 숫자만 저장
         headline: formData.headline || '',
         resumeFileUrl: undefined,
         resumeFileName: undefined,
-        foreigner_number: !isKorean ? formData.foreignerNumber : undefined,
+        foreigner_number: !isKorean && formData.foreignerNumber ? formData.foreignerNumber : undefined,  // ✅ 외국인만 저장
         address: formData.address,
         address_detail: formData.addressDetail,
         nationality: formData.nationality,

@@ -3,7 +3,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Building2, Globe, Calendar, Eye, Users, Edit, Trash2, PlusCircle, Briefcase } from 'lucide-react';
+import { Building2, Globe, Calendar, Eye, Edit, Trash2, PlusCircle, Briefcase } from 'lucide-react';
 import { Job } from '@/types/company-dashboard.types';
 
 interface JobsTabProps {
@@ -95,14 +95,6 @@ export const JobsTab = ({ jobs, loading, onDeleteJob }: JobsTabProps) => {
                     <span className="flex items-center gap-1">
                       <Calendar className="w-4 h-4" />
                       마감: {new Date(job.deadline).toLocaleDateString()}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Eye className="w-4 h-4" />
-                      {job.views || 0}회
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Users className="w-4 h-4" />
-                      지원자 {job.applicants || 0}명
                     </span>
                   </div>
 

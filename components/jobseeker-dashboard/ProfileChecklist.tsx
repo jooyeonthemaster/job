@@ -5,7 +5,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext_Supabase';
-import { TrendingUp, CheckCircle, ChevronRight, Edit3, Users, AlertCircle, X } from 'lucide-react';
+import { TrendingUp, CheckCircle, ChevronRight, Edit3, Users, AlertCircle, X, Eye } from 'lucide-react';
 import type { ChecklistItem, UserProfile } from '@/types/jobseeker-dashboard.types';
 import { checkTalentPoolEligibility, type EligibilityIssue } from '@/lib/utils/talent-pool-eligibility';
 
@@ -20,14 +20,64 @@ export default function ProfileChecklist({ checklist, checklistPercentage, profi
   const completedItems = checklist.filter(item => item.completed).length;
   const totalItems = checklist.length;
   const [showEligibilityModal, setShowEligibilityModal] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false);
 
   const eligibility = checkTalentPoolEligibility(profileData);
   const talentProfileUrl = user ? `/talent/${user.id}` : '/talent';
 
+  // 디버깅
+  console.log('[ProfileChecklist] User:', user);
+  console.log('[ProfileChecklist] Eligibility:', eligibility);
+  console.log('[ProfileChecklist] Profile Data:', profileData);
+
   const handleTalentPoolClick = (e: React.MouseEvent) => {
-    if (!eligibility.eligible) {
-      e.preventDefault();
-      setShowEligibilityModal(true);
+    e.preventDefault();
+    console.log('[ProfileChecklist] 인재풀 등록하기 클릭');
+    console.log('[ProfileChecklist] Eligible:', eligibility.eligible);
+    console.log('[ProfileChecklist] Completion Rate:', eligibility.completionRate);
+    setShowEligibilityModal(true);
+  };
+
+  const handlePublishTalentPool = async () => {
+    if (!user) {
+      alert('로그인이 필요합니다.');
+      return;
+    }
+
+    setIsPublishing(true);
+    try {
+      const response = await fetch('/api/talent/publish', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId: user.id }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        // 서버에서 반환한 에러 메시지 표시
+        if (data.missingFields && data.missingFields.length > 0) {
+          alert(`프로필 완성이 필요합니다:\n\n${data.missingFields.join('\n')}`);
+        } else {
+          throw new Error(data.error || '인재풀 등록에 실패했습니다.');
+        }
+        return;
+      }
+
+      console.log('[ProfileChecklist] 인재풀 등록 성공:', data);
+
+      // 성공 메시지 표시
+      alert('🎉 인재풀에 성공적으로 등록되었습니다!\n\n이제 기업들이 당신의 프로필을 보고 스카우트 제안을 보낼 수 있습니다.');
+
+      // 인재 목록 페이지로 이동
+      window.location.href = '/talent';
+    } catch (error: any) {
+      console.error('[ProfileChecklist] 인재풀 등록 실패:', error);
+      alert(error.message || '인재풀 등록 중 오류가 발생했습니다.');
+    } finally {
+      setIsPublishing(false);
     }
   };
 
@@ -117,22 +167,29 @@ export default function ProfileChecklist({ checklist, checklistPercentage, profi
             <Edit3 className="w-4 h-4" />
             지금 프로필 완성하기
           </Link>
-          <Link
-            href={talentProfileUrl}
+          <button
             onClick={handleTalentPoolClick}
             className={`inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg transition-colors text-sm font-medium ${
               eligibility.eligible
-                ? 'bg-white border-2 border-primary-600 text-primary-600 hover:bg-primary-50'
+                ? 'bg-white border-2 border-green-600 text-green-700 hover:bg-green-50'
                 : 'bg-gray-100 border-2 border-gray-300 text-gray-500 cursor-not-allowed'
             }`}
           >
             <Users className="w-4 h-4" />
-            내 프로필 보기
+            인재풀 등록하기
             {!eligibility.eligible && (
               <span className="ml-1 px-2 py-0.5 bg-gray-200 text-gray-600 rounded-full text-xs">
                 {eligibility.completionRate}%
               </span>
             )}
+          </button>
+          <Link
+            href={talentProfileUrl}
+            target="_blank"
+            className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
+          >
+            <Eye className="w-4 h-4" />
+            내 프로필 미리보기
           </Link>
         </div>
       </div>
@@ -149,14 +206,11 @@ export default function ProfileChecklist({ checklist, checklistPercentage, profi
           >
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-yellow-100 flex items-center justify-center">
-                  <AlertCircle className="w-6 h-6 text-yellow-600" />
+                <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
+                  <Users className="w-6 h-6 text-blue-600" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold text-gray-900">인재풀 등록 조건 미충족</h3>
-                  <p className="text-sm text-gray-600 mt-1">
-                    프로필 완성도: {eligibility.completionRate}%
-                  </p>
+                  <h3 className="text-xl font-bold text-gray-900">인재풀 등록 조건 안내</h3>
                 </div>
               </div>
               <button
@@ -168,39 +222,64 @@ export default function ProfileChecklist({ checklist, checklistPercentage, profi
             </div>
 
             <div className="mb-6">
-              <p className="text-gray-700 mb-4">
-                기업이 인재 프로필을 제대로 확인할 수 있도록 아래 정보를 먼저 완성해주세요.
-              </p>
-
-              <div className="space-y-3">
-                {eligibility.issues.map((issue, idx) => (
-                  <div key={idx} className="flex items-start gap-3 p-3 bg-red-50 border border-red-200 rounded-lg">
-                    <AlertCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
-                    <div className="flex-1">
-                      <p className="font-medium text-red-900 text-sm">{issue.field}</p>
-                      <p className="text-red-700 text-sm mt-1">{issue.message}</p>
-                    </div>
-                    {issue.link && (
-                      <Link
-                        href={issue.link}
-                        onClick={() => setShowEligibilityModal(false)}
-                        className="px-3 py-1 bg-red-600 text-white rounded-lg text-xs font-medium hover:bg-red-700 transition-colors shrink-0"
-                      >
-                        입력하기
-                      </Link>
-                    )}
-                  </div>
-                ))}
+              <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg mb-4">
+                <p className="text-sm text-blue-900 font-medium mb-2">
+                  🎯 인재풀 등록이란?
+                </p>
+                <p className="text-sm text-blue-800">
+                  프로필을 <strong>인재 검색 페이지</strong>에 공개하여 기업들이 찾을 수 있게 합니다.
+                  채용공고 지원과 별개로 기업의 직접 스카우트를 받을 수 있습니다.
+                </p>
               </div>
+
+              {eligibility.eligible ? (
+                <div className="p-4 bg-green-50 border border-green-200 rounded-lg mb-4">
+                  <p className="text-sm text-green-900 font-medium mb-2">
+                    ✅ 등록 조건 충족!
+                  </p>
+                  <p className="text-sm text-green-800">
+                    프로필이 100% 완성되었습니다. "인재풀에 등록하기" 버튼을 눌러 기업들에게 노출시키세요.
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <p className="text-gray-700 mb-4">
+                    기업이 인재 프로필을 제대로 확인할 수 있도록 아래 정보를 먼저 완성해주세요.
+                    <strong className="text-primary-600"> (100% 완성 필수)</strong>
+                  </p>
+
+                  <div className="space-y-3">
+                    {eligibility.issues.map((issue, idx) => (
+                      <div key={idx} className="flex items-start gap-3 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                        <AlertCircle className="w-5 h-5 text-orange-600 shrink-0 mt-0.5" />
+                        <div className="flex-1">
+                          <p className="font-medium text-orange-900 text-sm">{issue.field}</p>
+                          <p className="text-orange-700 text-sm mt-1">{issue.message}</p>
+                        </div>
+                        {issue.link && (
+                          <Link
+                            href={issue.link}
+                            onClick={() => setShowEligibilityModal(false)}
+                            className="px-3 py-1 bg-orange-600 text-white rounded-lg text-xs font-medium hover:bg-orange-700 transition-colors shrink-0"
+                          >
+                            입력하기
+                          </Link>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
 
-            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg mb-4">
-              <p className="text-sm text-blue-900 font-medium mb-2">
+            <div className="p-4 bg-gradient-to-r from-primary-50 to-blue-50 border border-primary-200 rounded-lg mb-4">
+              <p className="text-sm text-gray-900 font-medium mb-2">
                 💡 인재풀 등록 혜택
               </p>
-              <ul className="text-sm text-blue-800 space-y-1">
-                <li>• 기업의 직접 스카우트 제안 수신</li>
-                <li>• 프로필 노출로 채용 기회 증가</li>
+              <ul className="text-sm text-gray-800 space-y-1">
+                <li>• 인재 검색 페이지에 노출 → 기업 유입 증가</li>
+                <li>• 기업의 직접 스카우트 제안 수신 가능</li>
+                <li>• 프로필 노출로 채용 기회 대폭 증가</li>
                 <li>• AI 매칭 정확도 향상</li>
               </ul>
             </div>
@@ -212,13 +291,23 @@ export default function ProfileChecklist({ checklist, checklistPercentage, profi
               >
                 닫기
               </button>
-              <Link
-                href="/profile/edit"
-                onClick={() => setShowEligibilityModal(false)}
-                className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium transition-colors text-center"
-              >
-                프로필 완성하기
-              </Link>
+              {eligibility.eligible ? (
+                <button
+                  onClick={handlePublishTalentPool}
+                  disabled={isPublishing}
+                  className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isPublishing ? '등록 중...' : '인재풀에 등록하기'}
+                </button>
+              ) : (
+                <Link
+                  href="/profile/edit"
+                  onClick={() => setShowEligibilityModal(false)}
+                  className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium transition-colors text-center"
+                >
+                  지금 완성하기
+                </Link>
+              )}
             </div>
           </div>
         </div>

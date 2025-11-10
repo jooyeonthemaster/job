@@ -109,9 +109,9 @@ export default function JobCreatePage() {
         throw new Error(result.error);
       }
 
-      // 제출 성공
-      alert('채용공고가 등록되었습니다. 관리자 승인 및 결제 확인 후 공고가 활성화됩니다.');
-      router.push('/company-dashboard?tab=jobs');
+      // 제출 성공 - 결제 페이지로 리디렉션
+      alert('채용공고가 등록되었습니다. 결제를 진행해주세요.');
+      router.push(`/payment/${result.jobId}`);
     } catch (err: any) {
       console.error('Submit error:', err);
       setError(err.message || '채용공고 등록에 실패했습니다.');

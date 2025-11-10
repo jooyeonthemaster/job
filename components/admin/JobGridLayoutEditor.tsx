@@ -15,12 +15,14 @@ interface JobGridLayoutEditorProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  preselectedJobId?: string | null;
 }
 
 export default function JobGridLayoutEditor({
   isOpen,
   onClose,
-  onSuccess
+  onSuccess,
+  preselectedJobId
 }: JobGridLayoutEditorProps) {
   // 3개 섹션별 슬롯
   const [topSlots, setTopSlots] = useState<GridSlot[]>([]);      // 20개 (4열 x 5행)
@@ -42,6 +44,16 @@ export default function JobGridLayoutEditor({
       loadData();
     }
   }, [isOpen, currentPage]);
+
+  // preselectedJobId가 변경되면 선택 상태 업데이트
+  useEffect(() => {
+    if (isOpen && preselectedJobId && unassignedJobs.length > 0) {
+      const preselectedJob = unassignedJobs.find(job => job.id === preselectedJobId);
+      if (preselectedJob) {
+        setSelectedJob(preselectedJob);
+      }
+    }
+  }, [preselectedJobId, unassignedJobs, isOpen]);
 
   const loadData = async () => {
     setLoading(true);
@@ -141,7 +153,30 @@ export default function JobGridLayoutEditor({
         .filter(s => s.job !== null)
         .map(s => s.job!.id);
 
-      setUnassignedJobs(activeJobs.filter(job => !allAssigned.includes(job.id)));
+      const unassigned = activeJobs.filter(job => !allAssigned.includes(job.id));
+      setUnassignedJobs(unassigned);
+
+      // preselectedJobId가 있으면 해당 공고를 자동 선택
+      if (preselectedJobId) {
+        const preselectedJob = activeJobs.find(job => job.id === preselectedJobId);
+        if (preselectedJob) {
+          setSelectedJob(preselectedJob);
+          
+          // 공고가 이미 할당되어 있으면 해당 슬롯으로 스크롤
+          setTimeout(() => {
+            const jobSlot = document.querySelector(`[data-job-id="${preselectedJobId}"]`);
+            if (jobSlot) {
+              jobSlot.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            } else {
+              // 미할당 공고면 사이드바로 스크롤
+              const sidebar = document.querySelector('.job-sidebar');
+              if (sidebar) {
+                sidebar.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }
+            }
+          }, 300);
+        }
+      }
     } catch (error) {
       console.error('Failed to load grid data:', error);
       alert('데이터 로딩에 실패했습니다.');
@@ -302,6 +337,7 @@ export default function JobGridLayoutEditor({
     return (
       <button
         key={`${section}-${index}`}
+        data-job-id={hasJob ? slot.job?.id : undefined}
         onClick={() => hasJob ? handleRemoveFromSlot(section, index) : handleSlotClick(section, index)}
         className={`
           ${sizeClasses[size]} rounded-lg border-2 transition-all relative overflow-hidden
@@ -309,7 +345,7 @@ export default function JobGridLayoutEditor({
             ? 'bg-white border-gray-200 hover:border-red-400 hover:shadow-md'
             : 'border-dashed border-gray-300 bg-gray-50 hover:border-primary-500 hover:bg-primary-50'
           }
-          ${isSelected ? 'ring-2 ring-primary-500' : ''}
+          ${isSelected ? 'ring-2 ring-primary-500 ring-offset-2' : ''}
         `}
       >
         {hasJob ? (
@@ -464,11 +500,14 @@ export default function JobGridLayoutEditor({
             </div>
 
             {/* 사이드바 - 미할당 공고 (30%) */}
-            <div className="w-80 border-l border-gray-200 flex flex-col">
+            <div className="w-80 border-l border-gray-200 flex flex-col job-sidebar">
               <div className="p-4 border-b border-gray-200">
-                <h3 className="text-sm font-bold text-gray-900 mb-3">
+                <h3 className="text-sm font-bold text-gray-900 mb-1">
                   할당 대기 공고 ({unassignedJobs.length}개)
                 </h3>
+                <p className="text-xs text-gray-500 mb-3">
+                  활성 + 결제 완료 + 미할당 공고만 표시
+                </p>
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <input
@@ -494,11 +533,12 @@ export default function JobGridLayoutEditor({
                   .map(job => (
                     <button
                       key={job.id}
+                      data-job-id={job.id}
                       onClick={() => setSelectedJob(selectedJob?.id === job.id ? null : job)}
                       className={`
                         w-full text-left p-3 rounded-lg border-2 transition-all
                         ${selectedJob?.id === job.id
-                          ? 'border-primary-500 bg-primary-50'
+                          ? 'border-primary-500 bg-primary-50 ring-2 ring-primary-500 ring-offset-2'
                           : 'border-gray-200 bg-white hover:border-gray-300'
                         }
                       `}

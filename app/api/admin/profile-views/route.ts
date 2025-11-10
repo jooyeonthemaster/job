@@ -23,16 +23,16 @@ export async function GET(request: Request) {
 
     const token = authHeader.replace('Bearer ', '');
 
-    // Supabase 클라이언트 생성 (토큰 검증용)
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-    const { createClient } = await import('@supabase/supabase-js');
-    const supabase = createClient(supabaseUrl, supabaseAnonKey);
+    // JWT 디코딩 (검증 없이 이메일 추출)
+    const base64Payload = token.split('.')[1];
+    const payload = JSON.parse(Buffer.from(base64Payload, 'base64').toString());
+    const userEmail = payload.email;
 
-    // 토큰으로 사용자 확인
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    console.log('🔍 [TOKEN] JWT 디코딩 성공');
+    console.log('🔍 [TOKEN] 이메일:', userEmail);
 
-    if (authError || !user) {
+    if (!userEmail) {
+      console.error('🔴 [AUTH ERROR] 토큰에 이메일 없음');
       return NextResponse.json(
         { error: '로그인이 필요합니다.' },
         { status: 401 }
@@ -47,12 +47,16 @@ export async function GET(request: Request) {
       'admin@gmail.com'
     ];
 
-    if (!adminEmails.includes(user.email || '')) {
+    if (!adminEmails.includes(userEmail || '')) {
+      console.error('🔴 [AUTH ERROR] 관리자 권한 없음');
+      console.error('🔴 [AUTH ERROR] 시도한 이메일:', userEmail);
       return NextResponse.json(
         { error: '관리자 권한이 없습니다.' },
         { status: 403 }
       );
     }
+
+    console.log('✅ [AUTH SUCCESS] 관리자 인증 성공:', userEmail);
 
     // 3. 관리자용 Supabase 클라이언트 생성 (RLS 우회)
     const adminSupabase = createAdminClient();

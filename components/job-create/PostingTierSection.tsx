@@ -59,7 +59,7 @@ export default function PostingTierSection({ formData, onUpdate }: PostingTierSe
               일반 채용공고 목록에 노출됩니다
             </p>
             <div className="flex items-baseline gap-2 ml-8">
-              <span className="text-3xl font-bold text-primary-600">10만원</span>
+              <span className="text-3xl font-bold text-primary-600">30만원</span>
               <span className="text-sm text-gray-500">(부가세 별도)</span>
             </div>
           </div>
@@ -108,7 +108,7 @@ export default function PostingTierSection({ formData, onUpdate }: PostingTierSe
               채용공고 목록 최상단에 고정 노출됩니다
             </p>
             <div className="flex items-baseline gap-2 ml-8">
-              <span className="text-3xl font-bold text-primary-600">100만원</span>
+              <span className="text-3xl font-bold text-primary-600">500만원</span>
               <span className="text-sm text-gray-500">(부가세 별도)</span>
             </div>
           </div>
@@ -157,7 +157,7 @@ export default function PostingTierSection({ formData, onUpdate }: PostingTierSe
               메인 페이지 + 채용공고 목록 최상단에 고정 노출됩니다
             </p>
             <div className="flex items-baseline gap-2 ml-8">
-              <span className="text-3xl font-bold text-secondary-600">130만원</span>
+              <span className="text-3xl font-bold text-secondary-600">200만원</span>
               <span className="text-sm text-gray-500">(부가세 별도)</span>
             </div>
           </div>

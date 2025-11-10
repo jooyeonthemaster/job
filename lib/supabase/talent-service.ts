@@ -4,6 +4,7 @@ import { supabase } from './config';
 export interface TalentProfile {
   id: string;
   name: string;
+  email?: string;
   title: string;
   nationality: string;
   location: string;
@@ -44,6 +45,12 @@ export interface TalentProfile {
 
 /**
  * 모든 인재 조회 (공개 설정된 사용자만)
+ *
+ * ✅ 필터 조건:
+ * - user_type = 'jobseeker'
+ * - onboarding_completed = true
+ * - is_public = true (인재풀 공개 여부)
+ * - profile_completed = true (프로필 100% 완성)
  */
 export const getAllTalents = async (): Promise<TalentProfile[]> => {
   try {
@@ -63,7 +70,9 @@ export const getAllTalents = async (): Promise<TalentProfile[]> => {
         salary_range:user_salary_range(*)
       `)
       .eq('user_type', 'jobseeker')
-      .eq('onboarding_completed', true);
+      .eq('onboarding_completed', true)
+      .eq('is_public', true)              // ✅ 인재풀 공개 필터 추가
+      .eq('profile_completed', true);     // ✅ 프로필 완성 필터 추가
 
     if (error) {
       console.error('Supabase error:', error);
@@ -128,19 +137,30 @@ export const getAllTalents = async (): Promise<TalentProfile[]> => {
 
 /**
  * 특정 인재 상세 조회
+ *
+ * ✅ 권한 체크:
+ * - is_public = true → 누구나 볼 수 있음
+ * - is_public = false → 본인만 볼 수 있음 (다른 사람이 접근 시 null 반환)
  */
 export const getTalentById = async (id: string): Promise<TalentProfile | null> => {
   try {
+    // 1. 현재 로그인한 사용자 정보 가져오기
+    const { data: { user: currentUser } } = await supabase.auth.getUser();
+
+    // 2. 인재 정보 조회
     const { data, error } = await supabase
       .from('users')
       .select(`
         id,
+        email,
         full_name,
         headline,
         nationality,
         profile_image_url,
         introduction,
         resume_file_url,
+        is_public,
+        profile_completed,
         skills:user_skills(skill_name),
         languages:user_languages(language_name, proficiency),
         experiences:user_experiences(*),
@@ -155,6 +175,15 @@ export const getTalentById = async (id: string): Promise<TalentProfile | null> =
 
     if (error) throw error;
     if (!data) return null;
+
+    // 3. 권한 체크: 비공개 프로필인 경우 본인만 볼 수 있음
+    if (!data.is_public) {
+      // 로그인하지 않았거나, 본인이 아닌 경우
+      if (!currentUser || currentUser.id !== data.id) {
+        console.log(`[getTalentById] 비공개 프로필 접근 차단: ${id}`);
+        return null;
+      }
+    }
 
     // 데이터 변환
     const skills = (data.skills || []).map((s: any) => s.skill_name);
@@ -202,6 +231,7 @@ export const getTalentById = async (id: string): Promise<TalentProfile | null> =
     return {
       id: data.id,
       name: data.full_name || 'Unknown',
+      email: data.email,
       title: data.headline || desiredPosition || 'Job Seeker',
       nationality: data.nationality || 'Not specified',
       location: preferredLocation,

@@ -113,40 +113,40 @@ export interface CompanyInsertData {
   email: string;
 
   // 사업자 정보
-  registration_number: string;
-  registration_document?: string;       // Storage URL
+  registration_number: string | null;   // nullable (UNIQUE 제약조건)
+  registration_document?: string | null; // Storage URL
   name: string;
-  name_en?: string;
-  established: string;
-  ceo_name: string;
+  name_en?: string | null;
+  established: string | null;
+  ceo_name: string | null;
 
   // 기업 분류
   company_type: CompanyType;
   industry?: BusinessType;
-  employee_count: string;
+  employee_count: string | null;
 
   // 연락처
-  phone?: string;                       // 담당자 전화번호
-  company_phone?: string;               // 기업 대표번호 (신규)
-  website: string;
+  phone?: string | null;                // 담당자 전화번호
+  company_phone?: string | null;        // 기업 대표번호 (신규)
+  website: string | null;
 
   // 주소
-  location: string;
+  location: string | null;
   address: string;
 
   // 이미지
-  logo?: string;                        // Storage URL
-  company_image?: string;               // 회사 전경 이미지 (신규)
+  logo?: string | null;                 // Storage URL
+  company_image?: string | null;        // 회사 전경 이미지 (신규)
   images?: string[];                    // Storage URLs (구형 호환)
 
   // 담당자 정보
-  manager_department: string;
-  manager_name: string;
-  manager_position?: string;
-  manager_phone?: string;
+  manager_department: string | null;
+  manager_name: string | null;
+  manager_position?: string | null;
+  manager_phone?: string | null;
 
   // 간단한 소개
-  summary?: string;
+  summary?: string | null;
 
   // 메타
   status: 'pending' | 'active' | 'suspended';
@@ -277,40 +277,41 @@ export const validateCompanySignupForm = (
   const errors: Record<string, string> = {};
 
   // Section 1: 사업자 정보
-  if (!formData.registrationNumber) {
-    errors.registrationNumber = '사업자등록번호를 입력해주세요';
-  } else if (!validateBusinessNumber(formData.registrationNumber)) {
+  // ✅ 사업자등록번호는 선택 필드 (입력시에만 형식 검증)
+  if (formData.registrationNumber && !validateBusinessNumber(formData.registrationNumber)) {
     errors.registrationNumber = '올바른 사업자등록번호 형식이 아닙니다 (10자리 숫자)';
   }
 
-  // 사업자등록증 필수
-  if (!formData.registrationDocument) {
-    errors.registrationDocument = '사업자등록증을 업로드해주세요';
-  }
+  // ✅ 사업자등록증은 선택 필드 (필수 체크 제거)
+  // if (!formData.registrationDocument) {
+  //   errors.registrationDocument = '사업자등록증을 업로드해주세요';
+  // }
 
+  // ✅ 기업명은 필수 필드
   if (!formData.name) {
     errors.name = '기업명을 입력해주세요';
   }
 
-  // establishmentYear 필드로 개업일자 검증 (YYYY-MM-DD)
-  if (!formData.establishmentYear) {
-    errors.establishmentYear = '개업일자를 입력해주세요';
-  } else if (!validateEstablishmentDate(formData.establishmentYear)) {
+  // ✅ 개업일자는 선택 필드 (입력시에만 형식 검증)
+  if (formData.establishmentYear && !validateEstablishmentDate(formData.establishmentYear)) {
     errors.establishmentYear = '올바른 개업일자를 입력해주세요 (YYYY-MM-DD)';
   }
 
-  if (!formData.ceoName) {
-    errors.ceoName = '대표자명을 입력해주세요';
-  }
+  // ✅ 대표자명은 선택 필드 (필수 체크 제거)
+  // if (!formData.ceoName) {
+  //   errors.ceoName = '대표자명을 입력해주세요';
+  // }
 
   // Section 2: 기업 기본 정보
-  if (!formData.companyType) {
-    errors.companyType = '기업형태를 선택해주세요';
-  }
+  // ✅ 기업형태는 선택 필드 (필수 체크 제거)
+  // if (!formData.companyType) {
+  //   errors.companyType = '기업형태를 선택해주세요';
+  // }
 
-  if (!formData.companyScale) {
-    errors.companyScale = '기업규모를 선택해주세요';
-  }
+  // ✅ 기업규모는 선택 필드 (필수 체크 제거)
+  // if (!formData.companyScale) {
+  //   errors.companyScale = '기업규모를 선택해주세요';
+  // }
 
   // ✅ 업태는 선택 필드 (필수 체크 제거)
   // if (!formData.businessCondition) {
@@ -327,7 +328,7 @@ export const validateCompanySignupForm = (
   //   errors.industryDetail = '업종 상세를 선택해주세요';
   // }
 
-  // 대표번호 검증 (선택)
+  // ✅ 대표번호는 선택 필드 (입력시에만 형식 검증)
   if (formData.companyPhone && !validatePhone(formData.companyPhone)) {
     errors.companyPhone = '올바른 전화번호 형식이 아닙니다 (숫자만 7~11자리)';
   }
@@ -337,10 +338,8 @@ export const validateCompanySignupForm = (
     errors.phone = '올바른 전화번호 형식이 아닙니다 (숫자만 7~11자리)';
   }
 
-  // ✅ 홈페이지는 필수 필드
-  if (!formData.website) {
-    errors.website = '홈페이지 주소를 입력해주세요';
-  } else if (!validateWebsite(formData.website)) {
+  // ✅ 홈페이지는 선택 필드 (입력시에만 형식 검증)
+  if (formData.website && !validateWebsite(formData.website)) {
     errors.website = '올바른 URL 형식이 아닙니다 (http:// 또는 https://)';
   }
 
@@ -349,18 +348,21 @@ export const validateCompanySignupForm = (
   }
 
   // Section 4: 복지 정보
-  if (!formData.basicBenefits || formData.basicBenefits.length === 0) {
-    errors.basicBenefits = '최소 1개 이상의 복지를 입력해주세요';
-  }
+  // ✅ 복지 정보는 선택 필드 (필수 체크 제거)
+  // if (!formData.basicBenefits || formData.basicBenefits.length === 0) {
+  //   errors.basicBenefits = '최소 1개 이상의 복지를 입력해주세요';
+  // }
 
   // Section 5: 담당자 정보
-  if (!formData.managerDepartment) {
-    errors.managerDepartment = '담당부서를 입력해주세요';
-  }
+  // ✅ 담당부서는 선택 필드 (필수 체크 제거)
+  // if (!formData.managerDepartment) {
+  //   errors.managerDepartment = '담당부서를 입력해주세요';
+  // }
 
-  if (!formData.managerName) {
-    errors.managerName = '담당자명을 입력해주세요';
-  }
+  // ✅ 담당자명은 선택 필드 (필수 체크 제거)
+  // if (!formData.managerName) {
+  //   errors.managerName = '담당자명을 입력해주세요';
+  // }
 
   // ✅ managerEmail은 제거됨 (email 필드가 담당자 이메일 역할)
   // if (!formData.managerEmail) {
@@ -374,8 +376,10 @@ export const validateCompanySignupForm = (
   //   errors.managerPosition = '담당자 직급/직책을 입력해주세요';
   // }
 
-  // ✅ 담당자 연락처는 선택 필드, 입력 시에만 형식 검증
-  if (formData.managerPhone && !validatePhone(formData.managerPhone)) {
+  // ✅ 담당자 연락처는 필수 필드 (연락처 전화)
+  if (!formData.managerPhone) {
+    errors.managerPhone = '담당자 연락처를 입력해주세요';
+  } else if (!validatePhone(formData.managerPhone)) {
     errors.managerPhone = '올바른 전화번호 형식이 아닙니다 (10-11자리)';
   }
 
@@ -428,6 +432,15 @@ export const validateCompanySignupForm = (
 // =====================================================
 
 /**
+ * 빈 문자열을 null로 변환하는 헬퍼 함수
+ * UNIQUE 제약조건이 있는 필드는 빈 값을 null로 저장해야 중복 에러 방지
+ */
+const emptyToNull = (value: string | undefined | null): string | null => {
+  if (!value || value.trim() === '') return null;
+  return value;
+};
+
+/**
  * 폼 데이터를 Supabase Insert 데이터로 변환
  * 파일 업로드는 별도로 처리 후 URL을 전달받음
  */
@@ -440,11 +453,11 @@ export const transformFormDataToInsertData = (
     images?: string[];
   }
 ): Partial<CompanyInsertData> => {
-  // 전화번호 하이픈 제거
-  const cleanCompanyPhone = formData.companyPhone?.replace(/-/g, '');
-  const cleanPhone = formData.phone?.replace(/-/g, '');
-  const cleanManagerPhone = formData.managerPhone?.replace(/-/g, '');
-  const cleanRegistrationNumber = formData.registrationNumber.replace(/-/g, '');
+  // 전화번호 하이픈 제거 (빈 값은 null로 변환)
+  const cleanCompanyPhone = emptyToNull(formData.companyPhone?.replace(/-/g, ''));
+  const cleanPhone = emptyToNull(formData.phone?.replace(/-/g, ''));
+  const cleanManagerPhone = emptyToNull(formData.managerPhone?.replace(/-/g, ''));
+  const cleanRegistrationNumber = emptyToNull(formData.registrationNumber?.replace(/-/g, ''));
 
   // 주소 통합: address와 addressDetail을 합침
   const fullAddress = formData.addressDetail
@@ -453,40 +466,40 @@ export const transformFormDataToInsertData = (
 
   return {
     // 사업자 정보
-    registration_number: cleanRegistrationNumber,
-    registration_document: uploadedFiles?.registrationDocument,
-    name: formData.name,
-    name_en: formData.nameEn,
-    established: formData.establishmentYear || formData.established, // establishmentYear 우선 사용
-    ceo_name: formData.ceoName,
+    registration_number: cleanRegistrationNumber, // UNIQUE 제약조건: 빈 값은 null
+    registration_document: emptyToNull(uploadedFiles?.registrationDocument),
+    name: formData.name, // 필수 항목
+    name_en: emptyToNull(formData.nameEn),
+    established: emptyToNull(formData.establishmentYear || formData.established),
+    ceo_name: emptyToNull(formData.ceoName),
 
     // 기업 분류
     company_type: formData.companyType as CompanyType,
-    industry: formData.businessCondition as BusinessType, // businessCondition을 industry로 매핑
-    employee_count: formData.companyScale || formData.employeeCount || '', // companyScale을 employee_count로 매핑
+    industry: formData.businessCondition as BusinessType,
+    employee_count: emptyToNull(formData.companyScale || formData.employeeCount),
 
     // 연락처
-    company_phone: cleanCompanyPhone, // 기업 대표번호 (신규)
-    phone: cleanPhone || cleanManagerPhone || '', // phone이 없으면 manager_phone 사용
-    website: formData.website || '', // 필수 필드이므로 빈 문자열 기본값
+    company_phone: cleanCompanyPhone,
+    phone: cleanPhone || cleanManagerPhone || null,
+    website: emptyToNull(formData.website),
 
     // 주소
     location: formData.address, // 기본 주소를 location으로
     address: fullAddress, // 통합 주소를 address로
 
     // 이미지
-    logo: uploadedFiles?.logo,
-    company_image: uploadedFiles?.companyImage, // 회사 전경 이미지 (신규)
+    logo: emptyToNull(uploadedFiles?.logo),
+    company_image: emptyToNull(uploadedFiles?.companyImage),
     images: uploadedFiles?.images,
 
     // 담당자
-    manager_department: formData.managerDepartment,
-    manager_name: formData.managerName,
-    manager_position: formData.managerPosition,
+    manager_department: emptyToNull(formData.managerDepartment),
+    manager_name: emptyToNull(formData.managerName),
+    manager_position: emptyToNull(formData.managerPosition),
     manager_phone: cleanManagerPhone,
 
     // 간단한 소개
-    summary: formData.summary,
+    summary: emptyToNull(formData.summary),
 
     // 메타
     status: 'pending',

@@ -4,7 +4,8 @@
 export interface JobseekerOnboardingFormData {
   // 1. 회원 정보 입력 (필수)
   fullName: string;                    // 이름
-  phone: string;                       // 휴대폰 번호 (한국인만)
+  phoneCountryCode: string;            // 전화번호 국가 코드 (+82, +86 등)
+  phone: string;                       // 휴대폰 번호 (숫자만, 국가 코드 제외)
   phoneVerified: boolean;              // 전화번호 인증 여부
   foreignerNumber: string;             // 외국인등록번호 (외국인만, 123456-1234567)
   foreignerNumberVerified: boolean;    // 외국인등록번호 인증 여부
@@ -132,10 +133,16 @@ export const NATIONALITIES = [
 ] as const;
 
 // 유효성 검증 함수들
-export const validatePhone = (phone: string): boolean => {
-  // 010, 011, 016, 017, 018, 019로 시작하는 11자리 숫자 (하이픈 제외)
-  const phoneRegex = /^01[0-9]{8,9}$/;
-  return phoneRegex.test(phone.replace(/-/g, ''));
+export const validatePhone = (phone: string, countryCode: string = '+82'): boolean => {
+  // 국가별 전화번호 유효성 검증은 country-phone-codes.ts의 validatePhoneNumber 사용 권장
+  // 이 함수는 하위 호환성을 위해 유지 (한국 전화번호만 검증)
+  if (countryCode === '+82') {
+    // 한국: 010, 011, 016, 017, 018, 019로 시작하는 9-11자리 숫자
+    const phoneRegex = /^(0)?1[0-9]{8,9}$/;
+    return phoneRegex.test(phone.replace(/\D/g, ''));
+  }
+  // 다른 국가는 기본적으로 숫자만 있으면 통과 (country-phone-codes에서 상세 검증)
+  return /^[0-9]+$/.test(phone.replace(/\D/g, ''));
 };
 
 export const validateForeignerNumber = (number: string): boolean => {
@@ -193,15 +200,19 @@ export const validateJobseekerOnboardingForm = (
     errors.desiredJobCategory = '희망 근무 직군을 입력해주세요.';
   }
 
-  // 2. 한국인/외국인 구분 검증
-  if (isKorean) {
-    // 한국인: phone 필수
-    if (!formData.phone) {
-      errors.phone = '휴대폰 번호를 입력해주세요.';
-    } else if (!validatePhone(formData.phone)) {
-      errors.phone = '올바른 휴대폰 번호 형식이 아닙니다. (예: 010-1234-5678)';
-    }
-  } else {
+  // 2. 전화번호 검증 (모든 국적 필수)
+  if (!formData.phoneCountryCode) {
+    errors.phoneCountryCode = '국가 코드를 선택해주세요.';
+  }
+  
+  if (!formData.phone) {
+    errors.phone = '전화번호를 입력해주세요.';
+  } else if (!validatePhone(formData.phone, formData.phoneCountryCode)) {
+    errors.phone = '올바른 전화번호 형식이 아닙니다.';
+  }
+
+  // 3. 외국인등록번호 검증 (외국인만 필수)
+  if (!isKorean) {
     // 외국인: 외국인등록번호 필수
     if (!formData.foreignerNumber) {
       errors.foreignerNumber = '외국인등록번호를 입력해주세요.';
@@ -297,9 +308,10 @@ export const validateJobseekerOnboardingForm = (
 export interface JobseekerInsertData {
   email: string;
   full_name: string;
-  phone: string;
+  phone_country_code: string;          // 국가 코드 (+82, +86 등)
+  phone: string | null;                // 전화번호 (숫자만, NULL 허용)
   phone_verified: boolean;
-  foreigner_number: string;
+  foreigner_number: string | null;     // 외국인등록번호 (NULL 허용)
   foreigner_number_verified: boolean;
   desired_job_category: string;
   address: string;
@@ -320,11 +332,14 @@ export const transformJobseekerFormData = (
   formData: JobseekerOnboardingFormData,
   resumeFileUrl?: string
 ): Omit<JobseekerInsertData, 'email'> => {
+  const isKorean = formData.nationality === KOREA_NATIONALITY_CODE;
+  
   return {
     full_name: formData.fullName.trim(),
-    phone: formData.phone.replace(/-/g, ''), // 하이픈 제거
+    phone_country_code: formData.phoneCountryCode,
+    phone: formData.phone ? formData.phone.replace(/\D/g, '') : null, // 숫자만 추출
     phone_verified: formData.phoneVerified,
-    foreigner_number: formData.foreignerNumber,
+    foreigner_number: !isKorean && formData.foreignerNumber ? formData.foreignerNumber : null,
     foreigner_number_verified: formData.foreignerNumberVerified,
     desired_job_category: formData.desiredJobCategory.trim(),
     address: formData.address,

@@ -24,38 +24,43 @@ export interface JobFormData {
   employmentType: EmploymentType;
   experienceLevel: ExperienceLevel;
   deadline: string;
-  
+
   // 급여
   salaryMin: string;
   salaryMax: string;
   salaryNegotiable: boolean;
-  
+
   // 상세 정보
   description: string;
   mainTasks: string[];
   requirements: string[];
   preferredQualifications: string[];
-  
+
+  // ✨ 신규: JD, 경력 사항, 스킬
+  jobDescription: string;           // JD (Job Description)
+  requiredExperience: string;       // 필요 경력 사항
+  requiredSkills: string[];         // 필요 스킬
+
   // 복지 및 태그
   benefits: string[];
   tags: string[];
-  
+
   // 비자 및 언어
   visaSponsorship: boolean;
   koreanLevel: LanguageLevel;
   englishLevel: LanguageLevel;
-  
+
   // 근무 조건
   probation: string;
   workHours: string;
   startDate: string;
-  
+
   // 채용 담당자
   managerName: string;
   managerPosition: string;
   managerEmail: string;
   managerPhone: string;
-  
+
   // 공고 노출 위치
   postingTier: PostingTier;
 }

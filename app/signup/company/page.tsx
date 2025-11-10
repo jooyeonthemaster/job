@@ -383,7 +383,38 @@ export default function CompanySignupPage() {
               />
             </div>
 
-            {/* Section 3: 로고 & 회사 전경 이미지 */}
+            {/* Section 5: 담당자 정보 (계정 정보 통합) - 필수 항목 */}
+            <div className="bg-white rounded-2xl shadow-lg p-8">
+              <Section5Manager
+                formData={{
+                  managerDepartment: formData.managerDepartment,
+                  managerName: formData.managerName,
+                  managerEmail: formData.managerEmail,
+                  managerPosition: formData.managerPosition,
+                  managerPhone: formData.managerPhone,
+                  email: formData.email,
+                  password: formData.password,
+                  passwordConfirm: formData.passwordConfirm,
+                }}
+                onChange={handleChange}
+                errors={errors}
+                isEmailSignup={isEmailSignup}
+              />
+            </div>
+
+            {/* Section 6: 주소 정보 - 필수 항목 */}
+            <div className="bg-white rounded-2xl shadow-lg p-8">
+              <Section6Address
+                formData={{
+                  address: formData.address,
+                  addressDetail: formData.addressDetail,
+                }}
+                onChange={handleChange}
+                errors={errors}
+              />
+            </div>
+
+            {/* Section 3: 로고 & 회사 전경 이미지 - 선택 항목 */}
             <div className="bg-white rounded-2xl shadow-lg p-8">
               <Section3Images
                 formData={{
@@ -395,42 +426,11 @@ export default function CompanySignupPage() {
               />
             </div>
 
-            {/* Section 4: 복지 정보 */}
+            {/* Section 4: 복지 정보 - 선택 항목 */}
             <div className="bg-white rounded-2xl shadow-lg p-8">
               <Section4Benefits
                 formData={{
                   basicBenefits: formData.basicBenefits,
-                }}
-                onChange={handleChange}
-                errors={errors}
-              />
-            </div>
-
-            {/* Section 5: 담당자 정보 (계정 정보 통합) */}
-            <div className="bg-white rounded-2xl shadow-lg p-8">
-              <Section5Manager
-                formData={{
-                  managerDepartment: formData.managerDepartment,
-                  managerName: formData.managerName,
-                  managerEmail: formData.managerEmail,
-                  managerPosition: formData.managerPosition,
-                  managerPhone: formData.managerPhone,
-                  email: formData.email, // ✅ 계정 이메일 추가
-                  password: formData.password,
-                  passwordConfirm: formData.passwordConfirm,
-                }}
-                onChange={handleChange}
-                errors={errors}
-                isEmailSignup={isEmailSignup} // ✅ 이메일 가입 여부 전달
-              />
-            </div>
-
-            {/* Section 6: 주소 정보 */}
-            <div className="bg-white rounded-2xl shadow-lg p-8">
-              <Section6Address
-                formData={{
-                  address: formData.address,
-                  addressDetail: formData.addressDetail,
                 }}
                 onChange={handleChange}
                 errors={errors}

@@ -73,6 +73,7 @@ const ProfileEditInner = () => {
         const transformedProfile = {
           fullName: supabaseProfile.full_name,
           email: supabaseProfile.email,
+          phoneCountryCode: supabaseProfile.phone_country_code || '+82',  // ✅ 국가 코드 추가
           phone: supabaseProfile.phone,
           desiredJobCategory: supabaseProfile.desired_job_category,
           headline: supabaseProfile.headline,

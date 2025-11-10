@@ -1,15 +1,16 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
-import { 
-  Search, 
-  MapPin, 
-  Briefcase, 
-  Globe, 
-  Star, 
-  Clock, 
-  Filter, 
+import {
+  Search,
+  MapPin,
+  Briefcase,
+  Globe,
+  Star,
+  Clock,
+  Filter,
   ChevronRight,
   Users,
   Award,
@@ -22,8 +23,10 @@ import {
 import Link from 'next/link';
 import { talentProfiles } from '@/lib/talentData';
 import { getAllTalents, type TalentProfile } from '@/lib/supabase/talent-service';
+import { supabase } from '@/lib/supabase/config';
 
 export default function TalentPage() {
+  const router = useRouter();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const [selectedNationality, setSelectedNationality] = useState('all');
@@ -32,9 +35,52 @@ export default function TalentPage() {
   const [selectedCategory, setSelectedCategory] = useState<string[]>([]);
   const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
   const [expandedSubcategories, setExpandedSubcategories] = useState<string[]>([]);
-  const [showRealDataOnly, setShowRealDataOnly] = useState(false);
+  const [showRealDataOnly, setShowRealDataOnly] = useState(true);
   const [realProfiles, setRealProfiles] = useState<TalentProfile[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [isCompany, setIsCompany] = useState(false);
+  const [checkingAuth, setCheckingAuth] = useState(true);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+
+  // 사용자 타입 확인
+  useEffect(() => {
+    const checkUserType = async () => {
+      setCheckingAuth(true);
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user) {
+          setIsCompany(false);
+          setCheckingAuth(false);
+          return;
+        }
+
+        // 1. user_metadata에서 먼저 확인 (AuthContext와 동일한 방식)
+        let userType = user.user_metadata?.user_type;
+
+        // 2. metadata에 없으면 DB에서 조회
+        if (!userType) {
+          const { data: userData } = await supabase
+            .from('users')
+            .select('user_type')
+            .eq('id', user.id)
+            .single();
+
+          userType = userData?.user_type;
+        }
+
+        console.log('[TalentPage] 사용자 타입 확인:', userType);
+        setIsCompany(userType === 'company');
+      } catch (error) {
+        console.error('Failed to check user type:', error);
+        setIsCompany(false);
+      } finally {
+        setCheckingAuth(false);
+      }
+    };
+
+    checkUserType();
+  }, []);
 
   // Supabase 데이터를 로드
   useEffect(() => {
@@ -50,6 +96,8 @@ export default function TalentPage() {
         } finally {
           setLoading(false);
         }
+      } else {
+        setLoading(false);
       }
     };
     loadRealData();
@@ -493,10 +541,17 @@ export default function TalentPage() {
                                 checked={selectedCategory.includes(category.name)}
                                 onChange={(e) => {
                                   e.stopPropagation();
+                                  // 해당 카테고리의 모든 스킬 추출
+                                  const categorySkills = category.subcategories.flatMap(sub => sub.skills);
+
                                   if (e.target.checked) {
+                                    // 카테고리 추가 + 모든 하위 스킬 추가
                                     setSelectedCategory([...selectedCategory, category.name]);
+                                    setSelectedSkills([...new Set([...selectedSkills, ...categorySkills])]);
                                   } else {
+                                    // 카테고리 제거 + 모든 하위 스킬 제거
                                     setSelectedCategory(selectedCategory.filter(c => c !== category.name));
+                                    setSelectedSkills(selectedSkills.filter(skill => !categorySkills.includes(skill)));
                                   }
                                 }}
                                 onClick={(e) => e.stopPropagation()}
@@ -580,7 +635,7 @@ export default function TalentPage() {
                   </p>
                   {showRealDataOnly && (
                     <p className="text-xs text-green-600 mt-1">
-                      ✓ 실제 Firebase 데이터
+                      ✓ 실제 Supabase 데이터
                     </p>
                   )}
                 </div>
@@ -679,15 +734,59 @@ export default function TalentPage() {
                               {profile.availability}
                             </span>
                             <div className="flex gap-2">
-                              <Link
-                                href={`/talent/${profile.id}`}
-                                className="px-4 py-2 bg-primary-50 text-primary-600 rounded-lg hover:bg-primary-100 text-sm font-medium transition-colors"
+                              <button
+                                onClick={async (e) => {
+                                  e.preventDefault();
+
+                                  // 인증 확인 중이면 대기
+                                  if (checkingAuth) {
+                                    return;
+                                  }
+
+                                  // 기업이 아니면 로그인 모달 표시
+                                  if (!isCompany) {
+                                    setShowLoginModal(true);
+                                    return;
+                                  }
+
+                                  // 기업이면 결제 여부 확인
+                                  try {
+                                    // 현재 사용자의 세션 토큰 가져오기
+                                    const { data: { session } } = await supabase.auth.getSession();
+                                    if (!session) {
+                                      setShowLoginModal(true);
+                                      return;
+                                    }
+
+                                    const response = await fetch('/api/payment/profile/check', {
+                                      method: 'POST',
+                                      headers: {
+                                        'Content-Type': 'application/json',
+                                        'Authorization': `Bearer ${session.access_token}`
+                                      },
+                                      body: JSON.stringify({ talentId: profile.id })
+                                    });
+
+                                    const data = await response.json();
+
+                                    if (data.hasPaid) {
+                                      // 이미 결제했으면 상세 페이지로
+                                      router.push(`/talent/${profile.id}`);
+                                    } else {
+                                      // 결제 안 했으면 결제 페이지로
+                                      router.push(`/payment/profile/${profile.id}`);
+                                    }
+                                  } catch (error) {
+                                    console.error('Failed to check payment:', error);
+                                    alert('결제 확인 중 오류가 발생했습니다.');
+                                  }
+                                }}
+                                disabled={checkingAuth}
+                                className={`px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 text-sm font-medium transition-colors ${
+                                  checkingAuth ? 'opacity-50 cursor-not-allowed' : ''
+                                }`}
                               >
-                                프로필 보기
-                              </Link>
-                              <button className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 text-sm font-medium transition-colors">
-                                <Mail className="w-4 h-4" />
-                                컨택하기
+                                {checkingAuth ? '확인 중...' : '프로필 보기'}
                               </button>
                             </div>
                           </div>
@@ -717,6 +816,55 @@ export default function TalentPage() {
           </div>
         </div>
       </section>
+
+      {/* 로그인 필요 모달 */}
+      {showLoginModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden">
+            {/* 헤더 */}
+            <div className="bg-gradient-to-r from-primary-600 to-cyan-600 px-6 py-8">
+              <h3 className="text-2xl font-bold text-white text-center">
+                기업 회원 전용
+              </h3>
+            </div>
+
+            {/* 본문 */}
+            <div className="px-6 py-8">
+              <div className="text-center mb-6">
+                <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-8 h-8 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                </div>
+                <p className="text-lg text-gray-700 mb-2">
+                  프로필 확인은 기업 회원만 가능합니다
+                </p>
+                <p className="text-sm text-gray-500">
+                  기업 회원으로 로그인하시면 인재 프로필을 확인할 수 있습니다
+                </p>
+              </div>
+
+              {/* 버튼 */}
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowLoginModal(false)}
+                  className="flex-1 px-4 py-3 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium transition-colors"
+                >
+                  취소
+                </button>
+                <button
+                  onClick={() => {
+                    router.push('/login');
+                  }}
+                  className="flex-1 px-4 py-3 bg-gradient-to-r from-primary-600 to-cyan-600 text-white rounded-lg hover:shadow-lg font-medium transition-all"
+                >
+                  로그인하기
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

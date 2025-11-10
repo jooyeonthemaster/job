@@ -1,10 +1,12 @@
-// 기본 정보 섹션 (국적, 이름, 전화번호/외국인등록번호, 헤드라인)
+// 기본 정보 섹션 (국적, 이름, 전화번호, 외국인등록번호, 헤드라인)
 
 import {
   type JobseekerOnboardingFormData,
   NATIONALITIES,
   KOREA_NATIONALITY_CODE,
 } from '@/types/jobseeker-onboarding.types';
+import InternationalPhoneInput from '@/components/ui/form/InternationalPhoneInput';
+import { getCountryByIso2 } from '@/constants/country-phone-codes';
 
 type BasicInfoSectionProps = {
   formData: JobseekerOnboardingFormData;
@@ -14,6 +16,17 @@ type BasicInfoSectionProps = {
 
 export default function BasicInfoSection({ formData, errors, onChange }: BasicInfoSectionProps) {
   const isKorean = formData.nationality === KOREA_NATIONALITY_CODE;
+
+  // 국적 변경 시 기본 국가 코드 자동 설정
+  const handleNationalityChange = (nationality: string) => {
+    onChange('nationality', nationality);
+    
+    // 국적에 맞는 기본 국가 코드 설정
+    const country = getCountryByIso2(nationality);
+    if (country && country.code !== formData.phoneCountryCode) {
+      onChange('phoneCountryCode', country.code);
+    }
+  };
 
   return (
     <div className="border-b pb-8">
@@ -26,7 +39,7 @@ export default function BasicInfoSection({ formData, errors, onChange }: BasicIn
           </label>
           <select
             value={formData.nationality}
-            onChange={(e) => onChange('nationality', e.target.value)}
+            onChange={(e) => handleNationalityChange(e.target.value)}
             className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-colors ${
               errors.nationality ? 'border-red-500' : 'border-gray-300'
             }`}
@@ -44,116 +57,62 @@ export default function BasicInfoSection({ formData, errors, onChange }: BasicIn
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-6">
-          {/* 이름 */}
-          <div id="fullName">
+        {/* 이름 */}
+        <div id="fullName">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            이름 <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="text"
+            value={formData.fullName}
+            onChange={(e) => onChange('fullName', e.target.value)}
+            placeholder="홍길동"
+            className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-colors ${
+              errors.fullName ? 'border-red-500' : 'border-gray-300'
+            }`}
+          />
+          {errors.fullName && <p className="mt-1 text-sm text-red-500">{errors.fullName}</p>}
+        </div>
+
+        {/* 전화번호 (모든 사용자 필수) */}
+        <div id="phone">
+          <InternationalPhoneInput
+            countryCode={formData.phoneCountryCode}
+            phoneNumber={formData.phone}
+            onCountryCodeChange={(code) => onChange('phoneCountryCode', code)}
+            onPhoneNumberChange={(number) => onChange('phone', number)}
+            label="전화번호"
+            required
+            error={errors.phone || errors.phoneCountryCode}
+          />
+          {!errors.phone && !errors.phoneCountryCode && (
+            <p className="mt-1 text-xs text-gray-500">
+              국적에 맞는 전화번호를 입력해주세요
+            </p>
+          )}
+        </div>
+
+        {/* 외국인등록번호 (외국인만 필수) */}
+        {!isKorean && (
+          <div id="foreignerNumber">
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              이름 <span className="text-red-500">*</span>
+              외국인등록번호 <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
-              value={formData.fullName}
-              onChange={(e) => onChange('fullName', e.target.value)}
-              placeholder="홍길동"
+              value={formData.foreignerNumber}
+              onChange={(e) => onChange('foreignerNumber', e.target.value)}
+              placeholder="123456-1234567"
               className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-colors ${
-                errors.fullName ? 'border-red-500' : 'border-gray-300'
+                errors.foreignerNumber ? 'border-red-500' : 'border-gray-300'
               }`}
             />
-            {errors.fullName && <p className="mt-1 text-sm text-red-500">{errors.fullName}</p>}
+            {errors.foreignerNumber && <p className="mt-1 text-sm text-red-500">{errors.foreignerNumber}</p>}
+            <p className="mt-1 text-xs text-gray-500">
+              한국 체류 외국인등록번호를 입력해주세요
+            </p>
           </div>
-
-          {/* 한국인/외국인 구분 입력 */}
-          {isKorean ? (
-            // 한국인: 휴대폰 번호만 (3-4-4 형식)
-            <div id="phone">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                휴대폰 번호 <span className="text-red-500">*</span>
-              </label>
-              <div className="flex items-center gap-2">
-                <div className="flex-1">
-                  <input
-                    type="tel"
-                    inputMode="numeric"
-                    value={formData.phone.slice(0, 3)}
-                    onChange={(e) => {
-                      const numbersOnly = e.target.value.replace(/[^0-9]/g, '');
-                      if (numbersOnly.length <= 3) {
-                        const newPhone = numbersOnly + formData.phone.slice(3);
-                        onChange('phone', newPhone);
-                      }
-                    }}
-                    placeholder="010"
-                    maxLength={3}
-                    className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-colors ${
-                      errors.phone ? 'border-red-500' : 'border-gray-300'
-                    }`}
-                  />
-                </div>
-                <span className="text-gray-400 font-bold">-</span>
-                <div className="flex-1">
-                  <input
-                    type="tel"
-                    inputMode="numeric"
-                    value={formData.phone.slice(3, 7)}
-                    onChange={(e) => {
-                      const numbersOnly = e.target.value.replace(/[^0-9]/g, '');
-                      if (numbersOnly.length <= 4) {
-                        const newPhone = formData.phone.slice(0, 3) + numbersOnly + formData.phone.slice(7);
-                        onChange('phone', newPhone);
-                      }
-                    }}
-                    placeholder="1234"
-                    maxLength={4}
-                    className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-colors ${
-                      errors.phone ? 'border-red-500' : 'border-gray-300'
-                    }`}
-                  />
-                </div>
-                <span className="text-gray-400 font-bold">-</span>
-                <div className="flex-1">
-                  <input
-                    type="tel"
-                    inputMode="numeric"
-                    value={formData.phone.slice(7, 11)}
-                    onChange={(e) => {
-                      const numbersOnly = e.target.value.replace(/[^0-9]/g, '');
-                      if (numbersOnly.length <= 4) {
-                        const newPhone = formData.phone.slice(0, 7) + numbersOnly;
-                        onChange('phone', newPhone);
-                      }
-                    }}
-                    placeholder="5678"
-                    maxLength={4}
-                    className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-colors ${
-                      errors.phone ? 'border-red-500' : 'border-gray-300'
-                    }`}
-                  />
-                </div>
-              </div>
-              {errors.phone && <p className="mt-1 text-sm text-red-500">{errors.phone}</p>}
-              <p className="mt-1 text-xs text-gray-500">
-                나중에 휴대폰 본인인증을 진행합니다
-              </p>
-            </div>
-          ) : (
-            // 외국인: 외국인등록번호만
-            <div id="foreignerNumber">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                외국인등록번호 <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                value={formData.foreignerNumber}
-                onChange={(e) => onChange('foreignerNumber', e.target.value)}
-                placeholder="123456-1234567"
-                className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-colors ${
-                  errors.foreignerNumber ? 'border-red-500' : 'border-gray-300'
-                }`}
-              />
-              {errors.foreignerNumber && <p className="mt-1 text-sm text-red-500">{errors.foreignerNumber}</p>}
-            </div>
-          )}
-        </div>
+        )}
 
         {/* 희망 근무 직군 */}
         <div id="desiredJobCategory">

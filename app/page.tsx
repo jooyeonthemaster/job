@@ -134,6 +134,27 @@ export default function Home() {
       {/* Featured Jobs */}
       <section className="pt-8 pb-16 bg-gray-50 relative z-0">
         <div className="container mx-auto px-4 lg:px-8">
+          {/* Bridge World Banner */}
+          <div className="mb-10 bg-gradient-to-r from-primary-50 to-cyan-50 rounded-2xl p-6 border border-primary-100 shadow-sm">
+            <div className="flex items-start gap-4">
+              <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-primary-500 to-cyan-500 rounded-xl flex items-center justify-center shadow-md">
+                <Briefcase className="w-6 h-6 text-white" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-xl font-bold text-gray-900 mb-2">
+                  브릿지 월드가 당신이 찾고 있는 한국에서의 좋은 직장을 연결해 드립니다.
+                </h3>
+                <p className="text-base text-gray-700 flex items-center gap-2">
+                  <span className="font-medium text-primary-600">방법</span>
+                  <ChevronRight className="w-4 h-4 text-gray-400" />
+                  <span>본인의 이력서 등록</span>
+                  <ChevronRight className="w-4 h-4 text-gray-400" />
+                  <span>한국기업 연락 또는 본인이 회사선택 지원</span>
+                </p>
+              </div>
+            </div>
+          </div>
+
           <div className="flex items-center justify-between mb-12 relative z-0">
             <div>
               <h2 className="text-3xl font-bold text-gray-900 mb-2">

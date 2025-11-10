@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { RefreshCw, Eye, Briefcase, Star, Zap, CheckCircle, XCircle, Grid3x3 } from 'lucide-react';
+import { RefreshCw, Eye, Briefcase, Star, Zap, CheckCircle, XCircle, Grid3x3, Plus } from 'lucide-react';
 import Link from 'next/link';
 import {
   getAllJobs,
@@ -11,7 +11,6 @@ import {
   type JobWithCompany,
   type JobStats
 } from '@/lib/supabase/admin-service';
-import JobPositionAssignModal from './JobPositionAssignModal';
 import JobGridLayoutEditor from './JobGridLayoutEditor';
 
 export default function JobsTab() {
@@ -28,9 +27,8 @@ export default function JobsTab() {
     pendingAssignment: 0,
   });
   const [loading, setLoading] = useState(true);
-  const [selectedJob, setSelectedJob] = useState<JobWithCompany | null>(null);
-  const [showPositionModal, setShowPositionModal] = useState(false);
   const [showGridEditor, setShowGridEditor] = useState(false);
+  const [preselectedJobId, setPreselectedJobId] = useState<string | null>(null);
 
   const loadData = async () => {
     setLoading(true);
@@ -93,9 +91,14 @@ export default function JobsTab() {
     }
   };
 
-  const handlePositionAssign = (job: JobWithCompany) => {
-    setSelectedJob(job);
-    setShowPositionModal(true);
+  const handlePositionAssign = (jobId: string) => {
+    setPreselectedJobId(jobId);
+    setShowGridEditor(true);
+  };
+
+  const handleCloseGridEditor = () => {
+    setShowGridEditor(false);
+    setPreselectedJobId(null);
   };
 
   const getTierBadge = (tier: string) => {
@@ -165,23 +168,24 @@ export default function JobsTab() {
 
   return (
     <>
-      <JobPositionAssignModal
-        isOpen={showPositionModal}
-        onClose={() => setShowPositionModal(false)}
-        job={selectedJob as any}
-        onSuccess={loadData}
-      />
-
       <JobGridLayoutEditor
         isOpen={showGridEditor}
-        onClose={() => setShowGridEditor(false)}
+        onClose={handleCloseGridEditor}
         onSuccess={loadData}
+        preselectedJobId={preselectedJobId}
       />
 
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <h2 className="text-2xl font-bold text-gray-900">공고 관리</h2>
           <div className="flex items-center gap-3">
+            <Link
+              href="/admin/jobs/create"
+              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium flex items-center gap-2 shadow-md transition-all"
+            >
+              <Plus className="w-4 h-4" />
+              공고 등록
+            </Link>
             <button
               onClick={() => setShowGridEditor(true)}
               className="px-4 py-2 bg-gradient-to-r from-primary-600 to-secondary-600 text-white rounded-lg hover:from-primary-700 hover:to-secondary-700 text-sm font-medium flex items-center gap-2 shadow-md transition-all"
@@ -330,8 +334,8 @@ export default function JobsTab() {
                               우선순위: {job.display_priority}
                             </div>
                             <button
-                              onClick={() => handlePositionAssign(job)}
-                              className="mt-2 px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded hover:bg-gray-200"
+                              onClick={() => handlePositionAssign(job.id)}
+                              className="mt-2 px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded hover:bg-gray-200 transition-colors"
                             >
                               위치 변경
                             </button>
@@ -340,7 +344,7 @@ export default function JobsTab() {
                           <div className="space-y-2">
                             {job.payment_status === 'confirmed' ? (
                               <button
-                                onClick={() => handlePositionAssign(job)}
+                                onClick={() => handlePositionAssign(job.id)}
                                 className="w-full px-3 py-2 bg-primary-600 text-white text-xs font-medium rounded-lg hover:bg-primary-700 transition-colors"
                               >
                                 위치 할당하기
@@ -395,6 +399,11 @@ export default function JobsTab() {
     </>
   );
 }
+
+
+
+
+
 
 
 

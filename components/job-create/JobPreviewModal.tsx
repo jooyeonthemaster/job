@@ -1,6 +1,6 @@
 'use client';
 
-import { X, Building2, MapPin, Briefcase, Clock, Globe, DollarSign } from 'lucide-react';
+import { X, Building2, MapPin, Briefcase, Clock, Globe, DollarSign, FileText, Code } from 'lucide-react';
 import { JobFormData } from '@/types/job-form.types';
 
 interface JobPreviewModalProps {
@@ -167,6 +167,58 @@ export default function JobPreviewModal({
             </div>
           </div>
 
+          {/* ✨ JD (Job Description) */}
+          {formData.jobDescription && (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <FileText className="w-5 h-5 text-primary-600" />
+                <h4 className="font-bold text-gray-900">JD (Job Description)</h4>
+              </div>
+              <div className="p-4 border border-gray-200 rounded-lg bg-gray-50">
+                <p className="text-gray-800 whitespace-pre-wrap leading-relaxed">
+                  {formData.jobDescription}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* ✨ 필요 경력 사항 */}
+          {formData.requiredExperience && (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <Briefcase className="w-5 h-5 text-primary-600" />
+                <h4 className="font-bold text-gray-900">필요 경력 사항</h4>
+              </div>
+              <div className="p-4 border border-gray-200 rounded-lg bg-gray-50">
+                <p className="text-gray-800 whitespace-pre-wrap leading-relaxed">
+                  {formData.requiredExperience}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* ✨ 필요 스킬 */}
+          {formData.requiredSkills && formData.requiredSkills.length > 0 && (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <Code className="w-5 h-5 text-primary-600" />
+                <h4 className="font-bold text-gray-900">필요 스킬</h4>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {formData.requiredSkills.map((skill, index) => (
+                  skill.trim() && (
+                    <span
+                      key={index}
+                      className="px-3 py-1.5 bg-primary-100 text-primary-700 rounded-full text-sm font-medium"
+                    >
+                      {skill}
+                    </span>
+                  )
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Work Conditions */}
           {(formData.probation || formData.workHours || formData.startDate) && (
             <div className="space-y-3">
@@ -261,6 +313,12 @@ export default function JobPreviewModal({
     </div>
   );
 }
+
+
+
+
+
+
 
 
 

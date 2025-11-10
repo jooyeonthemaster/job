@@ -15,13 +15,14 @@ export interface JobseekerSignupData {
 export interface JobseekerOnboardingData {
   fullName: string;
   desired_job_category?: string;  // ✅ 희망 근무 직군 추가
-  phone: string;                // 휴대폰 번호 (한국인만)
+  phone_country_code?: string;    // 전화번호 국가 코드 (+82, +86 등)
+  phone: string;                  // 전화번호 (숫자만, 국가 코드 제외)
   headline?: string;
   resumeFileUrl?: string;
   resumeFileName?: string;
   // K-Work 확장 필드
   phone_verified?: boolean;
-  foreigner_number?: string;    // 외국인등록번호 (외국인만)
+  foreigner_number?: string;      // 외국인등록번호 (외국인만)
   foreigner_number_verified?: boolean;
   address?: string;
   address_detail?: string;
@@ -30,7 +31,7 @@ export interface JobseekerOnboardingData {
   gender?: string;
   visa_types?: string[];
   korean_level?: string;
-  otherLanguages?: Array<{      // 한국어 외 언어 능력
+  otherLanguages?: Array<{        // 한국어 외 언어 능력
     language: string;
     proficiency: string;
   }>;
@@ -43,16 +44,17 @@ export interface JobseekerOnboardingData {
  */
 export interface ProfileUpdateData {
   fullName?: string;
-  desiredJobCategory?: string;  // ✅ 희망 직군 추가
+  desiredJobCategory?: string;     // ✅ 희망 직군 추가
   headline?: string;
-  phone?: string;
+  phone_country_code?: string;     // 전화번호 국가 코드
+  phone?: string;                  // 전화번호 (숫자만)
   profileImageUrl?: string;
   workType?: string;
   companySize?: string;
   visaSponsorship?: boolean;
   remoteWork?: string;
   introduction?: string;
-  korean_level?: string; // ✅ 한국어 능력 추가
+  korean_level?: string;           // ✅ 한국어 능력 추가
 }
 
 /**

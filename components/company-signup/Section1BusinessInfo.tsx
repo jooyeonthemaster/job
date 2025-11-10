@@ -90,7 +90,7 @@ export default function Section1BusinessInfo({ formData, onChange, errors }: Pro
       {/* 사업자등록번호 */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
-          사업자등록번호 <span className="text-red-500">*</span>
+          사업자등록번호 (세금계산 발행시 기록 및 등록증 필요) <span className="text-gray-500">(선택)</span>
         </label>
         <div className="relative">
           <FileText className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -124,10 +124,10 @@ export default function Section1BusinessInfo({ formData, onChange, errors }: Pro
         </div>
       </div>
 
-      {/* 사업자등록증 업로드 (필수) */}
+      {/* 사업자등록증 업로드 (선택) */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
-          사업자등록증 <span className="text-red-500">*</span>
+          사업자등록증 <span className="text-gray-500">(선택)</span>
         </label>
         <div className="relative">
           <input
@@ -162,7 +162,7 @@ export default function Section1BusinessInfo({ formData, onChange, errors }: Pro
         {errors.registrationDocument && (
           <p className="mt-1 text-sm text-red-600">{errors.registrationDocument}</p>
         )}
-        <p className="mt-1 text-xs text-gray-500">💡 사업자등록증 파일을 반드시 첨부해주세요</p>
+        <p className="mt-1 text-xs text-gray-500">💡 세금계산서 발행 시 필요합니다</p>
       </div>
 
       {/* 기업명 (한글) */}
@@ -207,7 +207,7 @@ export default function Section1BusinessInfo({ formData, onChange, errors }: Pro
       {/* 개업일자 */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
-          개업일자 <span className="text-red-500">*</span>
+          개업일자 <span className="text-gray-500">(선택)</span>
         </label>
         <div className="relative">
           <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 z-10 pointer-events-none" />
@@ -237,7 +237,7 @@ export default function Section1BusinessInfo({ formData, onChange, errors }: Pro
       {/* 대표자명 */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
-          대표자명 <span className="text-red-500">*</span>
+          대표자명 <span className="text-gray-500">(선택)</span>
         </label>
         <div className="relative">
           <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />

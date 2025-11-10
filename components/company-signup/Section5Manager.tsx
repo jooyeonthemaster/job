@@ -250,7 +250,7 @@ export default function Section5Manager({ formData, onChange, errors, isEmailSig
       {/* 담당 부서 */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
-          담당 부서 <span className="text-red-500">*</span>
+          담당 부서 <span className="text-gray-500">(선택)</span>
         </label>
         <div className="relative">
           <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -272,7 +272,7 @@ export default function Section5Manager({ formData, onChange, errors, isEmailSig
       {/* 담당자명 */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
-          담당자명 <span className="text-red-500">*</span>
+          담당자명 <span className="text-gray-500">(선택)</span>
         </label>
         <div className="relative">
           <UserCircle className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -316,7 +316,7 @@ export default function Section5Manager({ formData, onChange, errors, isEmailSig
       {/* 담당자 연락처 (3개 입력칸) */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
-          담당자 연락처 <span className="text-gray-500">(선택)</span>
+          담당자 연락처 <span className="text-red-500">*</span>
         </label>
         <div className="flex items-center gap-2">
           <div className="relative flex-1">

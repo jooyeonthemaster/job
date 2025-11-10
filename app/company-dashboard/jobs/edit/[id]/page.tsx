@@ -85,6 +85,12 @@ export default function JobEditPage() {
           salaryMin: job.salary_min?.toString() || '',
           salaryMax: job.salary_max?.toString() || '',
           salaryNegotiable: job.salary_negotiable ?? true,
+
+          // ✨ JD, 경력 사항, 스킬 (신규 추가)
+          jobDescription: job.job_description || '',
+          requiredExperience: job.required_experience || '',
+          requiredSkills: job.required_skills || [],
+
           visaSponsorship: job.visa_sponsorship ?? true,
           koreanLevel: job.korean_level || 'INTERMEDIATE',
           englishLevel: job.english_level || 'FLUENT',

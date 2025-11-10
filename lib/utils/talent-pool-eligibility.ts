@@ -73,13 +73,13 @@ export const checkTalentPoolEligibility = (profile: UserProfile | null): Eligibi
     });
   }
 
-  // 3. 스킬 (최소 3개)
-  if (profile.skills && profile.skills.length >= 3) {
+  // 3. 스킬 (최소 1개)
+  if (profile.skills && profile.skills.length >= 1) {
     completedFields++;
   } else {
     issues.push({
       field: '보유 기술',
-      message: `최소 3개 이상의 기술을 입력해주세요. (현재: ${profile.skills?.length || 0}개)`,
+      message: `최소 1개 이상의 기술을 입력해주세요. (현재: ${profile.skills?.length || 0}개)`,
       link: '/profile/edit/skills'
     });
   }
@@ -96,12 +96,12 @@ export const checkTalentPoolEligibility = (profile: UserProfile | null): Eligibi
   }
 
   // 5. 자기소개
-  if (profile.introduction && profile.introduction.trim().length >= 50) {
+  if (profile.introduction && profile.introduction.trim().length > 0) {
     completedFields++;
   } else {
     issues.push({
       field: '자기소개',
-      message: `자기소개를 50자 이상 작성해주세요. (현재: ${profile.introduction?.trim().length || 0}자)`,
+      message: `자기소개를 1자 이상 작성해주세요. (현재: ${profile.introduction?.trim().length || 0}자)`,
       link: '/profile/edit/introduction'
     });
   }

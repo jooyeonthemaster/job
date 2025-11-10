@@ -19,7 +19,9 @@ import {
   Bookmark,
   Eye,
   CheckCircle,
-  ArrowLeft
+  ArrowLeft,
+  FileText,
+  Code
 } from 'lucide-react';
 
 export default function JobDetailPage() {
@@ -303,6 +305,55 @@ export default function JobDetailPage() {
                 {getKoreanLevelLabel(job.korean_level)}
               </p>
             </div>
+
+            {/* ✨ JD (Job Description) */}
+            {job.job_description && (
+              <div className="bg-white rounded-xl shadow-sm p-8">
+                <div className="flex items-center gap-2 mb-4">
+                  <FileText className="w-5 h-5 text-primary-600" />
+                  <h2 className="text-xl font-bold text-gray-900">JD (Job Description)</h2>
+                </div>
+                <div className="p-4 border border-gray-200 rounded-lg bg-gray-50">
+                  <p className="text-gray-800 whitespace-pre-wrap leading-relaxed">
+                    {job.job_description}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* ✨ 필요 경력 사항 */}
+            {job.required_experience && (
+              <div className="bg-white rounded-xl shadow-sm p-8">
+                <div className="flex items-center gap-2 mb-4">
+                  <Briefcase className="w-5 h-5 text-primary-600" />
+                  <h2 className="text-xl font-bold text-gray-900">필요 경력 사항</h2>
+                </div>
+                <div className="p-4 border border-gray-200 rounded-lg bg-gray-50">
+                  <p className="text-gray-800 whitespace-pre-wrap leading-relaxed">
+                    {job.required_experience}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* ✨ 필요 스킬 */}
+            {job.required_skills && job.required_skills.length > 0 && (
+              <div className="bg-white rounded-xl shadow-sm p-8">
+                <div className="flex items-center gap-2 mb-4">
+                  <Code className="w-5 h-5 text-primary-600" />
+                  <h2 className="text-xl font-bold text-gray-900">필요 스킬</h2>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {job.required_skills.map((skill: string, index: number) => (
+                    skill.trim() && (
+                      <span key={index} className="px-3 py-1.5 bg-primary-100 text-primary-700 rounded-full text-sm font-medium">
+                        {skill}
+                      </span>
+                    )
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Sidebar */}

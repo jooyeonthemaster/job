@@ -6,7 +6,22 @@
       "Bash(vercel ls)",
       "Bash(powershell -Command:*)",
       "Bash(npm run build:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\n[UPDATE/FIX]: 더미 데이터 통합 + 로고 fallback + 공고 상세 UI 개선\n\n- 더미 데이터 통합: 메인/jobs 페이지에 lib/data.ts 더미 공고 추가\n- 로고 fallback: 로드 실패 시 회사명 첫 글자 표시 (파란색 배경)\n- 공고 상세: 조회수/지원자 통계 제거 (비자 지원만 표시)\n- 이미지 도메인: Wikipedia/Toss 로고 허용\n\nFiles: app/page.tsx, app/jobs/page.tsx, app/jobs/[id]/page.tsx, \n       components/JobCard.tsx, components/JobGridCard.tsx, \n       lib/data.ts, next.config.ts, CHANGELOG.md\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git commit:*)",
+      "Bash(tree:*)",
+      "Bash(cat:*)",
+      "Bash(npm run dev:*)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "Bash(taskkill:*)",
+      "Bash(npm install:*)",
+      "Bash(psql:*)",
+      "Bash(npx tsc:*)",
+      "Bash(supabase --version:*)",
+      "Bash(node check-tables.js:*)",
+      "Bash(find:*)",
+      "Bash(dir /AD /B)"
     ],
     "deny": [],
     "ask": []

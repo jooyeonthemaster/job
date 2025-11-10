@@ -9,6 +9,7 @@ import Header from '@/components/Header';
 import HeroSection from '@/components/jobseeker-dashboard/HeroSection';
 import ProfileChecklist from '@/components/jobseeker-dashboard/ProfileChecklist';
 import ProfileCompleteBanner from '@/components/jobseeker-dashboard/ProfileCompleteBanner';
+import ProfileViewsNotification from '@/components/jobseeker-dashboard/ProfileViewsNotification';
 import ApplicationStatus from '@/components/jobseeker-dashboard/ApplicationStatus';
 import ExperienceSection from '@/components/jobseeker-dashboard/ExperienceSection';
 import EducationSection from '@/components/jobseeker-dashboard/EducationSection';
@@ -68,6 +69,9 @@ export default function JobSeekerDashboard() {
                 checklistPercentage={checklistPercentage}
                 profileData={profileData}
               />
+
+              {/* Profile Views Notification */}
+              <ProfileViewsNotification userId={user?.id} />
 
               {/* Application Status */}
               <ApplicationStatus />

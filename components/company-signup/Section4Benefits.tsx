@@ -107,7 +107,7 @@ export default function Section4Benefits({ formData, onChange, errors }: Props) 
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-lg font-bold text-gray-900">복지 정보</h3>
-              <p className="text-sm text-gray-600">제공하는 복지를 선택해주세요 (최소 1개)</p>
+              <p className="text-sm text-gray-600">제공하는 복지를 선택해주세요 (선택사항)</p>
             </div>
             <div className="text-sm font-medium text-primary-600">
               선택됨: {selectedCount}개
@@ -149,7 +149,7 @@ export default function Section4Benefits({ formData, onChange, errors }: Props) 
       {/* 자주 사용되는 복지 */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-3">
-          자주 사용되는 복지 <span className="text-gray-500">(최소 1개 선택)</span>
+          자주 사용되는 복지 <span className="text-gray-500">(선택)</span>
         </label>
         <div className="flex flex-wrap gap-2">
           {COMMON_BENEFITS.map((benefit) => {
@@ -226,7 +226,7 @@ export default function Section4Benefits({ formData, onChange, errors }: Props) 
 
       <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl">
         <p className="text-sm text-blue-800">
-          💡 <strong>최소 1개 이상</strong>의 복지를 선택해야 합니다. 제공하는 모든 복지를 선택하면 구직자들이 더 관심을 가질 수 있습니다.
+          💡 복지 정보는 선택사항입니다. 제공하는 복지를 입력하면 구직자들이 더 관심을 가질 수 있습니다.
         </p>
       </div>
     </div>

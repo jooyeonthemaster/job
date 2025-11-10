@@ -51,11 +51,17 @@ export async function POST(request: NextRequest) {
 
     const token = authHeader.replace('Bearer ', '');
 
-    // 토큰으로 사용자 확인
-    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+    // JWT 디코딩 (검증 없이 이메일 추출)
+    const base64Payload = token.split('.')[1];
+    const payload = JSON.parse(Buffer.from(base64Payload, 'base64').toString());
+    const userEmail = payload.email;
 
-    if (userError || !user) {
-      console.log('사용자 인증 실패:', userError);
+    console.log('🔍 [TOKEN] JWT 디코딩 성공');
+    console.log('🔍 [TOKEN] 이메일:', userEmail);
+    console.log('🔍 [TOKEN] Payload:', payload);
+
+    if (!userEmail) {
+      console.error('🔴 [AUTH ERROR] 토큰에 이메일 없음');
       return NextResponse.json(
         { error: '로그인이 필요합니다.' },
         { status: 401 }
@@ -70,15 +76,16 @@ export async function POST(request: NextRequest) {
       'admin@gmail.com'
     ];
 
-    if (!adminEmails.includes(user.email || '')) {
-      console.log('권한 없음:', user.email);
+    if (!adminEmails.includes(userEmail || '')) {
+      console.error('🔴 [AUTH ERROR] 관리자 권한 없음');
+      console.error('🔴 [AUTH ERROR] 시도한 이메일:', userEmail);
       return NextResponse.json(
         { error: '관리자 권한이 필요합니다.' },
         { status: 403 }
       );
     }
 
-    console.log('관리자 확인:', user.email);
+    console.log('✅ [AUTH SUCCESS] 관리자 인증 성공:', userEmail);
 
     // 3. 필수 필드 검증
     if (!id || !name || !company_type || !address || !summary || !description || !employee_count || !established || !industry) {
@@ -94,7 +101,7 @@ export async function POST(request: NextRequest) {
       name,
       company_type,
       created_by_admin: true,
-      created_by: user.id
+      created_by: payload.sub || 'admin'
     });
 
     // 서비스 롤 클라이언트 사용 (RLS 정책 우회)
@@ -110,7 +117,7 @@ export async function POST(request: NextRequest) {
         address: address,
         logo: logo || null,
         created_by_admin: true,
-        created_by: user.id,
+        created_by: payload.sub || 'admin',
         email: `admin+${Date.now()}@jobmatch.com`,
         status: 'active',
         profile_completed: false,

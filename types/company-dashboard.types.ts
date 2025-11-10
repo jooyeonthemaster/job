@@ -123,7 +123,7 @@ export interface MenuItem {
 /**
  * 탭 ID 타입
  */
-export type TabId = 'overview' | 'profile' | 'jobs' | 'applicants' | 'verification' | 'settings';
+export type TabId = 'overview' | 'profile' | 'jobs' | 'applicants' | 'viewed-profiles' | 'verification' | 'settings';
 
 /**
  * 프로필 완성도 필드 타입
@@ -172,5 +172,34 @@ export interface CompanyVerification {
   reviewed_at?: string;
   created_at: string;
   updated_at: string;
+}
+
+/**
+ * 구직자 프로필 정보 (간략)
+ */
+export interface TalentProfile {
+  id: string;
+  full_name: string;
+  email: string;
+  headline?: string;
+  desired_position?: string;
+  desired_salary?: string;
+  profile_image_url?: string;
+  experience_years?: number;
+  education_level?: string;
+  skills?: string[];
+}
+
+/**
+ * 결제한 프로필 정보
+ */
+export interface ViewedProfile {
+  id: string;
+  talent_id: string;
+  payment_status: string;
+  payment_amount: number;
+  payment_paid_at: string;
+  created_at: string;
+  users: TalentProfile;
 }
 

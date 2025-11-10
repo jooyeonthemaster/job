@@ -3,6 +3,7 @@
 import { JobFormData } from '@/types/job-form.types';
 import BasicInfoSection from '../BasicInfoSection';
 import SalarySection from '../SalarySection';
+import RequirementsSection from '../RequirementsSection';
 import LanguageSection from '../LanguageSection';
 import WorkConditionsSection from '../WorkConditionsSection';
 import RecruiterSection from '../RecruiterSection';
@@ -30,6 +31,7 @@ export default function JobMetadataForm({ formData, onUpdate }: JobMetadataFormP
 
       <BasicInfoSection formData={formData} onUpdate={onUpdate} />
       <SalarySection formData={formData} onUpdate={onUpdate} />
+      <RequirementsSection formData={formData} onUpdate={onUpdate} />
       <LanguageSection formData={formData} onUpdate={onUpdate} />
       <WorkConditionsSection formData={formData} onUpdate={onUpdate} />
       <RecruiterSection formData={formData} onUpdate={onUpdate} />

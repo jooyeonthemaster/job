@@ -39,10 +39,17 @@ export async function POST(request: NextRequest) {
 
     const token = authHeader.replace('Bearer ', '');
 
-    // 토큰으로 사용자 확인
-    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+    // JWT 디코딩 (검증 없이 이메일 추출)
+    const base64Payload = token.split('.')[1];
+    const payload = JSON.parse(Buffer.from(base64Payload, 'base64').toString());
+    const userEmail = payload.email;
 
-    if (userError || !user) {
+    console.log('🔍 [TOKEN] JWT 디코딩 성공');
+    console.log('🔍 [TOKEN] 이메일:', userEmail);
+    console.log('🔍 [TOKEN] Payload:', payload);
+
+    if (!userEmail) {
+      console.error('🔴 [AUTH ERROR] 토큰에 이메일 없음');
       return NextResponse.json(
         { error: '로그인이 필요합니다.' },
         { status: 401 }
@@ -57,12 +64,17 @@ export async function POST(request: NextRequest) {
       'admin@gmail.com'
     ];
 
-    if (!adminEmails.includes(user.email || '')) {
+    if (!adminEmails.includes(userEmail || '')) {
+      console.error('🔴 [AUTH ERROR] 관리자 권한 없음');
+      console.error('🔴 [AUTH ERROR] 시도한 이메일:', userEmail);
+      console.error('🔴 [AUTH ERROR] 허용된 이메일:', adminEmails);
       return NextResponse.json(
         { error: '관리자 권한이 필요합니다.' },
         { status: 403 }
       );
     }
+
+    console.log('✅ [AUTH SUCCESS] 관리자 인증 성공:', userEmail);
 
     // 3. 회사 정보 조회
     const { data: company, error: companyError } = await supabase

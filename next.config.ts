@@ -14,6 +14,13 @@ const nextConfig: NextConfig = {
   },
   eslint: {
     ignoreDuringBuilds: true
+  },
+  // ✅ 캐시 문제 해결: 개발 환경 최적화
+  experimental: {
+    // 서버 액션 활성화 (Next.js 15 권장)
+    serverActions: {
+      bodySizeLimit: '2mb'
+    }
   }
 };
 

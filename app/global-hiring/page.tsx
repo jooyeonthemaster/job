@@ -466,7 +466,7 @@ export default function GlobalHiringPage() {
         </div>
       </section>
 
-      {/* CTA Section */}
+      {/* Contact Section */}
       <section className="py-20 gradient-bg-secondary">
         <div className="container mx-auto px-4 lg:px-8">
           <div className="max-w-4xl mx-auto text-center">
@@ -477,12 +477,24 @@ export default function GlobalHiringPage() {
               viewport={{ once: true }}
             >
               <h2 className="text-4xl font-bold text-white mb-4">
-                전문가와 함께 시작하세요
+                한국 취업 관련 문의
               </h2>
-              <p className="text-xl text-white/90">
-                복잡한 비자 절차, 혼자 고민하지 마세요
-                <br />경험 많은 전문가가 처음부터 끝까지 함께합니다
+              <p className="text-xl text-white/90 mb-8">
+                한국 취업에 대해 궁금하신 점이 있으시면
+                <br />아래 연락처로 언제든지 문의해 주세요
               </p>
+              <div className="flex flex-col items-center gap-4">
+                <a
+                  href="mailto:KOREAJOB@SSMHR.COM"
+                  className="inline-flex items-center gap-3 bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-all px-8 py-4 rounded-xl text-white font-semibold text-lg"
+                >
+                  <Mail className="w-6 h-6" />
+                  <span>KOREAJOB@SSMHR.COM</span>
+                </a>
+                <p className="text-white/80 text-sm">
+                  비자, 취업, 정착 관련 모든 문의를 환영합니다
+                </p>
+              </div>
             </motion.div>
           </div>
         </div>
