@@ -4,11 +4,13 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase/config';
 import JobsTab from '@/components/admin/JobsTab';
-import { Settings, Briefcase, Users, Building2, FileText, LogOut } from 'lucide-react';
+import AdminCreatedTab from '@/components/admin/AdminCreatedTab';
+import ProfileViewsTab from '@/components/admin/ProfileViewsTab';
+import { Settings, Briefcase, Users, Building2, FileText, LogOut, Star, Eye } from 'lucide-react';
 
 export default function AdminPage() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<'jobs' | 'jobseekers' | 'companies' | 'applications'>('jobs');
+  const [activeTab, setActiveTab] = useState<'jobs' | 'admin-created' | 'profile-views' | 'jobseekers' | 'companies' | 'applications'>('jobs');
   const [loading, setLoading] = useState(true);
   const [authorized, setAuthorized] = useState(false);
 
@@ -19,7 +21,7 @@ export default function AdminPage() {
   const checkAuth = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      
+
       if (!user) {
         router.push('/login');
         return;
@@ -30,7 +32,8 @@ export default function AdminPage() {
       const adminEmails = [
         'admin@ssmhr.com',
         'joo.y.oh.ko@gmail.com',
-        'nadr110619@gmail.com' // 현재 사용 중인 어드민 계정
+        'nadr110619@gmail.com',
+        'admin@gmail.com' // 추가된 관리자 계정
       ];
 
       if (!adminEmails.includes(user.email || '')) {
@@ -110,6 +113,28 @@ export default function AdminPage() {
               공고 관리
             </button>
             <button
+              onClick={() => setActiveTab('admin-created')}
+              className={`flex items-center gap-2 px-4 py-4 border-b-2 font-medium transition-colors ${
+                activeTab === 'admin-created'
+                  ? 'border-primary-600 text-primary-600'
+                  : 'border-transparent text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <Star className="w-5 h-5" />
+              관리자 생성 항목
+            </button>
+            <button
+              onClick={() => setActiveTab('profile-views')}
+              className={`flex items-center gap-2 px-4 py-4 border-b-2 font-medium transition-colors ${
+                activeTab === 'profile-views'
+                  ? 'border-primary-600 text-primary-600'
+                  : 'border-transparent text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <Eye className="w-5 h-5" />
+              프로필 열람 내역
+            </button>
+            <button
               onClick={() => setActiveTab('jobseekers')}
               className={`flex items-center gap-2 px-4 py-4 border-b-2 font-medium transition-colors ${
                 activeTab === 'jobseekers'
@@ -149,6 +174,8 @@ export default function AdminPage() {
       {/* Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {activeTab === 'jobs' && <JobsTab />}
+        {activeTab === 'admin-created' && <AdminCreatedTab />}
+        {activeTab === 'profile-views' && <ProfileViewsTab />}
         {activeTab === 'jobseekers' && (
           <div className="bg-white rounded-xl shadow-sm p-8 text-center">
             <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />

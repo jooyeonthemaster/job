@@ -10,6 +10,55 @@
 
 ### 2025-11-10
 
+#### ➕ [ADD] 관리자 계정 추가 (admin@gmail.com)
+
+**변경 파일**:
+- `app/admin/page.tsx` (202줄 → 203줄)
+- `app/api/admin/jobs/create/route.ts` (210줄 → 210줄)
+- `app/api/admin/companies/create/route.ts` (162줄 → 162줄)
+- `app/api/admin/profile-views/route.ts` (167줄 → 167줄)
+
+**변경 내용**:
+- 관리자 이메일 목록에 `admin@gmail.com` 추가
+- 4개 파일의 `adminEmails` 배열에 통일되게 추가
+- 관리자 페이지 접근, API 호출 권한 부여
+
+**이유**:
+- 새로운 관리자 계정 추가 요청
+- 관리자 시스템 접근 권한 필요
+
+**영향**:
+- `admin@gmail.com` 계정으로 `/admin` 페이지 접근 가능
+- 관리자 전용 API 호출 가능 (공고 생성, 회사 생성, 프로필 열람 내역 조회)
+- Supabase RLS 정책도 별도로 업데이트 필요 (SQL 실행)
+
+**추가 작업 필요**:
+- Supabase Dashboard에서 RLS 정책 업데이트 (아래 SQL 실행 필요)
+- Supabase에서 `admin@gmail.com` 계정 회원가입 필요
+
+---
+
+#### 🎨 [UPDATE] 기업 대시보드 "기업 인증하기" 버튼 제거
+
+**변경 파일**:
+- `components/company-dashboard/CompanyProfileChecklist.tsx` (315줄 → 307줄)
+
+**변경 내용**:
+- 프로필 완성도 체크리스트에서 "기업 인증하기" 버튼 제거 (165-172줄)
+- 사용하지 않는 `CheckCircle` 아이콘 import 제거
+
+**이유**:
+- 기업 인증 기능이 현재 사용되지 않음
+- 사용자가 불필요한 버튼으로 판단하여 제거 요청
+- 대시보드 UI 간소화 및 사용자 경험 개선
+
+**영향**:
+- 기업 대시보드 Overview 탭에서 "기업 인증하기" 버튼 미표시
+- `/company-dashboard?tab=verification` 탭은 여전히 존재하나 직접 접근 불가
+- 기존 기능(정보 입력, 기업 공개) 정상 작동
+
+---
+
 #### 🐛 [FIX] 빌드 에러 4건 수정 (타입/런타임 에러)
 
 **1. 관리자 공고 수정 페이지 Props 에러**
