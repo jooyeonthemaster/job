@@ -188,17 +188,6 @@ export default function Header() {
 
               {/* Desktop Actions */}
               <div className="hidden lg:flex items-center gap-4">
-                {isAuthenticated && !isLoading && (
-                  <button className="p-2 hover:bg-gray-50 rounded-lg transition-colors relative">
-                    <Bell className="w-5 h-5 text-gray-600" />
-                    <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full" />
-                  </button>
-                )}
-
-                {isAuthenticated && !isLoading && (
-                  <div className="h-8 w-px bg-gray-200" />
-                )}
-
                 {renderAuthButtons()}
               </div>
 

@@ -3,7 +3,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Building2, Bell, LogOut } from 'lucide-react';
+import { Building2, LogOut } from 'lucide-react';
 import { Company } from '@/types/company-dashboard.types';
 
 interface DashboardHeaderProps {
@@ -24,14 +24,8 @@ export const DashboardHeader = ({ company, onSignOut }: DashboardHeaderProps) =>
           </div>
           
           <div className="flex items-center gap-4">
-            {/* 알림 */}
-            <button className="relative p-2 text-gray-600 hover:text-gray-900">
-              <Bell className="w-5 h-5" />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-            </button>
-            
             {/* 프로필 메뉴 */}
-            <div className="flex items-center gap-3 pl-4 border-l">
+            <div className="flex items-center gap-3">
               <div className="text-right">
                 <p className="text-sm font-medium text-gray-900">{company.name}</p>
                 <p className="text-xs text-gray-500">{company.email}</p>
