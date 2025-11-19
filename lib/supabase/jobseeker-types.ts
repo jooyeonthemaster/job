@@ -14,6 +14,7 @@ export interface JobseekerSignupData {
  */
 export interface JobseekerOnboardingData {
   fullName: string;
+  email?: string;
   desired_job_category?: string;  // ✅ 희망 근무 직군 추가
   phone_country_code?: string;    // 전화번호 국가 코드 (+82, +86 등)
   phone: string;                  // 전화번호 (숫자만, 국가 코드 제외)

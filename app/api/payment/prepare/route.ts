@@ -2,8 +2,14 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase/config';
+import { createClient } from '@supabase/supabase-js';
 
 export const dynamic = 'force-dynamic';
+
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,8 +22,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 1. 채용공고 정보 조회
-    const { data: job, error: jobError } = await supabase
+    const authHeader = request.headers.get('Authorization');
+    if (!authHeader) {
+      return NextResponse.json(
+        { error: '로그인이 필요합니다.' },
+        { status: 401 }
+      );
+    }
+
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+
+    if (authError || !user) {
+      return NextResponse.json(
+        { error: '로그인이 필요합니다.' },
+        { status: 401 }
+      );
+    }
+
+    const { data: job, error: jobError } = await supabaseAdmin
       .from('jobs')
       .select(`
         *,
@@ -39,17 +62,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (job.company_id !== user.id) {
+      return NextResponse.json(
+        { error: '해당 채용공고에 대한 권한이 없습니다.' },
+        { status: 403 }
+      );
+    }
+
     // 2. 결제 정보 확인
-    if (job.payment_status === 'paid') {
+    if (job.payment_status === 'paid' || job.payment_status === 'confirmed') {
       return NextResponse.json(
         { error: '이미 결제가 완료된 공고입니다.' },
         { status: 400 }
       );
     }
 
-    // 3. paymentId 생성 (이니시스 제한: 최대 40자)
-    // UUID 앞 8자 + timestamp로 고유성 보장 (약 25자)
-    const paymentId = `jb_${jobId.substring(0, 8)}_${Date.now()}`;
+    // 3. paymentId 생성 (≤ 40자). jobId(36) 기반 + 4자리 난수로 유니크 보장
+    const compactJobId = jobId.replace(/-/g, ''); // 32자리
+    const randomSuffix = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+    const paymentId = `jb${compactJobId}${randomSuffix}`; // 총 38자리
 
     // 4. 결제 정보 반환
     const paymentInfo = {

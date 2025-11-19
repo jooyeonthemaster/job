@@ -123,7 +123,7 @@ export interface MenuItem {
 /**
  * 탭 ID 타입
  */
-export type TabId = 'overview' | 'profile' | 'jobs' | 'applicants' | 'viewed-profiles' | 'verification' | 'settings';
+export type TabId = 'overview' | 'profile' | 'jobs' | 'applicants' | 'viewed-profiles' | 'payments' | 'verification' | 'settings';
 
 /**
  * 프로필 완성도 필드 타입

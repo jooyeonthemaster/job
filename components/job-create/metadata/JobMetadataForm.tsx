@@ -12,9 +12,10 @@ import PostingTierSection from '../PostingTierSection';
 interface JobMetadataFormProps {
   formData: JobFormData;
   onUpdate: <K extends keyof JobFormData>(field: K, value: JobFormData[K]) => void;
+  showPostingTier?: boolean;
 }
 
-export default function JobMetadataForm({ formData, onUpdate }: JobMetadataFormProps) {
+export default function JobMetadataForm({ formData, onUpdate, showPostingTier = false }: JobMetadataFormProps) {
   return (
     <div className="space-y-6">
       <div className="bg-gradient-to-r from-primary-50 to-secondary-50 rounded-xl p-6 border-2 border-primary-100">
@@ -35,7 +36,9 @@ export default function JobMetadataForm({ formData, onUpdate }: JobMetadataFormP
       <LanguageSection formData={formData} onUpdate={onUpdate} />
       <WorkConditionsSection formData={formData} onUpdate={onUpdate} />
       <RecruiterSection formData={formData} onUpdate={onUpdate} />
-      <PostingTierSection formData={formData} onUpdate={onUpdate} />
+      {showPostingTier && (
+        <PostingTierSection formData={formData} onUpdate={onUpdate} />
+      )}
     </div>
   );
 }

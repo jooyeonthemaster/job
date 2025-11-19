@@ -3,6 +3,7 @@
 import { supabase } from './config';
 import { JobFormData, JobSubmitData } from '@/types/job-form.types';
 import { JobContentBlock, EditorBlock } from '@/types/job-content.types';
+import { POSTING_PRICES, VAT_RATE, BILLING_CONTACT } from '@/constants/job-posting';
 
 // ==========================================
 // 채용공고 생성 (임시저장 또는 등록)
@@ -26,15 +27,13 @@ export async function createJob(
     }
 
     // 2. 과금 정보 계산
-    const POSTING_PRICES = {
-      standard: { price: 300000, duration: 30 },
-      top: { price: 500000, duration: 30 },
-      premium: { price: 2000000, duration: 60 }
-    };
-
     const selectedPrice = POSTING_PRICES[formData.postingTier];
-    const vatAmount = selectedPrice.price * 0.1;
-    const totalAmount = selectedPrice.price + vatAmount;
+    const vatAmount = selectedPrice.vatIncluded
+      ? 0
+      : Math.floor(selectedPrice.price * VAT_RATE);
+    const totalAmount = selectedPrice.vatIncluded
+      ? selectedPrice.price
+      : selectedPrice.price + vatAmount;
 
     // 3. 임시저장 시 빈 값 처리 (null로 변환)
     const salaryMin = formData.salaryMin ? parseInt(formData.salaryMin) : null;
@@ -86,8 +85,8 @@ export async function createJob(
         // 결제 정보
         payment_status: 'pending',
         payment_requested_at: new Date().toISOString(),
-        payment_billing_contact_name: '박윤미',
-        payment_billing_contact_phone: '010-8014-5573',
+        payment_billing_contact_name: BILLING_CONTACT.name,
+        payment_billing_contact_phone: BILLING_CONTACT.phone,
 
         // 메타 정보 (deadline 빈 값이면 null)
         deadline: deadline,
@@ -270,7 +269,7 @@ export async function updateJob(
     }
 
     // 근무 조건 업데이트
-    if (formData.probation || formData.workHours || formData.startDate) {
+    if (formData.probation !== undefined || formData.workHours !== undefined || formData.startDate !== undefined) {
       const { error: wcError } = await supabase
         .from('job_work_conditions')
         .upsert({
@@ -287,23 +286,49 @@ export async function updateJob(
       }
     }
 
-    // 담당자 정보 업데이트 (name과 email이 NOT NULL이므로 값이 있을 때만)
-    if (formData.managerName && formData.managerName.trim() && 
-        formData.managerEmail && formData.managerEmail.trim()) {
-      const { error: mgrError } = await supabase
+    // 담당자 정보 업데이트
+    // Note: 채용 공고별로 독립적인 담당자 정보 관리
+    // 사용자가 입력한 값이 있으면 업데이트, 없으면 기존 값 유지
+    if (formData.managerName !== undefined || formData.managerEmail !== undefined) {
+      // 최소한 하나의 필드라도 업데이트 시도
+      const { data: existingManager } = await supabase
         .from('job_manager')
-        .upsert({
-          job_id: jobId,
-          name: formData.managerName.trim(),
-          position: formData.managerPosition || '',
-          email: formData.managerEmail.trim(),
-          phone: formData.managerPhone || '',
-        }, {
-          onConflict: 'job_id'
-        });
+        .select('*')
+        .eq('job_id', jobId)
+        .single();
 
-      if (mgrError) {
-        console.error('Manager update error:', mgrError);
+      if (existingManager) {
+        // 기존 manager 있으면 업데이트
+        const { error: mgrError } = await supabase
+          .from('job_manager')
+          .update({
+            name: formData.managerName?.trim() || existingManager.name,
+            position: formData.managerPosition !== undefined ? formData.managerPosition : existingManager.position,
+            email: formData.managerEmail?.trim() || existingManager.email,
+            phone: formData.managerPhone !== undefined ? formData.managerPhone : existingManager.phone,
+          })
+          .eq('job_id', jobId);
+
+        if (mgrError) {
+          console.error('Manager update error:', mgrError);
+          // 에러 발생해도 공고 업데이트는 성공으로 처리
+        }
+      } else if (formData.managerName?.trim() && formData.managerEmail?.trim()) {
+        // manager가 없고, name과 email이 모두 있으면 생성
+        const { error: mgrError } = await supabase
+          .from('job_manager')
+          .insert({
+            job_id: jobId,
+            name: formData.managerName.trim(),
+            position: formData.managerPosition || '',
+            email: formData.managerEmail.trim(),
+            phone: formData.managerPhone || '',
+          });
+
+        if (mgrError) {
+          console.error('Manager insert error:', mgrError);
+          // 에러 발생해도 공고 업데이트는 성공으로 처리
+        }
       }
     }
 

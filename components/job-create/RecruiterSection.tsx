@@ -10,29 +10,23 @@ interface RecruiterSectionProps {
 }
 
 export default function RecruiterSection({ formData, onUpdate }: RecruiterSectionProps) {
-  // RecruiterInfoSection에 맞게 데이터 변환
-  const recruiterInfo = {
-    recruiterName: formData.managerName,
-    recruiterPosition: formData.managerPosition,
-    recruiterEmail: formData.managerEmail,
-    recruiterPhone: formData.managerPhone,
+  // RecruiterInfoSection이 이제 manager* 필드를 직접 사용하므로
+  // 변환 없이 그대로 전달
+  const managerInfo = {
+    managerName: formData.managerName,
+    managerPosition: formData.managerPosition,
+    managerEmail: formData.managerEmail,
+    managerPhone: formData.managerPhone,
   };
 
-  // 업데이트 핸들러 변환
-  const handleUpdate = (field: 'recruiterName' | 'recruiterPosition' | 'recruiterEmail' | 'recruiterPhone', value: string) => {
-    const fieldMap = {
-      recruiterName: 'managerName',
-      recruiterPosition: 'managerPosition',
-      recruiterEmail: 'managerEmail',
-      recruiterPhone: 'managerPhone',
-    } as const;
-
-    onUpdate(fieldMap[field] as keyof JobFormData, value);
+  // 업데이트 핸들러도 직접 전달
+  const handleUpdate = (field: 'managerName' | 'managerPosition' | 'managerEmail' | 'managerPhone', value: string) => {
+    onUpdate(field as keyof JobFormData, value);
   };
 
   return (
     <RecruiterInfoSection
-      formData={recruiterInfo}
+      formData={managerInfo}
       onUpdate={handleUpdate}
     />
   );

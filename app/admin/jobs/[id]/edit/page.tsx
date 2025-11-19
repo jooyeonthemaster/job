@@ -11,6 +11,11 @@ import JobContentEditor from '@/components/job-create/editor/JobContentEditor';
 import JobPreviewModal from '@/components/job-create/JobPreviewModal';
 import { ArrowLeft, Save, Eye, Loader } from 'lucide-react';
 
+const pickSingle = <T,>(relation: T | T[] | null | undefined): T | null => {
+  if (!relation) return null;
+  return Array.isArray(relation) ? relation[0] ?? null : relation;
+};
+
 interface SelectedCompany {
   id: string;
   name: string;
@@ -64,7 +69,7 @@ export default function AdminJobEditPage() {
         console.error('Admin check error:', error);
         router.push('/');
       }
-    };
+    };                                                                                      
 
     checkAdminAccess();
   }, [jobId]);
@@ -93,6 +98,9 @@ export default function AdminJobEditPage() {
       }
 
       // 폼 데이터 설정
+      const workConditions = pickSingle(job.job_work_conditions);
+      const manager = pickSingle(job.job_manager);
+
       setFormDataBulk({
         // 기본 정보
         title: job.title || '',
@@ -129,15 +137,15 @@ export default function AdminJobEditPage() {
         englishLevel: job.english_level || 'NONE',
 
         // 근무 조건
-        probation: job.job_work_conditions?.[0]?.probation || '',
-        workHours: job.job_work_conditions?.[0]?.work_hours || '',
-        startDate: job.job_work_conditions?.[0]?.start_date || '',
+        probation: workConditions?.probation || '',
+        workHours: workConditions?.work_hours || '',
+        startDate: workConditions?.start_date || '',
 
         // 채용 담당자
-        managerName: job.job_manager?.[0]?.name || '',
-        managerPosition: job.job_manager?.[0]?.position || '',
-        managerEmail: job.job_manager?.[0]?.email || '',
-        managerPhone: job.job_manager?.[0]?.phone || '',
+        managerName: manager?.name || '',
+        managerPosition: manager?.position || '',
+        managerEmail: manager?.email || '',
+        managerPhone: manager?.phone || '',
 
         // 공고 노출 위치
         postingTier: job.posting_tier || 'standard',

@@ -5,6 +5,7 @@
 import Link from 'next/link';
 import { Building2, Globe, Calendar, Eye, Edit, Trash2, PlusCircle, Briefcase } from 'lucide-react';
 import { Job } from '@/types/company-dashboard.types';
+import { formatDeadline } from '@/utils/jobFormatters';
 
 interface JobsTabProps {
   jobs: Job[];
@@ -85,7 +86,7 @@ export const JobsTab = ({ jobs, loading, onDeleteJob }: JobsTabProps) => {
 
                   <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 mb-4">
                     <span className="flex items-center gap-1">
-                      <Building2 className="w-4 h-4" />
+                      <Briefcase className="w-4 h-4" />
                       {job.department}
                     </span>
                     <span className="flex items-center gap-1">
@@ -94,7 +95,7 @@ export const JobsTab = ({ jobs, loading, onDeleteJob }: JobsTabProps) => {
                     </span>
                     <span className="flex items-center gap-1">
                       <Calendar className="w-4 h-4" />
-                      마감: {new Date(job.deadline).toLocaleDateString()}
+                      마감: {formatDeadline(job.deadline)}
                     </span>
                   </div>
 

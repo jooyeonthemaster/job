@@ -7,6 +7,8 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
+export const dynamic = 'force-dynamic';
+
 // GET: 기업의 모든 지원자 조회
 export async function GET(request: NextRequest) {
   try {

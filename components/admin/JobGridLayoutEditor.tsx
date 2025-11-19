@@ -58,7 +58,7 @@ export default function JobGridLayoutEditor({
   const loadData = async () => {
     setLoading(true);
     try {
-      // 활성화되고 결제 완료된 공고만 DB에서 직접 필터링
+      // 결제 완료된 공고만 DB에서 직접 필터링 (active + pending_approval 포함, 테스트 결제 포함)
       const { data: allJobs, error } = await supabase
         .from('jobs')
         .select(`
@@ -70,8 +70,8 @@ export default function JobGridLayoutEditor({
             industry
           )
         `)
-        .eq('status', 'active')
-        .eq('payment_status', 'confirmed')
+        .in('status', ['active', 'pending_approval'])
+        .not('payment_status', 'is', null)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -272,24 +272,26 @@ export default function JobGridLayoutEditor({
 
       const changedSlots = allSlots.filter(slot => slot.job !== null);
 
-      // 모든 공고의 위치를 일괄 업데이트
+      // 모든 공고의 위치를 일괄 업데이트 (위치 할당 = 자동 승인)
       const updatePromises = changedSlots.map(slot => {
         return supabase
           .from('jobs')
           .update({
             display_position: slot.position,
-            display_priority: slot.priority
+            display_priority: slot.priority,
+            status: 'active'  // 위치 할당 시 자동으로 활성화
           })
           .eq('id', slot.job!.id);
       });
 
-      // 할당 해제된 공고들의 display_position을 null로
+      // 할당 해제된 공고들의 display_position을 null로 (위치 해제 = 승인 취소)
       const unassignPromises = unassignedJobs.map(job => {
         return supabase
           .from('jobs')
           .update({
             display_position: null,
-            display_priority: null
+            display_priority: null,
+            status: 'pending_approval'  // 위치 해제 시 승인 대기로 되돌림
           })
           .eq('id', job.id);
       });

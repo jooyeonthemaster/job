@@ -116,6 +116,13 @@ export default function JobsTab() {
           최상단
         </span>
       );
+    } else if (tier === 'test') {
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 text-xs font-medium rounded-full">
+          <CheckCircle className="w-3 h-3" />
+          테스트
+        </span>
+      );
     } else {
       return <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded-full">일반</span>;
     }
@@ -372,17 +379,19 @@ export default function JobsTab() {
                             <>
                               <button
                                 onClick={() => handleApproveJob(job.id)}
-                                className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                                className="px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-1.5 font-medium text-sm"
                                 title="승인"
                               >
                                 <CheckCircle className="w-4 h-4" />
+                                승인
                               </button>
                               <button
                                 onClick={() => handleRejectJob(job.id)}
-                                className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                className="px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center gap-1.5 font-medium text-sm"
                                 title="반려"
                               >
                                 <XCircle className="w-4 h-4" />
+                                반려
                               </button>
                             </>
                           )}

@@ -20,6 +20,13 @@ export const POSTING_PRICES: Record<PostingTier, PostingPrice> = {
     duration: 60,
     label: '첫 페이지 최상단 (프리미엄)',
     desc: '메인 페이지 + 목록 최상단 고정'
+  },
+  test: {
+    price: 1000,
+    duration: 7,
+    label: '테스트 상품',
+    desc: '개발/QA용 테스트 결제',
+    vatIncluded: true
   }
 };
 

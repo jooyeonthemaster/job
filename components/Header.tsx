@@ -84,7 +84,7 @@ export default function Header() {
                     {userProfile?.fullName || userProfile?.full_name || userProfile?.name || '사용자'}
                   </p>
                   <p className="text-xs text-gray-500 mt-1">
-                    {user?.email}
+                    {userProfile?.email || user?.email || '이메일 정보 없음'}
                   </p>
                 </div>
                 

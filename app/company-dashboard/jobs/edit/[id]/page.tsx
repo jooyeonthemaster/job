@@ -12,6 +12,11 @@ import JobPreviewModal from '@/components/job-create/JobPreviewModal';
 import { ChevronLeft, Save, Eye, Send } from 'lucide-react';
 import { JobFormData } from '@/types/job-form.types';
 
+const pickSingle = <T,>(relation: T | T[] | null | undefined): T | null => {
+  if (!relation) return null;
+  return Array.isArray(relation) ? relation[0] ?? null : relation;
+};
+
 export default function JobEditPage() {
   const router = useRouter();
   const params = useParams();
@@ -65,13 +70,9 @@ export default function JobEditPage() {
         // 공고 상태 저장
         setJobStatus(job.status || 'draft');
 
-        // 근무 조건 및 담당자 정보 추출
-        const workConditions = job.job_work_conditions && job.job_work_conditions.length > 0 
-          ? job.job_work_conditions[0] 
-          : null;
-        const manager = job.job_manager && job.job_manager.length > 0 
-          ? job.job_manager[0] 
-          : null;
+        // 근무 조건 및 담당자 정보 추출 (PostgREST가 객체/배열 모두 반환할 수 있으므로 안전하게 처리)
+        const workConditions = pickSingle(job.job_work_conditions);
+        const manager = pickSingle(job.job_manager);
 
         // 폼 데이터 일괄 설정
         setFormDataBulk({

@@ -8,17 +8,20 @@ import Header from '@/components/Header';
 import Link from 'next/link';
 import Image from 'next/image';
 import JobApplicationModal from '@/components/JobApplicationModal';
+import JobDetailSidebar from '@/components/JobDetailSidebar';
+import {
+  formatSalary,
+  getExperienceLabel,
+  getEmploymentTypeLabel,
+  getKoreanLevelLabel
+} from '@/utils/jobFormatters';
 import {
   Building2,
   MapPin,
-  Clock,
-  Users,
   DollarSign,
   Globe,
   Briefcase,
   Calendar,
-  Share2,
-  Eye,
   CheckCircle,
   ArrowLeft,
   FileText,
@@ -62,6 +65,12 @@ export default function JobDetailPage() {
               industry,
               location,
               description
+            ),
+            job_manager (
+              name,
+              position,
+              email,
+              phone
             )
           `)
           .eq('id', jobId)
@@ -70,9 +79,17 @@ export default function JobDetailPage() {
         if (error) throw error;
 
         if (data) {
+          console.log('📊 Job Data:', data);
+          console.log('👤 Manager Info (from job_manager):', {
+            name: data.job_manager?.name,
+            position: data.job_manager?.position,
+            email: data.job_manager?.email,
+            phone: data.job_manager?.phone
+          });
           setJob({
             ...data,
-            company: data.companies
+            company: data.companies,
+            manager: data.job_manager
           });
         }
       } catch (error) {
@@ -106,6 +123,68 @@ export default function JobDetailPage() {
       return;
     }
 
+    // ✅ 프로필 완성도 및 공개 여부 확인
+    if (!userProfile) {
+      setErrorMessage('프로필 정보를 불러올 수 없습니다.');
+      return;
+    }
+
+    // 1. 프로필 공개 여부 확인
+    if (!userProfile.is_public) {
+      setErrorMessage('프로필을 공개로 설정해야 지원할 수 있습니다. 프로필을 완성하고 공개해주세요.');
+      setTimeout(() => {
+        router.push('/jobseeker-dashboard');
+      }, 2500);
+      return;
+    }
+
+    // 2. 필수 기본 정보 확인 (이름, 한 줄 소개)
+    if (!userProfile.full_name || !userProfile.headline) {
+      setErrorMessage('기본 정보(이름, 한 줄 소개)를 입력해야 지원할 수 있습니다.');
+      setTimeout(() => {
+        router.push('/profile/edit/basic');
+      }, 2500);
+      return;
+    }
+
+    // 3. 이력서 파일 확인
+    if (!userProfile.resume_file_url) {
+      setErrorMessage('이력서 파일을 업로드해야 지원할 수 있습니다.');
+      setTimeout(() => {
+        router.push('/profile/edit/resume');
+      }, 2500);
+      return;
+    }
+
+    // 4. 경력 또는 학력 확인
+    const hasExperience = userProfile.experiences && userProfile.experiences.length > 0;
+    const hasEducation = userProfile.educations && userProfile.educations.length > 0;
+    if (!hasExperience && !hasEducation) {
+      setErrorMessage('경력 또는 학력 정보를 1개 이상 입력해야 지원할 수 있습니다.');
+      setTimeout(() => {
+        router.push('/profile/edit/experience');
+      }, 2500);
+      return;
+    }
+
+    // 5. 기술 확인
+    if (!userProfile.skills || userProfile.skills.length === 0) {
+      setErrorMessage('보유 기술을 1개 이상 입력해야 지원할 수 있습니다.');
+      setTimeout(() => {
+        router.push('/profile/edit/skills');
+      }, 2500);
+      return;
+    }
+
+    // 6. 언어 능력 확인
+    if (!userProfile.languages || userProfile.languages.length === 0) {
+      setErrorMessage('언어 능력을 1개 이상 입력해야 지원할 수 있습니다.');
+      setTimeout(() => {
+        router.push('/profile/edit/skills');
+      }, 2500);
+      return;
+    }
+
     // 에러 메시지 초기화 및 모달 오픈
     setErrorMessage('');
     setIsApplicationModalOpen(true);
@@ -113,22 +192,36 @@ export default function JobDetailPage() {
 
   const handleApplicationSubmit = async (message: string) => {
     try {
-      const response = await fetch('/api/job-applications', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          jobId: job.id,
-          applicantId: user?.id,
-          message,
-        }),
-      });
+      if (!user?.id) {
+        throw new Error('로그인이 필요합니다.');
+      }
 
-      const data = await response.json();
+      if (!userProfile?.email || !userProfile?.full_name) {
+        throw new Error('프로필 정보가 필요합니다.');
+      }
 
-      if (!response.ok) {
-        throw new Error(data.error || '지원서 제출에 실패했습니다.');
+      // 🔥 API 우회: 클라이언트에서 직접 Supabase insert
+      const { data: application, error: insertError } = await supabase
+        .from('job_applications')
+        .insert({
+          job_id: job.id,
+          job_title: job.title,
+          company_id: job.company?.id,
+          company_name: job.company?.name,
+          applicant_id: user.id,
+          applicant_name: userProfile.full_name,
+          applicant_email: userProfile.email,
+          message: message,
+          status: 'pending',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+
+      if (insertError) {
+        console.error('지원서 제출 에러:', insertError);
+        throw new Error(insertError.message || '지원서 제출에 실패했습니다.');
       }
 
       // ✅ 성공 메시지 Toast
@@ -142,47 +235,6 @@ export default function JobDetailPage() {
     } catch (error: unknown) {
       throw error; // 모달에서 에러 메시지 표시
     }
-  };
-
-  const formatSalary = (min: number, max: number) => {
-    const format = (num: number) => {
-      if (num >= 100000000) return `${(num / 100000000).toFixed(1)}억`;
-      if (num >= 10000000) return `${(num / 10000).toFixed(0)}만`;
-      return num.toLocaleString();
-    };
-    return `${format(min)} - ${format(max)}`;
-  };
-
-  const getExperienceLabel = (level: string) => {
-    const labels: Record<string, string> = {
-      ENTRY: '신입',
-      JUNIOR: '주니어',
-      MID: '미드레벨',
-      SENIOR: '시니어',
-      EXECUTIVE: '임원급'
-    };
-    return labels[level] || level;
-  };
-
-  const getEmploymentTypeLabel = (type: string) => {
-    const labels: Record<string, string> = {
-      FULL_TIME: '정규직',
-      PART_TIME: '파트타임',
-      CONTRACT: '계약직',
-      INTERNSHIP: '인턴십'
-    };
-    return labels[type] || type;
-  };
-
-  const getKoreanLevelLabel = (level: string) => {
-    const labels: Record<string, string> = {
-      NONE: '무관',
-      BASIC: '기초',
-      INTERMEDIATE: '중급',
-      ADVANCED: '고급',
-      NATIVE: '원어민'
-    };
-    return labels[level] || level;
   };
 
   if (loading) {
@@ -425,58 +477,11 @@ export default function JobDetailPage() {
 
           {/* Sidebar */}
           <div className="lg:col-span-1">
-            <div className="sticky top-8 space-y-4">
-              {/* Apply Button */}
-              <button
-                onClick={handleApplyClick}
-                className="w-full bg-gradient-to-r from-primary-600 to-cyan-600 text-white py-4 px-6 rounded-xl font-semibold hover:shadow-lg transition-all"
-              >
-                지원하기
-              </button>
-
-              {/* Action Buttons */}
-              <button
-                onClick={handleCopyLink}
-                className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl border border-gray-200 bg-white text-gray-700 hover:border-primary-600 transition-all"
-              >
-                <Share2 className="w-4 h-4" />
-                공유
-              </button>
-
-              {/* Company Info Card */}
-              {job.company && (
-                <div className="bg-white rounded-xl shadow-sm p-6">
-                  <h3 className="font-semibold text-gray-900 mb-4">회사 정보</h3>
-                  <div className="space-y-3">
-                    <div>
-                      <p className="text-xs text-gray-500 mb-1">회사명</p>
-                      <p className="text-sm font-medium text-gray-900">{job.company.name}</p>
-                      <p className="text-xs text-gray-500">{job.company.name_en}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500 mb-1">업종</p>
-                      <p className="text-sm text-gray-900">{job.company.industry}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500 mb-1">위치</p>
-                      <p className="text-sm text-gray-900">{job.company.location}</p>
-                    </div>
-                    {job.company.description && (
-                      <div>
-                        <p className="text-xs text-gray-500 mb-1">소개</p>
-                        <p className="text-sm text-gray-700 line-clamp-3">{job.company.description}</p>
-                      </div>
-                    )}
-                    <Link
-                      href={`/companies/${job.company.id}`}
-                      className="block text-center py-2 text-sm text-primary-600 hover:text-primary-700 font-medium"
-                    >
-                      회사 페이지 보기 →
-                    </Link>
-                  </div>
-                </div>
-              )}
-            </div>
+            <JobDetailSidebar
+              job={job}
+              onApplyClick={handleApplyClick}
+              onCopyLink={handleCopyLink}
+            />
           </div>
         </div>
       </div>

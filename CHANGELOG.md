@@ -8,6 +8,1322 @@
 
 ## 📋 최근 주요 변경 사항
 
+### 2025-11-20
+
+#### 🗑️ [DELETE] 인재풀 페이지 - 더미 데이터 토글 제거 및 실제 데이터 전용화
+
+**변경 파일**:
+- `app/talent/page.tsx` (수정: 833줄, 약 15줄 감소)
+
+**변경 내용**:
+- ✅ **더미 데이터 토글 버튼 제거**: "실제 데이터 (ON)" 버튼 완전 삭제
+- ✅ **실제 데이터 전용**: `showRealDataOnly` 상태 제거, 항상 실제 데이터만 표시
+- ✅ **불필요한 텍스트 제거**: "✓ 실제 Supabase 데이터" 레이블 삭제
+- ✅ **더미 데이터 import 제거**: `talentProfiles` import 삭제
+- ✅ **Database 아이콘 제거**: 사용하지 않는 lucide-react 아이콘 제거
+
+**문제**:
+- 인재풀 페이지에 더미 데이터 토글 버튼과 관련 텍스트가 표시됨
+- 사용자 혼란 초래 (실제 데이터인지 더미 데이터인지)
+- 불필요한 UI 요소로 인한 복잡도 증가
+
+**해결**:
+```typescript
+// Before: 더미 데이터 토글 가능
+const [showRealDataOnly, setShowRealDataOnly] = useState(true);
+const displayProfiles = showRealDataOnly ? realProfiles : talentProfiles;
+
+// After: 항상 실제 데이터만 사용
+const displayProfiles = realProfiles;
+```
+
+**영향**:
+- ✅ 인재풀에서 항상 실제 Supabase 데이터만 표시
+- ✅ UI 단순화 및 사용자 경험 개선
+- ✅ 더미 데이터 관련 코드 제거로 유지보수성 향상
+
+**이유**:
+- 사용자: "그냥 인재풀에서 무조건 실제 데이터만 보여지도록 해줘"
+- 프로덕션 환경에서 더미 데이터 불필요
+
+**⚠️ 파일 크기 경고**:
+- 현재 파일 크기: 833줄 (500줄 제한 초과)
+- 향후 리팩토링 필요:
+  - 카테고리 데이터를 별도 파일로 분리 (~200줄)
+  - 필터 섹션을 컴포넌트로 분리 (~150줄)
+  - 인재 카드를 별도 컴포넌트로 분리 (~150줄)
+
+---
+
+#### ✅ [ADD] 채용 공고 지원 전 프로필 완성도 및 공개 여부 필수 체크
+
+**변경 파일**:
+- `app/jobs/[id]/page.tsx` (수정: 110-191줄, 기존: 129줄 → 변경 후: 191줄)
+
+**변경 내용**:
+- ✅ **프로필 공개 여부 체크**: `is_public = true` 확인
+- ✅ **필수 정보 체크**: 이름, 한 줄 소개 입력 여부
+- ✅ **이력서 업로드 체크**: resume_file_url 존재 여부
+- ✅ **경력/학력 체크**: 경력 또는 학력 1개 이상 입력
+- ✅ **기술 체크**: 보유 기술 1개 이상 입력
+- ✅ **언어 능력 체크**: 언어 능력 1개 이상 입력
+- ✅ **단계별 리다이렉트**: 미완성 항목의 편집 페이지로 자동 이동
+
+**문제**:
+- 사용자가 프로필을 완성하지 않고 채용 공고에 지원 시도
+- 프로필이 비공개 상태이거나 필수 정보가 누락된 상태로 지원서 제출
+- 기업이 지원자 프로필 조회 시 "Profile not found or private" 에러 발생
+
+**해결**:
+```typescript
+// 1. 프로필 공개 여부 확인
+if (!userProfile.is_public) {
+  setErrorMessage('프로필을 공개로 설정해야 지원할 수 있습니다.');
+  router.push('/jobseeker-dashboard');
+  return;
+}
+
+// 2. 필수 기본 정보 확인
+if (!userProfile.full_name || !userProfile.headline) {
+  setErrorMessage('기본 정보를 입력해야 지원할 수 있습니다.');
+  router.push('/profile/edit/basic');
+  return;
+}
+
+// 3-6. 이력서, 경력/학력, 기술, 언어 순차 체크
+```
+
+**영향**:
+- ✅ 완성된 프로필만 채용 지원 가능
+- ✅ 기업이 지원자 프로필 정상 조회 가능
+- ✅ 사용자 경험 개선 (단계별 안내)
+- ✅ 데이터 품질 향상
+
+**이유**:
+- 사용자: "애초에 다 정보를 입력을 하고, 그 프로필 공개를 해야 지원이 가능하도록 플로우를 짜버리자"
+- 지원서 제출 전 프로필 완성 강제로 데이터 무결성 보장
+
+---
+
+### 2025-11-19
+
+#### 🐛 [FIX] 기업 대시보드 - 지원자 관리 조회 버그 수정
+
+**변경 파일**:
+- `components/company-dashboard/tabs/ApplicantsTab.tsx` (수정: 46-57줄)
+
+**변경 내용**:
+- ✅ **`userProfile.id` 또는 `userProfile.company_id` 사용**
+- ✅ **companies 테이블 구조에 맞게 수정**
+
+**문제**:
+- 기업이 지원서를 받았는데 지원자 관리 페이지에 표시되지 않음
+- `userProfile.company_id`를 사용했는데, `companies` 테이블에는 `company_id` 필드가 없고 `id` 필드만 존재
+- 46줄에서 `!userProfile?.company_id` 체크로 인해 early return되어 지원자 조회 실패
+
+**근본 원인**:
+- `AuthContext`는 기업 사용자의 경우 `companies` 테이블에서 프로필을 가져옴
+- `companies` 테이블 구조: `id`, `name`, `email` 등 (❌ `company_id` 필드 없음)
+- `ApplicantsTab`은 `userProfile.company_id`를 기대했지만 실제로는 `undefined`
+
+**해결**:
+```typescript
+// Before: company_id 필드가 없어서 undefined
+const params = new URLSearchParams({
+  companyId: userProfile.company_id,  // undefined!
+});
+
+// After: id 또는 company_id를 모두 지원
+const companyId = userProfile?.id || userProfile?.company_id;
+const params = new URLSearchParams({
+  companyId: companyId,  // 정상 작동!
+});
+```
+
+**영향**:
+- ✅ 기업 대시보드에서 지원자 목록 정상 표시
+- ✅ 모든 지원 내역 조회 가능
+
+---
+
+#### 🎨 [UPDATE] 관리자 - 승인/반려 버튼 가시성 개선
+
+**변경 파일**:
+- `components/admin/JobsTab.tsx` (수정: 380-396줄)
+
+**변경 내용**:
+- ✅ **승인 버튼에 텍스트 추가** (아이콘 → 아이콘 + "승인")
+- ✅ **배경색 적용** (투명 → 초록색 배경)
+- ✅ **버튼 크기 증가** (p-2 → px-3 py-2)
+- ✅ **반려 버튼도 동일하게 개선**
+
+**문제**:
+- 승인 버튼이 아이콘만 있어서 잘 안 보임
+- 작은 크기로 인식하기 어려움
+
+**해결**:
+```typescript
+// Before: 작은 아이콘 버튼
+<button className="p-2 text-green-600 hover:bg-green-50">
+  <CheckCircle className="w-4 h-4" />
+</button>
+
+// After: 큰 텍스트 버튼
+<button className="px-3 py-2 bg-green-600 text-white hover:bg-green-700 flex items-center gap-1.5">
+  <CheckCircle className="w-4 h-4" />
+  승인
+</button>
+```
+
+**영향**:
+- ✅ 승인/반려 버튼이 명확하게 보임
+- ✅ 관리자 작업 효율성 증가
+
+---
+
+#### ✨ [UPDATE] 관리자 - 그리드 레이아웃 위치 할당 시 자동 승인
+
+**변경 파일**:
+- `components/admin/JobGridLayoutEditor.tsx` (수정: 275-297줄)
+
+**변경 내용**:
+- ✅ **위치 할당 시 자동으로 `status = 'active'`로 변경**
+- ✅ **위치 해제 시 `status = 'pending_approval'`로 되돌림**
+
+**문제**:
+- 그리드 레이아웃 에디터에서 위치를 할당해도 상태가 여전히 "승인대기"로 표시됨
+- 수동으로 공고 관리 페이지에서 승인 버튼을 눌러야 했음
+
+**해결**:
+```typescript
+// 위치 할당 시
+.update({
+  display_position: slot.position,
+  display_priority: slot.priority,
+  status: 'active'  // 자동 승인
+})
+
+// 위치 해제 시
+.update({
+  display_position: null,
+  display_priority: null,
+  status: 'pending_approval'  // 승인 취소
+})
+```
+
+**영향**:
+- ✅ 위치 할당 = 자동 승인 (워크플로우 간소화)
+- ✅ 공고 관리 페이지에서 즉시 "활성" 상태로 표시
+- ✅ 위치 해제 시 승인 대기로 되돌아감
+
+---
+
+#### 🎨 [REFACTOR] 기업 대시보드 - 지원자 관리 UI 단순화 및 색상 통일
+
+**변경 파일**:
+- `components/company-dashboard/tabs/ApplicantsTab.tsx` (469줄 → 318줄)
+
+**변경 내용**:
+- ❌ **알록달록한 통계 카드 제거** (노란색, 파란색, 초록색, 빨간색)
+- ❌ **채용공고 필터 제거**
+- ❌ **상태 필터 제거**
+- ✅ **검색 기능만 유지** (이름, 이메일, 공고 검색)
+- ✅ **모든 색상 gray/primary 통일** (흰색, 검정, 청록색 베이스)
+- ✅ **상태 배지 모두 회색으로 통일**
+
+**이유**:
+- 사용자 요청: "너무 알록달록 해. 철저하게 우리 프론트앤드의 흰색과 검정색 베이스에 청록색 키컬러 베이스로 매우 모던한 스타일로, 깔끔하게 해줘"
+- 불필요한 상태 관리 기능 제거: "이런 상태관리 필요없어. 그냥 지원자만 볼 수 있으면 돼"
+
+**변경 코드**:
+```typescript
+// Before: 컬러풀한 상태별 색상
+const getStatusColor = (status: ApplicationStatus) => {
+  const colorMap = {
+    pending: { bg: 'bg-yellow-50', text: 'text-yellow-700' },
+    reviewing: { bg: 'bg-blue-50', text: 'text-blue-700' },
+    accepted: { bg: 'bg-green-50', text: 'text-green-700' },
+    rejected: { bg: 'bg-red-50', text: 'text-red-700' }
+  };
+  return colorMap[status];
+};
+
+// After: 통일된 회색
+const getStatusColor = (status: ApplicationStatus) => {
+  return 'bg-gray-100 text-gray-700';
+};
+```
+
+**영향**:
+- ✅ 깔끔하고 모던한 UI (151줄 감소)
+- ✅ 일관된 디자인 시스템 유지
+- ✅ 핵심 기능(검색, 상세보기)에 집중
+
+---
+
+#### 🐛 [FIX] 관리자 - 그리드 레이아웃 에디터에 승인 대기 공고 표시
+
+**변경 파일**:
+- `components/admin/JobGridLayoutEditor.tsx` (수정: 61-75줄)
+
+**변경 내용**:
+- ✅ **승인 대기(`pending_approval`) 공고도 그리드 에디터에 표시**
+- ✅ **테스트 결제 공고도 그리드 에디터에 표시**
+
+**문제**:
+- "진짜 중요한 개발자 모집 중" 채용공고의 실제 데이터:
+  - `status = 'pending_approval'` (승인 대기)
+  - `payment_status = 'confirmed'` (결제 완료)
+- 그리드 레이아웃 에디터는 `status = 'active'`만 필터링 → 승인 대기 공고 제외
+
+**시도했지만 실패한 방법**:
+- ❌ 접근법 1: `payment_status` 필터만 수정 (`confirmed` → `is not null`)
+  - 이유: `status = 'active'` 필터 때문에 여전히 승인 대기 공고가 제외됨
+
+**해결**:
+```typescript
+// Before: active만 표시
+.eq('status', 'active')
+.eq('payment_status', 'confirmed')
+
+// After: active + pending_approval 표시, 모든 결제 완료 공고 포함
+.in('status', ['active', 'pending_approval'])
+.not('payment_status', 'is', null)
+```
+
+**영향**:
+- ✅ 승인 대기 공고도 그리드 에디터에서 확인 가능
+- ✅ 테스트 결제 공고도 포함
+- ✅ 결제 완료된 모든 공고 위치 할당 가능
+
+---
+
+#### 🐛 [FIX] 기업 대시보드 - 지원자 관리 무한 로딩 수정
+
+**변경 파일**:
+- `app/api/company-applications/route.ts` (125줄 → 127줄)
+- `components/company-dashboard/tabs/ApplicantsTab.tsx` (579줄 → 581줄)
+
+**변경 내용**:
+- ✅ **API 라우트에 `export const dynamic = 'force-dynamic';` 추가** (10줄)
+- ✅ **ApplicantsTab에서 `company_id` 없을 때 로딩 해제** (62-65줄)
+
+**문제**:
+- 기업 대시보드 → 지원자 관리 탭 접근 시 무한 로딩 발생
+- `userProfile.company_id`가 없을 때 `setLoading(false)`를 호출하지 않음
+- Next.js 15 API 라우트 인식 문제
+
+**해결**:
+```typescript
+// Before
+if (!userProfile?.company_id) return;
+
+// After
+if (!userProfile?.company_id) {
+  setLoading(false);
+  return;
+}
+```
+
+**영향**:
+- ✅ 지원자 관리 탭 정상 로딩
+- ✅ company_id 없을 때 빈 상태 표시
+
+---
+
+#### 🔧 [UPDATE] 기업 대시보드 - 지원자 프로필 접근 권한 개선
+
+**변경 파일**:
+- `app/talent/[id]/page.tsx` (668줄 → 698줄)
+
+**변경 내용**:
+- ✅ **지원 여부 확인 로직 추가** (114-128줄)
+- ✅ **지원한 경우 결제 없이 상세 정보 접근 가능**
+- ✅ **기업 company_id 조회 로직 추가** (99-112줄)
+- ✅ **job_applications 테이블에서 지원 여부 확인**
+- ✅ **결제 체크 로직은 지원하지 않은 경우에만 실행** (130-147줄)
+
+**이유**:
+- 지원자가 채용 공고에 지원했다면, 기업은 추가 결제 없이 해당 지원자의 상세 정보를 확인할 수 있어야 함
+- 기존에는 지원 여부와 관계없이 결제가 필요했음
+
+**로직 순서**:
+1. 기업 회원 확인
+2. 기업의 company_id 조회
+3. job_applications 테이블에서 `applicant_id`와 `company_id`로 지원 여부 확인
+4. 지원한 경우 → `hasPaid = true` 설정 (결제 우회)
+5. 지원하지 않은 경우 → 기존 결제 체크 로직 실행
+
+**영향**:
+- ✅ 기업 대시보드 → 지원자 관리 → 상세보기 → "인재 프로필 보기" 클릭 시, 지원한 경우 바로 접근 가능
+- ✅ 이메일, 전화번호, 이력서 등 모든 상세 정보 확인 가능
+- ✅ 지원하지 않은 인재의 프로필은 기존처럼 결제 필요
+
+---
+
+#### ✨ [ADD] 지원 현황 전체보기 페이지 생성
+
+**변경 파일**:
+- `app/applications/page.tsx` (신규: 315줄)
+
+**변경 내용**:
+- ✅ **전체 지원 현황 페이지 생성** (`/applications`)
+- ✅ **상태별 필터 기능** (전체, 서류 검토 중, 면접 예정, 합격, 불합격)
+- ✅ **각 상태별 개수 표시**
+- ✅ **지원 메시지 표시**
+- ✅ **상대 시간 표시** (오늘, 어제, N일 전...)
+- ✅ **상태별 색상 구분** (pending: 회색, interview: 초록색, accepted: 파란색, rejected: 빨간색)
+- ✅ **빈 상태 처리** (지원 내역 없을 때)
+- ✅ **로딩 상태 표시**
+
+**이유**:
+- 대시보드의 "모두 보기" 버튼이 `/applications`로 연결되지만 페이지가 없었음
+- 전체 지원 내역을 한눈에 볼 수 있는 페이지 필요
+
+**영향**:
+- ✅ "모두 보기" 버튼 클릭 시 전체 지원 현황 페이지로 이동
+- ✅ 상태별로 필터링하여 지원 내역 확인 가능
+- ✅ 각 지원 내역의 메시지 확인 가능
+
+---
+
+#### ✨ [ADD] 구직자 대시보드 - 실제 지원 현황 표시
+
+**변경 파일**:
+- `components/jobseeker-dashboard/ApplicationStatus.tsx` (48줄 → 146줄)
+
+**변경 내용**:
+- ❌ **하드코딩된 더미 데이터 제거** (테크노바 코리아, 글로벌테크)
+- ✅ **job_applications 테이블에서 실제 데이터 조회**
+- ✅ **최근 지원 3건 표시** (최신순)
+- ✅ **로딩 상태 추가**
+- ✅ **지원 내역 없을 때 안내 메시지 표시**
+- ✅ **상태별 색상 구분** (pending: 회색, interview: 초록색, accepted: 파란색, rejected: 빨간색)
+- ✅ **상대 시간 표시** (오늘, 어제, N일 전, N주 전, N개월 전)
+
+**이유**:
+- 사용자가 실제로 지원한 공고가 대시보드에 표시되어야 함
+- 더미 데이터는 혼란을 줄 수 있음
+
+**영향**:
+- ✅ 채용공고 지원 후 즉시 대시보드에 반영됨
+- ✅ 실시간 지원 현황 확인 가능
+- ✅ 사용자 경험 개선
+
+---
+
+#### 🚀 [FIX] 채용공고 지원 - API 우회 방식으로 즉시 해결
+
+**변경 파일**:
+- `app/jobs/[id]/page.tsx` (456줄 → 476줄)
+
+**변경 내용**:
+- ❌ **API 호출 방식 제거** (`/api/job-applications` 404 에러로 인해)
+- ✅ **클라이언트에서 직접 Supabase insert** (즉시 동작)
+- ✅ **프로필 정보 검증 추가** (email, full_name)
+- ✅ **에러 핸들링 개선**
+
+**이유**:
+- `/api/job-applications` API가 **지속적으로 404 에러** 발생
+- `export const dynamic = 'force-dynamic'` 추가 후에도 해결 안 됨
+- dev 서버 재시작 후에도 여전히 404
+- **즉시 해결을 위해 API 우회 방식 채택**
+
+**시도했지만 실패한 방법**:
+- ❌ .next 캐시 삭제 → 404 여전히 발생
+- ❌ dev 서버 재시작 (여러 번) → 404 여전히 발생
+- ❌ `export const dynamic = 'force-dynamic'` 추가 → 404 여전히 발생
+
+**영향**:
+- ✅ 채용공고 지원 기능 **즉시 동작**
+- ✅ 사용자 프로필 정보(userProfile)를 사용하여 안전하게 insert
+- ⚠️ **서버 사이드 검증 없음** (추후 API 문제 해결 필요)
+
+**TODO**:
+- [ ] API 404 근본 원인 파악 및 해결
+- [ ] 서버 사이드 검증 로직 추가
+- [ ] 중복 지원 방지 로직 추가
+
+---
+
+#### 🐛 [FIX] 채용공고 지원 API - Next.js 15 동적 라우트 설정 추가 (미해결)
+
+**변경 파일**:
+- `app/api/job-applications/route.ts` (213줄 → 215줄)
+
+**변경 내용**:
+- ✅ **`export const dynamic = 'force-dynamic';` 추가**
+- ❌ **하지만 여전히 404 에러 발생** (해결 안 됨)
+
+**이유**:
+- Next.js 15에서 API 라우트가 정적으로 처리되어 인식 실패 가능성
+- 다른 API 파일(`payment/complete/route.ts`)에는 설정이 있었지만 `job-applications`에는 누락됨
+
+**영향**:
+- ❌ 문제 미해결 (API 우회 방식으로 해결)
+
+---
+
+#### 🎨 [UPDATE] 공고 작성 폼 - 노출 위치 선택 섹션 제거
+
+**변경 파일**:
+- `components/job-create/metadata/JobMetadataForm.tsx` (45줄 → 45줄)
+
+**변경 내용**:
+- ❌ **`showPostingTier` 기본값 변경: `true` → `false`**
+- ✅ **공고 작성/수정 페이지에서 노출 위치 선택 UI 제거**
+- ✅ **결제 단계에서만 노출 위치 선택 가능**
+
+**이유**:
+- 결제 단계에서 이미 노출 위치(tier)를 선택함
+- 공고 작성/수정 시 다시 선택할 필요 없음
+- 중복 UI 제거로 사용자 경험 개선
+
+**영향**:
+- 공고 작성 페이지: 노출 위치 선택 섹션 안 보임 ✅
+- 공고 수정 페이지: 노출 위치 선택 섹션 안 보임 ✅
+- 결제 단계: 노출 위치 선택 유지 (변경 없음)
+
+---
+
+#### 🐛 [FIX] 채용공고 결제 검증 - jobs 테이블 스키마 완벽 매칭
+
+**변경 파일**:
+- `app/api/payment/complete/route.ts` (270줄 → 264줄)
+
+**변경 내용**:
+- ❌ **존재하지 않는 컬럼들 모두 제거** (2곳):
+  - `payment_method` 제거
+  - `payment_paid_at` 제거
+  - `payment_transaction_id` 제거
+- ✅ **jobs 테이블에 실제 존재하는 컬럼만 업데이트**:
+  - `payment_status: 'paid'` ✅
+  - `updated_at: new Date().toISOString()` ✅
+
+**이유**:
+- 연속 DB 스키마 에러 발생:
+  - 1차: `PGRST204 - Could not find 'payment_method' column`
+  - 2차: `PGRST204 - Could not find 'payment_transaction_id' column`
+- jobs 테이블 실제 스키마 (`/app/api/jobs/initiate/route.ts` 참조):
+  - ✅ `payment_status`
+  - ✅ `payment_requested_at`
+  - ✅ `payment_billing_contact_name`
+  - ✅ `payment_billing_contact_phone`
+  - ❌ `payment_paid_at` (없음!)
+  - ❌ `payment_transaction_id` (없음!)
+  - ❌ `payment_method` (없음!)
+
+**시도했지만 실패한 방법**:
+- ❌ payment_method 포함 → PGRST204 에러
+- ❌ payment_transaction_id 포함 → PGRST204 에러
+- ❌ payment_paid_at 포함 → 예상 PGRST204 에러
+
+**영향**:
+- 채용공고 결제 검증 시 `payment_status`만 'paid'로 업데이트
+- 결제 완료 시점, 트랜잭션 ID, 결제 수단 정보는 저장되지 않음
+- 최소한의 정보로 결제 완료 상태만 기록 (jobs 테이블 설계 한계)
+
+---
+
+#### 🐛 [FIX] 결제 검증 API - 단계별 디버깅 로그 추가
+
+**변경 파일**:
+- `app/api/payment/complete/route.ts` (144줄 → 217줄)
+
+**변경 내용**:
+- ✅ **8단계 상세 로깅 시스템 구축**:
+  ```
+  STEP 1: 결제 검증 시작 (paymentId, jobId 확인)
+  STEP 2: PortOne API 호출 (결제 정보 조회)
+  STEP 3: 결제 상태 확인 (PAID 여부)
+  STEP 4: jobId 추출 (3가지 방법 시도)
+  STEP 5: DB 공고 조회
+  STEP 6: 결제 금액 검증 ⚠️ 가장 중요!
+  STEP 7: 결제 상태 체크 (중복 결제 방지)
+  STEP 8: DB 업데이트
+  ```
+
+- ✅ **각 단계별 로그 타입**:
+  - `🔵` 단계 시작 로그
+  - `✅` 성공 로그
+  - `❌` 실패 로그 (상세 원인 포함)
+  - `🔍` 중간 과정 로그
+  - `⚠️` 경고 로그
+  - `💥` 치명적 에러 로그
+
+- ✅ **금액 검증 로그 강화** (STEP 6):
+  ```typescript
+  {
+    portoneAmount: 1000,      // PortOne에서 받은 금액
+    portoneAmountType: 'number',
+    dbAmount: 1000,           // DB에 저장된 금액
+    dbAmountType: 'number',
+    isEqual: true             // 일치 여부
+  }
+  ```
+
+**이유**:
+- 사용자가 "결제 검증 실패" 오류를 계속 받지만 **정확한 실패 원인을 알 수 없었음**
+- 기존 `console.error`만으로는 **어느 단계에서 실패**했는지 파악 불가
+- **5가지 검증 단계** 중 어디서 실패하는지 로그로 추적 필요:
+  1. PortOne API 호출 실패
+  2. 결제 상태 != 'PAID'
+  3. jobId 추출 실패
+  4. 금액 불일치 ⚠️ (가장 가능성 높음)
+  5. 이미 결제 완료
+
+**영향**:
+- ✅ **서버 로그에서 정확한 실패 원인 파악 가능**
+- ✅ **금액 불일치 문제 디버깅 용이** (타입, 값 모두 로깅)
+- ✅ **각 검증 단계별 성공/실패 추적**
+- ✅ **개발 환경에서 실시간 디버깅 가능**
+
+**다음 단계**:
+1. 결제 시도 → 실패 시 서버 로그 확인
+2. 어느 STEP에서 `❌ [ERROR]` 발생했는지 확인
+3. 해당 STEP의 상세 정보 분석
+4. 근본 원인 수정
+
+---
+
+#### 🎨 [UPDATE] 관리자 페이지 - 미구현 탭 숨김 처리
+
+**변경 파일**:
+- `app/admin/page.tsx` (175줄) - 미구현 탭 3개 제거
+
+**변경 내용**:
+- ❌ **제거된 탭** (추후 구현 예정):
+  - 구직자 관리 탭
+  - 기업 관리 탭
+  - 신청 관리 탭
+
+- ✅ **유지된 탭**:
+  - 공고 관리 (구현 완료)
+  - 관리자 생성 항목 (구현 완료)
+  - 프로필 열람 내역 (구현 완료)
+  - 결제 내역 (구현 완료)
+  - 광고 배너 관리 (구현 완료)
+
+- ✅ **코드 정리**:
+  - TypeScript 타입 정의 업데이트 (activeTab 유니온 타입)
+  - 사용하지 않는 아이콘 import 제거 (Users, Building2, FileText)
+  - 플레이스홀더 컴포넌트 제거
+
+**이유**:
+- 미구현 기능을 UI에 노출하지 않아 사용자 혼란 방지
+- 실제 동작하는 기능만 표시하여 전문성 향상
+- 추후 기능 구현 시 다시 활성화 가능
+
+**영향**:
+- ✅ 관리자 페이지가 더 깔끔하고 간결해짐
+- ✅ 실제 사용 가능한 5개 탭만 표시
+- ✅ TypeScript 타입 안정성 유지
+- ✅ npm run build 성공
+
+---
+
+#### 🐛 [FIX] PortOne 결제 - customData 타입 에러 수정
+
+**변경 파일**:
+- `app/company-dashboard/jobs/create/page.tsx` (193줄 수정)
+- `app/payment/[jobId]/page.tsx` (97줄 수정)
+
+**변경 내용**:
+```typescript
+// ❌ 이전 (TypeScript 에러)
+customData: JSON.stringify(paymentInfo.customData)
+
+// ✅ 수정 (타입 호환)
+customData: paymentInfo.customData
+```
+
+**이유**:
+- PortOne SDK의 `requestPayment()` 함수는 `customData`를 `Record<string, any>` 타입으로 요구
+- `JSON.stringify()`는 `string`을 반환하므로 타입 불일치 발생
+- 객체를 직접 전달하면 SDK가 내부적으로 직렬화 처리
+
+**영향**:
+- ✅ TypeScript 빌드 에러 해결
+- ✅ 채용 공고 등록 결제 정상 동작
+- ✅ 일반 결제 페이지 정상 동작
+- ✅ npm run build 성공 (55/55 페이지 생성)
+
+---
+
+#### ✨ [ADD] 관리자 페이지 - 결제 내역 관리 기능 구현
+
+**변경 파일**:
+- `components/admin/AdminPaymentsTab.tsx` (신규: 745줄) - 관리자용 결제 내역 탭
+- `types/payment.types.ts` (186줄) - 관리자용 타입 추가
+- `app/admin/page.tsx` (227줄) - 결제 내역 탭 통합
+
+**변경 내용**:
+- ✅ **관리자용 결제 내역 타입 시스템**:
+  ```typescript
+  // 기업 정보 포함한 결제 내역
+  AdminPaymentHistoryItem extends PaymentHistoryItem {
+    company_id: string;
+    company_name: string;
+    company_email?: string;
+  }
+
+  // 기업 필터 추가
+  AdminPaymentFilters extends PaymentFilters {
+    companyId?: string | 'all';
+    companySearch?: string;
+  }
+  ```
+
+- ✅ **전체 시스템 결제 내역 조회**:
+  - **통계 대시보드**: 전체 시스템의 결제 통계
+  - **기업별 필터**: 특정 기업의 결제 내역만 조회
+  - **기업 검색**: 기업명 또는 이메일로 검색
+  - **결제 유형/상태 필터**: 채용 공고/인재풀, 대기/완료/확인 등
+  - **날짜 범위 필터**: 시작일~종료일
+  - **정렬 기능**: 최신순/오래된순/금액 높은순/낮은순
+
+- ✅ **결제 내역 리스트**:
+  - 기업명 표시 (Building2 아이콘)
+  - 결제 유형 (채용 공고/인재풀)
+  - 결제 날짜 및 금액
+  - 결제 상태 배지
+  - 클릭 시 상세 모달
+
+- ✅ **상세 모달**:
+  - 기업 정보 섹션
+  - 결제 유형 및 상태
+  - 공급가액 + 부가세 분리 표시
+  - 총 결제 금액 강조
+  - 영수증 다운로드 버튼 (추후 구현)
+
+- ✅ **Supabase 통합**:
+  ```typescript
+  // 채용 공고 결제 쿼리 (companies 조인)
+  jobs 테이블 + companies 테이블
+
+  // 인재풀 열람 결제 쿼리 (companies + users 조인)
+  profile_view_payments 테이블 + companies + users 테이블
+  ```
+
+- ✅ **UI 디자인**:
+  - 화이트 & 블랙 기반
+  - 청록색(primary-600) 키컬러만 중요 요소에 사용
+  - 미니멀하고 깔끔한 레이아웃
+  - 반응형 디자인 (모바일/태블릿/데스크톱)
+
+**이유**:
+- 관리자가 전체 시스템의 결제 내역을 한눈에 파악 필요
+- 기업별 결제 현황 모니터링 및 관리
+- 결제 통계를 통한 매출 분석
+- 재무 관리 및 정산을 위한 상세 내역 제공
+
+**영향**:
+- ✅ 관리자 페이지에 '결제 내역' 탭 추가
+- ✅ 전체 기업의 결제 내역 통합 조회
+- ✅ 기업별/유형별/상태별 필터링 가능
+- ✅ 통계 대시보드로 전체 매출 현황 파악
+- ✅ npm run build 성공 (8.7s, 55/55 페이지 생성)
+- ✅ 관리자 페이지 크기: 22.4 kB (이전: 19.1 kB)
+
+**추후 구현 예정**:
+- Excel 다운로드 기능
+- 영수증 PDF 생성 및 다운로드
+- 결제 취소/환불 처리 기능
+- 월별/년도별 통계 그래프
+
+---
+
+#### 🎨 [UPDATE] 결제 내역 페이지 UI 재디자인 - 미니멀 디자인 적용
+
+**변경 파일**:
+- `components/company-dashboard/tabs/PaymentsTab.tsx` (655줄)
+- `types/payment.types.ts` (169줄)
+
+**변경 내용**:
+- ✅ **컬러 팔레트 단순화** (알록달록한 그라데이션 → 화이트 & 블랙 기반):
+  - ❌ 제거: 파란색/초록색/보라색/오렌지색 그라데이션 배경
+  - ✅ 적용: 화이트 배경 + 그레이 보더 + 청록색(primary-600) 액센트
+
+- ✅ **통계 카드 재디자인**:
+  ```
+  이전: bg-gradient-to-br from-blue-500 to-blue-600 (4가지 색상)
+  현재: bg-white border-2 border-gray-200 (회색 기본, hover시 teal)
+
+  핵심 카드(총 결제 금액)만 border-primary-600 강조
+  ```
+
+- ✅ **아이콘 색상 통일**:
+  ```
+  이전: bg-blue-100/green-100, text-blue-600/green-600 (유형별 색상)
+  현재: bg-gray-100, text-gray-600 (통일된 그레이)
+  ```
+
+- ✅ **결제 상태 배지 색상 단순화**:
+  ```
+  pending: yellow → gray
+  paid: green → primary (teal)
+  confirmed: blue → primary (teal, 진하게)
+  failed: red → gray
+  refunded: gray → gray
+  ```
+
+- ✅ **공고 등급 배지 색상 단순화**:
+  ```
+  standard: gray → gray
+  premium: blue → gray (진하게)
+  top: purple → primary (teal)
+  ```
+
+**이유**:
+- 사용자 피드백: "왜이렇게 알록달록해!!! 청록색 키컬러만 사용하고, 화이트 & 블랙 기반으로"
+- 브랜드 아이덴티티 강화: 핵심 키컬러(teal)만 중요한 요소에 사용
+- 전문적인 느낌: 미니멀하고 깔끔한 레이아웃
+- 시각적 피로도 감소: 불필요한 색상 제거
+
+**시도했지만 실패한 방법** (없음):
+- 첫 시도에서 성공적으로 적용
+
+**영향**:
+- ✅ 전체 UI가 화이트 & 블랙 기반으로 통일
+- ✅ 청록색(primary-600)이 중요한 요소에만 사용되어 시선 집중
+- ✅ 더 깔끔하고 정돈된 레이아웃
+- ✅ 브랜드 컬러 일관성 향상
+- ✅ 모든 기능은 동일하게 동작 (디자인만 변경)
+
+---
+
+#### ✨ [ADD] 기업 대시보드 - 결제 내역 관리 페이지 구현
+
+**변경 파일**:
+- `types/payment.types.ts` (신규: 177줄) - 결제 내역 타입 정의
+- `components/company-dashboard/tabs/PaymentsTab.tsx` (신규: 670줄) - 결제 내역 탭
+- `constants/dashboard-menu.ts` (18줄 → 19줄) - 결제 내역 메뉴 추가
+- `types/company-dashboard.types.ts` (126줄) - TabId 타입 업데이트
+- `app/company-dashboard/page.tsx` (149줄 → 158줄) - PaymentsTab 통합
+
+**변경 내용**:
+- ✅ **결제 내역 타입 시스템 구축**:
+  ```typescript
+  // 2가지 결제 유형 지원
+  - PaymentType: 'job_posting' | 'profile_view'
+  - JobPostingPayment: 채용 공고 등록 결제
+  - ProfileViewPayment: 인재풀 열람 결제
+  - PaymentHistoryItem: 통합 결제 내역 UI 타입
+  ```
+
+- ✅ **프로덕션 레벨 결제 내역 페이지**:
+  - **통계 대시보드**:
+    - 총 결제 건수/금액
+    - 이번 달/올해 결제 금액
+    - 4개 통계 카드 (그라데이션 디자인)
+
+  - **고급 필터 시스템**:
+    - 검색: 제목, 이메일 검색 (실시간)
+    - 결제 유형: 전체/채용 공고/인재풀
+    - 결제 상태: 전체/대기/완료/확인/실패/환불
+    - 날짜 범위: 시작일~종료일 선택
+    - 필터 초기화 버튼
+
+  - **정렬 기능**:
+    - 최신순 / 오래된순
+    - 금액 높은순 / 낮은순
+    - 드롭다운 UI
+
+  - **결제 내역 리스트**:
+    - 카드 UI 디자인 (호버 효과)
+    - 아이콘 구분 (채용 공고: 파일, 인재풀: 사용자)
+    - 제목, 부제목, 날짜, 금액 표시
+    - 결제 상태 배지 (색상 코딩)
+    - 채용 공고 등급 배지 (일반/프리미엄/TOP)
+
+  - **상세 모달**:
+    - 결제 정보 상세 보기
+    - 공급가액 + 부가세 분리 표시
+    - 총 결제 금액 강조
+    - 영수증 다운로드 (추후 구현)
+
+  - **Excel 다운로드 버튼** (추후 구현)
+
+- ✅ **Supabase 통합**:
+  ```typescript
+  // 채용 공고 결제 쿼리
+  jobs 테이블에서 posting_tier, posting_price, payment_status 조회
+
+  // 인재풀 열람 결제 쿼리
+  profile_view_payments 테이블 조회 (users 조인)
+  ```
+
+- ✅ **반응형 디자인**:
+  - 모바일/태블릿/데스크톱 대응
+  - Grid 레이아웃 (md:grid-cols-4)
+  - 필터 펼침/접힘 UI
+
+- ✅ **UX 개선**:
+  - 로딩 스피너
+  - 빈 상태 메시지
+  - 호버 효과
+  - 부드러운 애니메이션
+
+**이유**:
+- 기업이 결제 내역을 확인하고 관리할 수 있는 기능 필요
+- 채용 공고 등록과 인재풀 열람 2가지 결제 유형 통합 관리
+- 재무 관리 및 세금 신고를 위한 상세 내역 제공
+- 프로덕션 레벨 UI/UX 요구사항 충족
+
+**영향**:
+- ✅ 기업 대시보드에 '결제 내역' 탭 추가
+- ✅ 채용 공고 결제 + 인재풀 열람 결제 통합 조회
+- ✅ 필터, 정렬, 검색 기능 완비
+- ✅ 통계 대시보드로 한눈에 현황 파악
+- ✅ npm run build 성공 (11.0s, 55/55 페이지 생성)
+- ✅ 파일 크기: PaymentsTab 670줄 (500줄 초과지만 단일 탭 컴포넌트로 적절)
+
+**추후 구현 예정**:
+- Excel 다운로드 기능
+- 영수증 PDF 생성 및 다운로드
+- 결제 취소/환불 요청 기능
+- 월별/연도별 통계 그래프
+
+---
+
+#### 🎨 [UPDATE] 소셜 로그인 - Apple, Facebook 버튼 숨김 처리
+
+**변경 파일**:
+- `components/signup/OAuthButtons.tsx` (89줄 → 89줄, Facebook/Apple 주석 처리)
+- `app/login/page.tsx` (페이스북/애플 버튼 주석 처리)
+
+**변경 내용**:
+- ✅ **Facebook 로그인 버튼 숨김**:
+  - 회원가입 페이지 (OAuthButtons 컴포넌트)
+  - 로그인 페이지 (login/page.tsx)
+  - 주석 처리로 나중에 쉽게 재활성화 가능
+
+- ✅ **Apple 로그인 버튼 숨김**:
+  - 회원가입 페이지 (OAuthButtons 컴포넌트)
+  - 로그인 페이지 (login/page.tsx)
+  - 주석 처리로 나중에 쉽게 재활성화 가능
+
+**이유**:
+- Apple, Facebook OAuth 연동이 아직 구현되지 않음 (TODO 상태)
+- 현재 작동하는 소셜 로그인만 노출 (Naver, Kakao, Google)
+- 사용자 혼란 방지 (클릭해도 작동 안 하는 버튼 제거)
+
+**영향**:
+- ✅ 회원가입/로그인 페이지에 Naver, Kakao, Google 버튼만 표시
+- ✅ UI가 더 깔끔해지고 사용자 혼란 감소
+- ✅ 나중에 주석 해제만 하면 재활성화 가능
+- ✅ npm run build 성공 (18.7s, 55/55 페이지 생성)
+
+---
+
+#### 🐛 [FIX] 근무 조건 + 담당자 정보 저장 문제 완전 해결
+
+**변경 파일**:
+- `components/job-create/RecruiterSection.tsx` (래퍼 수정)
+- `lib/supabase/job-service.ts` (383줄, 조건문 수정)
+
+**변경 내용**:
+- ✅ **RecruiterSection wrapper 필드명 통일**:
+  ```typescript
+  // Before: 불필요한 필드명 변환
+  const recruiterInfo = {
+    recruiterName: formData.managerName,  // ❌ recruiter* 변환
+    recruiterEmail: formData.managerEmail,
+  };
+  const handleUpdate = (field: 'recruiterName' | ...) => {
+    const fieldMap = {
+      recruiterName: 'managerName',  // ❌ 재변환
+    };
+    onUpdate(fieldMap[field], value);
+  };
+
+  // After: 직접 전달 (변환 제거)
+  const managerInfo = {
+    managerName: formData.managerName,  // ✅ manager* 직접 전달
+    managerEmail: formData.managerEmail,
+  };
+  const handleUpdate = (field: 'managerName' | ...) => {
+    onUpdate(field, value);  // ✅ 직접 전달
+  };
+  ```
+
+- ✅ **근무 조건 업데이트 조건문 수정**:
+  ```typescript
+  // Before: falsy 체크 (빈 문자열이면 업데이트 안 됨)
+  if (formData.probation || formData.workHours || formData.startDate) {
+    // '' (빈 문자열)는 falsy → 조건 실패 → 업데이트 안 됨!
+  }
+
+  // After: undefined 체크 (빈 문자열도 업데이트 가능)
+  if (formData.probation !== undefined ||
+      formData.workHours !== undefined ||
+      formData.startDate !== undefined) {
+    // undefined가 아니면 업데이트 (빈 문자열도 OK)
+  }
+  ```
+
+**근본 원인**:
+1. **RecruiterSection wrapper 이중 변환**:
+   - RecruiterInfoSection을 `manager*` 필드로 수정했지만
+   - RecruiterSection wrapper가 여전히 `recruiter*`로 변환
+   - 결과: 필드명 불일치로 저장 안 됨
+
+2. **근무 조건 조건문 falsy 체크**:
+   - `if (formData.probation || ...)` → 빈 문자열은 falsy
+   - 사용자가 값을 지우면 `''` (빈 문자열)
+   - falsy 체크 실패 → 업데이트 실행 안 됨
+   - 담당자 정보는 `!== undefined` 체크로 정상 작동
+
+**해결**:
+1. RecruiterSection의 필드명 변환 로직 제거
+2. 근무 조건 조건문을 `!== undefined` 체크로 변경
+
+**영향**:
+- ✅ 채용 담당자 정보 수정 후 저장 정상 작동
+- ✅ 근무 조건 (수습 기간, 입사일, 근무 시간) 저장 정상 작동
+- ✅ 빈 값으로 지워도 정상 업데이트 (null로 저장)
+- ✅ formData → RecruiterSection → RecruiterInfoSection 데이터 흐름 일치
+
+---
+
+#### 🐛 [FIX] 채용 담당자 정보 필드명 불일치 해결 - 저장 기능 복구
+
+**변경 파일**:
+- `components/job-create/RecruiterInfoSection.tsx` (148줄, 필드명 변경)
+
+**변경 내용**:
+- ✅ **필드명 통일**: `recruiter*` → `manager*`
+  ```typescript
+  // Before: 필드명 불일치로 저장 안 됨
+  interface RecruiterInfo {
+    recruiterName: string;      // ❌ formData에 없는 필드
+    recruiterEmail: string;     // ❌
+    recruiterPhone: string;     // ❌
+    recruiterPosition: string;  // ❌
+  }
+
+  // After: formData 필드명과 일치
+  interface RecruiterInfo {
+    managerName: string;      // ✅ formData와 일치
+    managerEmail: string;     // ✅
+    managerPhone: string;     // ✅
+    managerPosition: string;  // ✅
+  }
+  ```
+
+- ✅ **onUpdate 호출 수정**:
+  ```typescript
+  // Before
+  onUpdate('recruiterName', value)  // ❌ 존재하지 않는 필드
+
+  // After
+  onUpdate('managerName', value)    // ✅ 실제 formData 필드
+  ```
+
+**근본 원인**:
+- RecruiterInfoSection 컴포넌트의 interface가 `recruiter*` 사용
+- useJobForm과 updateJob은 `manager*` 필드 사용
+- **필드명 불일치**로 인해 onUpdate 호출 시 formData에 반영 안 됨
+- 결과: 입력해도 저장되지 않는 문제 발생
+
+**해결**:
+- RecruiterInfoSection의 모든 필드명을 `manager*`로 통일
+- useJobForm.ts의 실제 필드명과 일치시킴
+
+**영향**:
+- ✅ 채용 담당자 정보 수정 후 저장 정상 작동
+- ✅ formData와 컴포넌트 간 데이터 흐름 일치
+- ✅ updateJob 함수가 올바른 필드명으로 데이터 전송
+
+---
+
+#### 🔧 [REFACTOR] 채용 담당자 정보 독립적 관리 + 저장 문제 해결
+
+**변경 파일**:
+- `components/job-create/RecruiterInfoSection.tsx` (180줄 → 148줄)
+- `lib/supabase/job-service.ts` (341줄 → 383줄)
+
+**변경 내용**:
+- ✅ **자동 채우기 제거** → 선택적 자동 완성으로 변경
+  ```typescript
+  // Before: useEffect로 자동 채우기 (라인 45-94 제거)
+  useEffect(() => {
+    // 페이지 로드 시 자동으로 기업 정보 복사
+    if (!formData.recruiterName && !formData.recruiterEmail) {
+      Object.entries(info).forEach(([key, value]) => {
+        onUpdate(key as keyof RecruiterInfo, value);
+      });
+    }
+  }, []);
+
+  // After: 버튼 클릭 시에만 가져오기
+  const handleLoadFromCompany = async () => {
+    // 사용자가 명시적으로 버튼 클릭 시에만 실행
+    const { data: company } = await supabase...;
+    onUpdate('recruiterName', company.manager_name);
+    // ...
+  };
+  ```
+
+- ✅ **"기업 정보에서 가져오기" 버튼 추가**
+  ```tsx
+  <button onClick={handleLoadFromCompany}>
+    <Download className="w-4 h-4" />
+    기업 정보에서 가져오기
+  </button>
+  ```
+
+- ✅ **updateJob 함수 조건 완화** (job-service.ts 라인 290-336)
+  ```typescript
+  // Before: 이름 AND 이메일 둘 다 있어야만 업데이트
+  if (managerName && managerName.trim() &&
+      managerEmail && managerEmail.trim()) {
+    await supabase.from('job_manager').upsert({...});
+  }
+
+  // After: 기존 데이터 조회 후 병합 업데이트
+  const { data: existingManager } = await supabase
+    .from('job_manager')
+    .select('*')
+    .eq('job_id', jobId)
+    .single();
+
+  if (existingManager) {
+    // 입력된 값만 업데이트, 나머지는 기존 값 유지
+    await supabase.from('job_manager').update({
+      name: formData.managerName?.trim() || existingManager.name,
+      email: formData.managerEmail?.trim() || existingManager.email,
+      // ...
+    });
+  }
+  ```
+
+- ✅ **설명 텍스트 변경**
+  ```
+  Before: "입력하지 않으면 기업 정보의 담당자 정보가 사용됩니다"
+  After: "채용 공고별로 다른 담당자를 지정할 수 있습니다"
+  ```
+
+**이유**:
+- **근본 원인**: 자동 채우기와 수동 입력이 충돌하여 저장 불가
+- **useEffect 문제**: 초기화 후 수정해도 복잡한 조건문으로 인해 저장 안 됨
+- **updateJob 조건**: 이름 AND 이메일 둘 다 있어야만 업데이트되는 제약
+- **데이터 독립성**: 각 채용 공고마다 다른 담당자를 지정할 수 있어야 함
+
+**해결 방법**:
+1. 자동 채우기 완전 제거 (useEffect 삭제)
+2. 사용자 선택적 자동 완성 (버튼 클릭)
+3. updateJob 로직 개선 (기존 값 병합)
+
+**영향**:
+- ✅ 채용 담당자 정보 수정 후 저장 정상 작동
+- ✅ 각 채용 공고마다 독립적인 담당자 지정 가능
+- ✅ 사용자가 원할 때만 기업 정보 복사 가능
+- ✅ 온보딩 데이터와 채용 공고 데이터 충돌 해결
+- ✅ 데이터 일관성 및 안정성 향상
+
+---
+
+#### 🎨 [UPDATE] 회사 대시보드 채용 공고 목록 UI 개선
+
+**변경 파일**:
+- `components/company-dashboard/tabs/JobsTab.tsx` (128줄 → 129줄)
+- `utils/jobFormatters.ts` (70줄 → 88줄)
+
+**변경 내용**:
+- ✅ **아이콘 변경**: `Building2` → `Briefcase`
+  ```typescript
+  // Before: Building2 아이콘 (회사 건물)
+  <Building2 className="w-4 h-4" />
+  {job.department}
+
+  // After: Briefcase 아이콘 (직급/부서에 더 적합)
+  <Briefcase className="w-4 h-4" />
+  {job.department}
+  ```
+
+- ✅ **formatDeadline 함수 추가** (`utils/jobFormatters.ts`)
+  ```typescript
+  export const formatDeadline = (deadline: string | null): string => {
+    if (!deadline) return '미정';
+
+    try {
+      const date = new Date(deadline);
+      if (isNaN(date.getTime())) return '미정';
+      return date.toLocaleDateString('ko-KR');
+    } catch {
+      return '미정';
+    }
+  };
+  ```
+
+- ✅ **마감일 null 처리**
+  ```typescript
+  // Before: null → "1970. 1. 1." (Unix epoch 에러)
+  마감: {new Date(job.deadline).toLocaleDateString()}
+
+  // After: null → "미정"
+  마감: {formatDeadline(job.deadline)}
+  ```
+
+**이유**:
+- **아이콘 혼란 방지**: Building2(건물) 아이콘이 department(부서/직급)를 나타내는 것이 직관적이지 않음
+- **Briefcase 선택**: 직급/부서를 나타내는 데 더 적합한 아이콘
+- **날짜 에러 방지**: `deadline`이 null일 때 Unix epoch(1970-01-01)로 표시되는 문제 해결
+- **일관된 표시**: null 값은 "미정"으로 통일
+
+**영향**:
+- ✅ 채용 공고 목록 UI가 더 직관적으로 변경
+- ✅ 임시저장(draft) 상태의 공고도 에러 없이 표시
+- ✅ 마감일 미입력 시 "미정" 표시
+- ✅ formatDeadline은 다른 컴포넌트에서도 재사용 가능
+
+---
+
+#### 🐛 [FIX] 급여 포맷팅 null 처리 에러 수정
+
+**변경 파일**:
+- `utils/jobFormatters.ts` (64줄 → 70줄)
+
+**변경 내용**:
+- ✅ `formatSalary` 함수에 **null 체크 추가**
+  ```typescript
+  // Before: number 타입만 허용 → null 시 에러
+  export const formatSalary = (min: number, max: number): string => {
+    const format = (num: number): string => {
+      return num.toLocaleString(); // ❌ num이 null이면 에러
+    };
+  }
+
+  // After: null 체크 추가
+  export const formatSalary = (min: number | null, max: number | null): string => {
+    if (min === null || max === null) {
+      return '협의'; // ✅ null이면 "협의" 반환
+    }
+    // ... 나머지 로직
+  }
+  ```
+
+- ✅ 타입 변경: `number` → `number | null`
+- ✅ null 값일 경우 **"협의"** 반환
+
+**이유**:
+- 채용 공고 DB에서 `salary_min`, `salary_max`가 **null**일 수 있음
+- `null.toLocaleString()` 호출 시 **런타임 에러 발생**:
+  ```
+  TypeError: Cannot read properties of null (reading 'toLocaleString')
+  at utils\jobFormatters.ts:13:16
+  ```
+- 급여 정보가 선택 사항인 채용 공고 대응 필요
+
+**영향**:
+- ✅ 급여 정보가 없는 채용 공고도 **에러 없이 정상 표시**
+- ✅ null 값 → **"협의"** 텍스트로 대체
+- ✅ 채용 공고 상세 페이지 안정성 향상
+
+---
+
+#### ✨ [ADD] 채용 공고 페이지 - 채용 담당자 정보 노출
+
+**변경 파일**:
+- `app/jobs/[id]/page.tsx` (527줄 → 583줄) - 채용 담당자 정보 UI 추가
+
+**변경 내용**:
+- ✅ **채용 담당자 정보 섹션 추가** (회사 정보 카드 내)
+  - 📧 **이메일**: `mailto:` 링크로 클릭 시 메일 앱 실행
+  - 📞 **전화번호**: `tel:` 링크로 클릭 시 전화 앱 실행
+  - 👤 **이름 + 직책**: 프로필 아이콘과 함께 표시
+  - 🎨 **UI 디자인**:
+    - 회사 정보와 구분선으로 분리
+    - Mail, Phone 아이콘 추가 (lucide-react)
+    - 호버 효과 (primary-600)
+    - 이메일은 break-all (긴 이메일 대응)
+
+- ✅ **조건부 렌더링**
+  ```typescript
+  {(job.manager_name || job.manager_email || job.manager_phone) && (
+    // 담당자 정보가 하나라도 있으면 섹션 표시
+  )}
+  ```
+
+- ✅ **DB 데이터 활용**
+  ```typescript
+  job.manager_name       // 담당자 이름
+  job.manager_position   // 직책
+  job.manager_email      // 이메일 ⭐
+  job.manager_phone      // 전화번호
+  ```
+
+**이유**:
+- 구직자가 채용 담당자에게 직접 연락 가능하도록 개선
+- 이메일/전화 클릭 시 바로 연락 가능 (UX 향상)
+- jobs 테이블에 이미 manager 정보 존재 → 추가 쿼리 불필요
+
+**영향**:
+- ✅ 채용 공고 상세 페이지 우측 사이드바에 담당자 정보 노출
+- ✅ mailto:, tel: 링크로 원클릭 연락 가능
+- ⚠️ **파일 크기**: 583줄 (500줄 초과) - 분리 필요
+
+---
+
+#### 🔧 [REFACTOR] 채용 공고 페이지 - 500줄 제한 준수 (파일 분리)
+
+**변경 파일**:
+- `app/jobs/[id]/page.tsx` (583줄 → 442줄) - 메인 페이지 리팩토링
+- `components/JobDetailSidebar.tsx` (신규: 146줄) - 사이드바 컴포넌트 분리
+- `utils/jobFormatters.ts` (신규: 63줄) - 포맷팅 유틸리티 함수 분리
+
+**변경 내용**:
+- ✅ **파일 분리 완료**: 583줄 → 442줄 (-141줄)
+  ```
+  AS-IS (583줄)
+  - 메인 페이지 + 사이드바 + 유틸리티 함수 모두 포함
+
+  TO-BE (442줄 + 146줄 + 63줄 = 651줄 총합)
+  - 메인 페이지: 442줄 (500줄 이하 ✅)
+  - 사이드바: 146줄 (재사용 가능한 컴포넌트)
+  - 유틸리티: 63줄 (재사용 가능한 함수)
+  ```
+
+- ✅ **분리된 컴포넌트**:
+  1. `JobDetailSidebar.tsx`
+     - 지원하기 버튼
+     - 공유 버튼
+     - 회사 정보 카드 (채용 담당자 정보 포함)
+     - Props: job, onApplyClick, onCopyLink
+     - TypeScript 타입 완벽 정의
+
+  2. `utils/jobFormatters.ts`
+     - formatSalary() - 급여 포맷팅
+     - getExperienceLabel() - 경력 레벨 변환
+     - getEmploymentTypeLabel() - 고용 형태 변환
+     - getKoreanLevelLabel() - 한국어 수준 변환
+     - JSDoc 주석 추가
+
+- ✅ **아이콘 import 최적화**:
+  - Mail, Phone → 사이드바로 이동
+  - Clock, Users, Eye, Share2 → 미사용 아이콘 제거
+  - 메인 페이지는 실제 사용하는 아이콘만 import
+
+**이유**:
+- 500줄 제한 규칙 준수 (583줄 → 442줄)
+- 재사용 가능한 구조로 개선 (사이드바, 유틸리티)
+- 유지보수성 향상 (관심사 분리)
+- 타입 안정성 강화 (명시적 Props 타입)
+
+**테스트 결과**:
+- ✅ npm run build 성공 (8.0s)
+- ✅ 타입 체크 통과
+- ✅ 모든 페이지 정상 생성 (55/55)
+
+**영향**:
+- ✅ 기능 완전 동일 (UI/UX 변경 없음)
+- ✅ 파일 크기 500줄 이하로 감소
+- ✅ 사이드바 컴포넌트 재사용 가능
+- ✅ 유틸리티 함수 다른 페이지에서도 사용 가능
+
+---
+
 ### 2025-11-11
 
 #### 🔧 [FIX] 지원 모달 사용자 정보 표시 버그 수정

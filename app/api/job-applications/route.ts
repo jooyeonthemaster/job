@@ -7,6 +7,8 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
+export const dynamic = 'force-dynamic';
+
 // POST: 채용공고 지원
 export async function POST(request: NextRequest) {
   try {

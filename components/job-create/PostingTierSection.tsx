@@ -11,8 +11,12 @@ interface PostingTierSectionProps {
 
 export default function PostingTierSection({ formData, onUpdate }: PostingTierSectionProps) {
   const selectedPrice = POSTING_PRICES[formData.postingTier];
-  const vatAmount = selectedPrice.price * VAT_RATE;
-  const totalAmount = selectedPrice.price + vatAmount;
+  const vatAmount = selectedPrice.vatIncluded
+    ? 0
+    : Math.floor(selectedPrice.price * VAT_RATE);
+  const totalAmount = selectedPrice.vatIncluded
+    ? selectedPrice.price
+    : selectedPrice.price + vatAmount;
 
   return (
     <div className="bg-gradient-to-br from-primary-50 via-white to-secondary-50 rounded-xl p-6 shadow-lg border-2 border-primary-100">
@@ -108,7 +112,7 @@ export default function PostingTierSection({ formData, onUpdate }: PostingTierSe
               채용공고 목록 최상단에 고정 노출됩니다
             </p>
             <div className="flex items-baseline gap-2 ml-8">
-              <span className="text-3xl font-bold text-primary-600">500만원</span>
+              <span className="text-3xl font-bold text-primary-600">50만원</span>
               <span className="text-sm text-gray-500">(부가세 별도)</span>
             </div>
           </div>
@@ -164,6 +168,54 @@ export default function PostingTierSection({ formData, onUpdate }: PostingTierSe
           {formData.postingTier === 'premium' && (
             <div className="absolute top-5 right-5">
               <div className="p-1 bg-secondary-600 rounded-full">
+                <Check className="w-4 h-4 text-white" />
+              </div>
+            </div>
+          )}
+        </label>
+
+        {/* 테스트 상품 */}
+        <label className={`relative flex items-start p-5 rounded-xl border-2 cursor-pointer transition-all ${
+          formData.postingTier === 'test'
+            ? 'border-dashed border-green-500 bg-green-50 shadow-md'
+            : 'border-gray-200 bg-white hover:border-green-200 hover:bg-gray-50'
+        }`}>
+          <input
+            type="radio"
+            name="postingTier"
+            value="test"
+            checked={formData.postingTier === 'test'}
+            onChange={(e) => onUpdate('postingTier', e.target.value as PostingTier)}
+            className="sr-only"
+          />
+          <div className="flex-1">
+            <div className="flex items-center gap-3 mb-2">
+              <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                formData.postingTier === 'test' ? 'border-green-600' : 'border-gray-300'
+              }`}>
+                {formData.postingTier === 'test' && (
+                  <div className="w-3 h-3 rounded-full bg-green-600"></div>
+                )}
+              </div>
+              <span className="text-lg font-bold text-gray-900">테스트 상품</span>
+              <span className="px-3 py-1 bg-green-100 text-green-700 text-sm font-medium rounded-full">
+                개발용
+              </span>
+              <span className="px-3 py-1 bg-gray-100 text-gray-700 text-sm font-medium rounded-full">
+                7일
+              </span>
+            </div>
+            <p className="text-sm text-gray-600 ml-8 mb-3">
+              QA/개발 환경에서 결제 동작을 테스트할 때 사용하세요
+            </p>
+            <div className="flex items-baseline gap-2 ml-8">
+              <span className="text-3xl font-bold text-green-600">1,000원</span>
+              <span className="text-sm text-gray-500">(부가세 포함)</span>
+            </div>
+          </div>
+          {formData.postingTier === 'test' && (
+            <div className="absolute top-5 right-5">
+              <div className="p-1 bg-green-600 rounded-full">
                 <Check className="w-4 h-4 text-white" />
               </div>
             </div>

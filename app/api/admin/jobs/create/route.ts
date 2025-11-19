@@ -4,6 +4,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase, createAdminClient } from '@/lib/supabase/config';
 import { JobFormData } from '@/types/job-form.types';
+import { POSTING_PRICES, VAT_RATE, BILLING_CONTACT } from '@/constants/job-posting';
 
 export const dynamic = 'force-dynamic';
 
@@ -90,16 +91,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 4. 과금 정보 계산
-    const POSTING_PRICES = {
-      standard: { price: 300000, duration: 30 },
-      top: { price: 500000, duration: 30 },
-      premium: { price: 2000000, duration: 60 }
-    };
-
     const selectedPrice = POSTING_PRICES[formData.postingTier];
-    const vatAmount = selectedPrice.price * 0.1;
-    const totalAmount = selectedPrice.price + vatAmount;
+    const vatAmount = selectedPrice.vatIncluded
+      ? 0
+      : Math.floor(selectedPrice.price * VAT_RATE);
+    const totalAmount = selectedPrice.vatIncluded
+      ? selectedPrice.price
+      : selectedPrice.price + vatAmount;
 
     // 5. 급여 및 마감일 처리
     const salaryMin = formData.salaryMin ? parseInt(formData.salaryMin) : null;
@@ -153,7 +151,7 @@ export async function POST(request: NextRequest) {
         payment_status: 'paid',  // 관리자 공고는 즉시 결제 완료
         payment_requested_at: new Date().toISOString(),
         payment_billing_contact_name: '관리자',
-        payment_billing_contact_phone: '000-0000-0000',
+        payment_billing_contact_phone: BILLING_CONTACT.phone,
 
         // 메타 정보
         deadline: deadline,

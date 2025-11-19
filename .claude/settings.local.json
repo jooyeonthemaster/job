@@ -30,7 +30,11 @@
       "Bash(if [ ! -d \"claudedocs\" ])",
       "Bash(then mkdir claudedocs)",
       "Bash(fi:*)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(if [ -d \".next\" ])",
+      "Bash(then rm -rf .next)",
+      "Bash(else echo \"ℹ️ .next 폴더가 없습니다\")",
+      "Bash(node -e:*)"
     ],
     "deny": [],
     "ask": []

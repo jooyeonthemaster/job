@@ -30,7 +30,10 @@ export const completeOnboarding = async (
 
     console.log('[completeOnboarding] 기존 사용자:', existingUser ? '있음' : '없음');
 
+    const emailToSave = data.email?.trim();
+
     const updateData: any = {
+      ...(emailToSave ? { email: emailToSave } : {}),
       full_name: data.fullName,
       desired_job_category: data.desired_job_category || null,  // ✅ 희망 근무 직군 추가
       phone_country_code: data.phone_country_code || '+82',     // ✅ 국가 코드 추가 (기본값: 한국)
@@ -89,11 +92,17 @@ export const completeOnboarding = async (
       console.log('[completeOnboarding] 신규 레코드 생성 시작');
       const { data: authUser } = await supabase.auth.getUser();
 
+      const normalizedEmail = emailToSave || authUser.user?.email || '';
+
+      if (!normalizedEmail) {
+        throw new Error('이메일 정보가 없어 온보딩을 완료할 수 없습니다.');
+      }
+
       const insertData = {
         id: userId,
-        email: authUser.user?.email || '',
         user_type: 'jobseeker',
         ...updateData,
+        email: normalizedEmail,
         created_at: new Date().toISOString()
       };
 

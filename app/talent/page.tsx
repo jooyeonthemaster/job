@@ -17,11 +17,9 @@ import {
   Languages,
   DollarSign,
   Mail,
-  ChevronDown,
-  Database
+  ChevronDown
 } from 'lucide-react';
 import Link from 'next/link';
-import { talentProfiles } from '@/lib/talentData';
 import { getAllTalents, type TalentProfile } from '@/lib/supabase/talent-service';
 import { supabase } from '@/lib/supabase/config';
 
@@ -35,7 +33,6 @@ export default function TalentPage() {
   const [selectedCategory, setSelectedCategory] = useState<string[]>([]);
   const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
   const [expandedSubcategories, setExpandedSubcategories] = useState<string[]>([]);
-  const [showRealDataOnly, setShowRealDataOnly] = useState(true);
   const [realProfiles, setRealProfiles] = useState<TalentProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCompany, setIsCompany] = useState(false);
@@ -82,29 +79,25 @@ export default function TalentPage() {
     checkUserType();
   }, []);
 
-  // Supabase 데이터를 로드
+  // Supabase 실제 데이터 로드
   useEffect(() => {
     const loadRealData = async () => {
-      if (showRealDataOnly) {
-        setLoading(true);
-        try {
-          const talents = await getAllTalents();
-          setRealProfiles(talents);
-          console.log(`✅ Loaded ${talents.length} talents from Supabase`);
-        } catch (error) {
-          console.error('Failed to load real data:', error);
-        } finally {
-          setLoading(false);
-        }
-      } else {
+      setLoading(true);
+      try {
+        const talents = await getAllTalents();
+        setRealProfiles(talents);
+        console.log(`✅ Loaded ${talents.length} talents from Supabase`);
+      } catch (error) {
+        console.error('Failed to load real data:', error);
+      } finally {
         setLoading(false);
       }
     };
     loadRealData();
-  }, [showRealDataOnly]);
+  }, []);
 
-  // 표시할 프로필 선택 (실제 데이터 또는 더미 데이터)
-  const displayProfiles = showRealDataOnly ? realProfiles : talentProfiles;
+  // 실제 데이터만 표시
+  const displayProfiles = realProfiles;
 
   const allSkills = Array.from(new Set(displayProfiles.flatMap(p => p.skills))).slice(0, 12);
   const nationalities = Array.from(new Set(displayProfiles.map(p => p.nationality)));
@@ -485,19 +478,6 @@ export default function TalentPage() {
               <Filter className="w-4 h-4" />
               상세조건
             </button>
-
-            {/* 실제 데이터만 보기 토글 */}
-            <button
-              onClick={() => setShowRealDataOnly(!showRealDataOnly)}
-              className={`flex items-center gap-1.5 px-4 py-1.5 border rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
-                showRealDataOnly
-                  ? 'bg-primary-600 text-white border-primary-600'
-                  : 'border-gray-300 text-gray-700 hover:bg-gray-50'
-              }`}
-            >
-              <Database className="w-4 h-4" />
-              {loading ? '로딩 중...' : showRealDataOnly ? '실제 데이터 (ON)' : '실제 데이터'}
-            </button>
           </div>
         </div>
       </section>
@@ -633,11 +613,6 @@ export default function TalentPage() {
                   <p className="text-sm text-gray-600">
                     <span className="font-semibold text-gray-900">{filteredProfiles.length}</span>명의 인재가 검색되었습니다
                   </p>
-                  {showRealDataOnly && (
-                    <p className="text-xs text-green-600 mt-1">
-                      ✓ 실제 Supabase 데이터
-                    </p>
-                  )}
                 </div>
               </div>
             </div>
@@ -797,19 +772,8 @@ export default function TalentPage() {
                 ))
               ) : (
                 <div className="bg-white rounded-xl shadow-sm p-12 text-center">
-                  <p className="text-gray-500">
-                    {showRealDataOnly 
-                      ? '실제 데이터가 없습니다. 온보딩을 완료한 구직자가 아직 없습니다.' 
-                      : '검색 조건에 맞는 인재가 없습니다.'}
-                  </p>
-                  {showRealDataOnly && (
-                    <button
-                      onClick={() => setShowRealDataOnly(false)}
-                      className="mt-4 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 text-sm"
-                    >
-                      더미 데이터 보기
-                    </button>
-                  )}
+                  <p className="text-gray-500 mb-2">검색 조건에 맞는 인재가 없습니다.</p>
+                  <p className="text-sm text-gray-400">다른 조건으로 검색해보세요.</p>
                 </div>
               )}
             </div>

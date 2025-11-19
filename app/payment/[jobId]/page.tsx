@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import { DollarSign, FileText, Building2, CreditCard, CheckCircle } from 'lucide-react';
+import { supabase } from '@/lib/supabase/config';
 
 export default function PaymentPage() {
   const params = useParams();
@@ -19,9 +20,19 @@ export default function PaymentPage() {
     // 결제 정보 불러오기
     const fetchPaymentInfo = async () => {
       try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.access_token) {
+          alert('로그인이 필요합니다.');
+          router.push('/login');
+          return;
+        }
+
         const response = await fetch('/api/payment/prepare', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${session.access_token}`
+          },
           body: JSON.stringify({ jobId })
         });
 
@@ -83,6 +94,7 @@ export default function PaymentPage() {
         // customData 제거: 이니시스 V2는 merchantData 사용 오류 발생
         taxFreeAmount: paymentInfo.taxFreeAmount,
         vatAmount: paymentInfo.vatAmount,
+        customData: paymentInfo.customData,
       });
 
       console.log('PortOne 응답:', response);
@@ -98,7 +110,7 @@ export default function PaymentPage() {
       const verifyResponse = await fetch('/api/payment/complete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ paymentId: paymentInfo.paymentId })
+        body: JSON.stringify({ paymentId: paymentInfo.paymentId, jobId })
       });
 
       if (!verifyResponse.ok) {

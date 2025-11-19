@@ -7,11 +7,12 @@ import JobsTab from '@/components/admin/JobsTab';
 import AdminCreatedTab from '@/components/admin/AdminCreatedTab';
 import ProfileViewsTab from '@/components/admin/ProfileViewsTab';
 import BannersTab from '@/components/admin/BannersTab';
-import { Settings, Briefcase, Users, Building2, FileText, LogOut, Star, Eye, Monitor } from 'lucide-react';
+import AdminPaymentsTab from '@/components/admin/AdminPaymentsTab';
+import { Settings, Briefcase, LogOut, Star, Eye, Monitor, CreditCard } from 'lucide-react';
 
 export default function AdminPage() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<'jobs' | 'admin-created' | 'profile-views' | 'jobseekers' | 'companies' | 'applications' | 'banners'>('jobs');
+  const [activeTab, setActiveTab] = useState<'jobs' | 'admin-created' | 'profile-views' | 'payments' | 'banners'>('jobs');
   const [loading, setLoading] = useState(true);
   const [authorized, setAuthorized] = useState(false);
 
@@ -76,7 +77,7 @@ export default function AdminPage() {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div className="px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-gradient-to-br from-primary-600 to-cyan-600 rounded-lg flex items-center justify-center">
@@ -100,11 +101,11 @@ export default function AdminPage() {
 
       {/* Tabs */}
       <div className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-4">
+        <div className="px-8">
+          <div className="flex items-center gap-8">
             <button
               onClick={() => setActiveTab('jobs')}
-              className={`flex items-center gap-2 px-4 py-4 border-b-2 font-medium transition-colors ${
+              className={`flex items-center gap-2 px-6 py-4 border-b-2 font-medium transition-colors whitespace-nowrap ${
                 activeTab === 'jobs'
                   ? 'border-primary-600 text-primary-600'
                   : 'border-transparent text-gray-600 hover:text-gray-900'
@@ -115,7 +116,7 @@ export default function AdminPage() {
             </button>
             <button
               onClick={() => setActiveTab('admin-created')}
-              className={`flex items-center gap-2 px-4 py-4 border-b-2 font-medium transition-colors ${
+              className={`flex items-center gap-2 px-6 py-4 border-b-2 font-medium transition-colors whitespace-nowrap ${
                 activeTab === 'admin-created'
                   ? 'border-primary-600 text-primary-600'
                   : 'border-transparent text-gray-600 hover:text-gray-900'
@@ -126,7 +127,7 @@ export default function AdminPage() {
             </button>
             <button
               onClick={() => setActiveTab('profile-views')}
-              className={`flex items-center gap-2 px-4 py-4 border-b-2 font-medium transition-colors ${
+              className={`flex items-center gap-2 px-6 py-4 border-b-2 font-medium transition-colors whitespace-nowrap ${
                 activeTab === 'profile-views'
                   ? 'border-primary-600 text-primary-600'
                   : 'border-transparent text-gray-600 hover:text-gray-900'
@@ -136,41 +137,19 @@ export default function AdminPage() {
               프로필 열람 내역
             </button>
             <button
-              onClick={() => setActiveTab('jobseekers')}
-              className={`flex items-center gap-2 px-4 py-4 border-b-2 font-medium transition-colors ${
-                activeTab === 'jobseekers'
+              onClick={() => setActiveTab('payments')}
+              className={`flex items-center gap-2 px-6 py-4 border-b-2 font-medium transition-colors whitespace-nowrap ${
+                activeTab === 'payments'
                   ? 'border-primary-600 text-primary-600'
                   : 'border-transparent text-gray-600 hover:text-gray-900'
               }`}
             >
-              <Users className="w-5 h-5" />
-              구직자 관리
-            </button>
-            <button
-              onClick={() => setActiveTab('companies')}
-              className={`flex items-center gap-2 px-4 py-4 border-b-2 font-medium transition-colors ${
-                activeTab === 'companies'
-                  ? 'border-primary-600 text-primary-600'
-                  : 'border-transparent text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              <Building2 className="w-5 h-5" />
-              기업 관리
-            </button>
-            <button
-              onClick={() => setActiveTab('applications')}
-              className={`flex items-center gap-2 px-4 py-4 border-b-2 font-medium transition-colors ${
-                activeTab === 'applications'
-                  ? 'border-primary-600 text-primary-600'
-                  : 'border-transparent text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              <FileText className="w-5 h-5" />
-              신청 관리
+              <CreditCard className="w-5 h-5" />
+              결제 내역
             </button>
             <button
               onClick={() => setActiveTab('banners')}
-              className={`flex items-center gap-2 px-4 py-4 border-b-2 font-medium transition-colors ${
+              className={`flex items-center gap-2 px-6 py-4 border-b-2 font-medium transition-colors whitespace-nowrap ${
                 activeTab === 'banners'
                   ? 'border-primary-600 text-primary-600'
                   : 'border-transparent text-gray-600 hover:text-gray-900'
@@ -184,28 +163,11 @@ export default function AdminPage() {
       </div>
 
       {/* Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="px-8 py-8">
         {activeTab === 'jobs' && <JobsTab />}
         {activeTab === 'admin-created' && <AdminCreatedTab />}
         {activeTab === 'profile-views' && <ProfileViewsTab />}
-        {activeTab === 'jobseekers' && (
-          <div className="bg-white rounded-xl shadow-sm p-8 text-center">
-            <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-600">구직자 관리 기능은 추후 추가됩니다.</p>
-          </div>
-        )}
-        {activeTab === 'companies' && (
-          <div className="bg-white rounded-xl shadow-sm p-8 text-center">
-            <Building2 className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-600">기업 관리 기능은 추후 추가됩니다.</p>
-          </div>
-        )}
-        {activeTab === 'applications' && (
-          <div className="bg-white rounded-xl shadow-sm p-8 text-center">
-            <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-600">신청 관리 기능은 추후 추가됩니다.</p>
-          </div>
-        )}
+        {activeTab === 'payments' && <AdminPaymentsTab />}
         {activeTab === 'banners' && <BannersTab />}
       </div>
     </div>

@@ -1,6 +1,6 @@
 // 채용공고 생성 폼 관련 타입 정의
 
-export type PostingTier = 'standard' | 'top' | 'premium';
+export type PostingTier = 'standard' | 'top' | 'premium' | 'test';
 
 export type EmploymentType = 'FULL_TIME' | 'PART_TIME' | 'CONTRACT' | 'INTERNSHIP';
 
@@ -13,6 +13,7 @@ export interface PostingPrice {
   duration: number;
   label: string;
   desc: string;
+  vatIncluded?: boolean;
 }
 
 export interface JobFormData {

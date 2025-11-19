@@ -187,6 +187,7 @@ export const useJobseekerOnboarding = () => {
       // Supabase users 테이블 업데이트
       await completeOnboarding(user.id, {
         fullName: formData.fullName,
+        email: formData.email,
         desired_job_category: formData.desiredJobCategory,  // ✅ 희망 근무 직군 저장
         phone_country_code: formData.phoneCountryCode,      // ✅ 국가 코드 저장
         phone: formData.phone ? formData.phone.replace(/\D/g, '') : '',  // ✅ 숫자만 저장

@@ -95,7 +95,39 @@ export default function TalentDetailPage() {
             return;
           }
 
-          // 4. 기업인 경우 - 결제 여부 확인
+          // 4. 기업인 경우 - 지원 여부 또는 결제 여부 확인
+          // 4-1. 먼저 현재 기업의 company_id 조회
+          const { data: companyData } = await supabase
+            .from('companies')
+            .select('id')
+            .eq('user_id', user.id)
+            .single();
+
+          if (!companyData?.id) {
+            // 기업 정보가 없는 경우 - 공개 정보만 표시
+            setHasPaid(false);
+            setCheckingPayment(false);
+            setLoading(false);
+            return;
+          }
+
+          // 4-2. 지원 여부 확인
+          const { data: applicationData } = await supabase
+            .from('job_applications')
+            .select('id')
+            .eq('applicant_id', params.id)
+            .eq('company_id', companyData.id)
+            .maybeSingle();
+
+          if (applicationData) {
+            // 지원한 경우 - 결제 없이도 상세 정보 표시
+            setHasPaid(true);
+            setCheckingPayment(false);
+            setLoading(false);
+            return;
+          }
+
+          // 4-3. 지원하지 않은 경우 - 결제 여부 확인
           const paymentResponse = await fetch('/api/payment/profile/check', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -108,7 +140,7 @@ export default function TalentDetailPage() {
 
             // 결제하지 않은 경우 결제 페이지로 리다이렉트
             if (!paymentData.hasPaid) {
-              alert('프로필 상세 정보를 확인하려면 결제가 필요합니다.');
+              alert('프로필 상세 정보를 확인하려면 지원자가 지원하거나 결제가 필요합니다.');
               router.push(`/payment/profile/${params.id}`);
               return;
             }
