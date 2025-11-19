@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext_Supabase';
 import OptimizedImage from './OptimizedImage';
 import RollingBanner from './RollingBanner';
+import AdBanner from '@/components/ui/AdBanner';
 
 export default function Header() {
   const pathname = usePathname();
@@ -233,26 +234,9 @@ export default function Header() {
                 ))}
               </div>
 
-              {/* Ad Banner Slot */}
+              {/* Ad Banner */}
               <div className="flex items-center">
-                <div className="group relative">
-                  <div className="w-[400px] h-[50px] bg-gradient-to-br from-gray-50 to-gray-100 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center cursor-pointer hover:border-primary-400 hover:bg-gradient-to-br hover:from-primary-50 hover:to-blue-50 transition-all duration-300">
-                    <div className="text-center">
-                      <div className="text-xs font-semibold text-gray-400 group-hover:text-primary-600 transition-colors">
-                        광고 배너 영역
-                      </div>
-                      <div className="text-[10px] text-gray-400 mt-0.5 group-hover:text-primary-500">
-                        400 x 50
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Hover tooltip */}
-                  <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none z-50">
-                    광고 문의: ad@globaltalent.com
-                    <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-gray-900 rotate-45"></div>
-                  </div>
-                </div>
+                <AdBanner position="header" width={400} height={50} />
               </div>
             </div>
           </div>

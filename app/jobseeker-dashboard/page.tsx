@@ -111,6 +111,7 @@ export default function JobSeekerDashboard() {
                   resumeFileName={profileData.resumeFileName}
                   resumeUploadedAt={profileData.resumeUploadedAt}
                   onPreview={() => setShowResumePreview(true)}
+                  userId={user?.id}
                 />
               )}
 
@@ -136,6 +137,7 @@ export default function JobSeekerDashboard() {
           onClose={() => setShowResumePreview(false)}
           resumeFileUrl={profileData.resumeFileUrl}
           resumeFileName={profileData.resumeFileName}
+          userId={user?.id}
         />
       )}
 

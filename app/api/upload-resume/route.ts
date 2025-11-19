@@ -25,15 +25,13 @@ export async function POST(request: NextRequest) {
     const buffer = Buffer.from(bytes);
 
     // Cloudinary에 업로드 (Promise 사용)
-    // PDF를 이미지로 변환하려면 resource_type을 'image'로 설정해야 함
     const result = await new Promise((resolve, reject) => {
       const uploadStream = cloudinary.uploader.upload_stream(
         {
-          resource_type: 'image', // PDF를 이미지로 변환 가능하도록 image 타입 사용
+          resource_type: 'raw', // PDF는 raw 타입으로 업로드 (public 접근 가능)
           folder: 'resumes', // resumes 폴더에 저장
           public_id: `resume_${Date.now()}`, // 고유한 파일명
-          format: 'pdf', // 원본 포맷은 PDF로 유지
-          flags: 'attachment', // 다운로드 가능하도록 설정
+          access_mode: 'public', // 명시적으로 public 설정
         },
         (error, result) => {
           if (error) reject(error);

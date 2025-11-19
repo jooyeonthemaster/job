@@ -24,6 +24,17 @@ export default function JobApplicationModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
 
+  // 🔍 디버깅: 사용자 정보 확인
+  if (isOpen && process.env.NODE_ENV === 'development') {
+    console.log('[JobApplicationModal] 사용자 정보:', {
+      user_email: user?.email,
+      user_metadata_email: user?.user_metadata?.email,
+      userProfile_email: userProfile?.email,
+      userProfile_full_name: userProfile?.full_name,
+      user_metadata_full_name: user?.user_metadata?.full_name
+    });
+  }
+
   if (!isOpen) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -91,8 +102,8 @@ export default function JobApplicationModal({
           <div className="bg-gray-50 rounded-xl p-4 space-y-2">
             <h3 className="font-medium text-gray-900">지원자 정보</h3>
             <div className="text-sm text-gray-700">
-              <p><span className="font-medium">이름:</span> {userProfile?.fullName || '이름 없음'}</p>
-              <p><span className="font-medium">이메일:</span> {user?.email}</p>
+              <p><span className="font-medium">이름:</span> {userProfile?.full_name || user?.user_metadata?.full_name || '이름 없음'}</p>
+              <p><span className="font-medium">이메일:</span> {userProfile?.email || user?.email || user?.user_metadata?.email || '이메일 없음'}</p>
             </div>
           </div>
 

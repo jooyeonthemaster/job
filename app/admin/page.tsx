@@ -6,11 +6,12 @@ import { supabase } from '@/lib/supabase/config';
 import JobsTab from '@/components/admin/JobsTab';
 import AdminCreatedTab from '@/components/admin/AdminCreatedTab';
 import ProfileViewsTab from '@/components/admin/ProfileViewsTab';
-import { Settings, Briefcase, Users, Building2, FileText, LogOut, Star, Eye } from 'lucide-react';
+import BannersTab from '@/components/admin/BannersTab';
+import { Settings, Briefcase, Users, Building2, FileText, LogOut, Star, Eye, Monitor } from 'lucide-react';
 
 export default function AdminPage() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<'jobs' | 'admin-created' | 'profile-views' | 'jobseekers' | 'companies' | 'applications'>('jobs');
+  const [activeTab, setActiveTab] = useState<'jobs' | 'admin-created' | 'profile-views' | 'jobseekers' | 'companies' | 'applications' | 'banners'>('jobs');
   const [loading, setLoading] = useState(true);
   const [authorized, setAuthorized] = useState(false);
 
@@ -167,6 +168,17 @@ export default function AdminPage() {
               <FileText className="w-5 h-5" />
               신청 관리
             </button>
+            <button
+              onClick={() => setActiveTab('banners')}
+              className={`flex items-center gap-2 px-4 py-4 border-b-2 font-medium transition-colors ${
+                activeTab === 'banners'
+                  ? 'border-primary-600 text-primary-600'
+                  : 'border-transparent text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <Monitor className="w-5 h-5" />
+              광고 배너 관리
+            </button>
           </div>
         </div>
       </div>
@@ -194,6 +206,7 @@ export default function AdminPage() {
             <p className="text-gray-600">신청 관리 기능은 추후 추가됩니다.</p>
           </div>
         )}
+        {activeTab === 'banners' && <BannersTab />}
       </div>
     </div>
   );

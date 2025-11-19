@@ -1,7 +1,7 @@
 'use client';
 
 import { CldUploadWidget } from 'next-cloudinary';
-import { useState } from 'react';
+import { useState, useEffect, memo } from 'react';
 import { Camera, Upload, X, CheckCircle, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -17,7 +17,7 @@ interface CloudinaryUploadProps {
   userId?: string;
 }
 
-export default function CloudinaryUpload({
+function CloudinaryUploadComponent({
   onUploadSuccess,
   onUploadError,
   type = 'profile',
@@ -30,6 +30,13 @@ export default function CloudinaryUpload({
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [error, setError] = useState<string>('');
+
+  // currentImageUrl이 변경될 때 preview 업데이트
+  useEffect(() => {
+    if (currentImageUrl !== preview) {
+      setPreview(currentImageUrl || '');
+    }
+  }, [currentImageUrl, preview]);
 
   // 타입별 설정
   const getConfigByType = () => {
@@ -263,3 +270,7 @@ export default function CloudinaryUpload({
     </div>
   );
 }
+
+// React.memo로 감싸서 불필요한 리렌더링 방지
+const CloudinaryUpload = memo(CloudinaryUploadComponent);
+export default CloudinaryUpload;

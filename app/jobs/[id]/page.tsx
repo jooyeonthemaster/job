@@ -3,9 +3,11 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase/config';
+import { useAuth } from '@/contexts/AuthContext_Supabase';
 import Header from '@/components/Header';
 import Link from 'next/link';
 import Image from 'next/image';
+import JobApplicationModal from '@/components/JobApplicationModal';
 import {
   Building2,
   MapPin,
@@ -16,7 +18,6 @@ import {
   Briefcase,
   Calendar,
   Share2,
-  Bookmark,
   Eye,
   CheckCircle,
   ArrowLeft,
@@ -27,9 +28,21 @@ import {
 export default function JobDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const { user, userProfile, userType } = useAuth();  // ✅ userType 추가
   const [job, setJob] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [isBookmarked, setIsBookmarked] = useState(false);
+  const [isApplicationModalOpen, setIsApplicationModalOpen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string>('');  // ✅ 에러 메시지 상태
+
+  // ✅ 에러 메시지 자동 제거 (3초)
+  useEffect(() => {
+    if (errorMessage) {
+      const timer = setTimeout(() => {
+        setErrorMessage('');
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [errorMessage]);
 
   useEffect(() => {
     const fetchJob = async () => {
@@ -75,6 +88,60 @@ export default function JobDetailPage() {
   const handleCopyLink = () => {
     navigator.clipboard.writeText(window.location.href);
     alert('링크가 복사되었습니다!');
+  };
+
+  const handleApplyClick = () => {
+    // 로그인 확인
+    if (!user) {
+      setErrorMessage('로그인이 필요합니다.');
+      setTimeout(() => {
+        router.push('/login/jobseeker');
+      }, 2000);
+      return;
+    }
+
+    // 구직자 계정 확인 (✅ userType 사용)
+    if (userType !== 'jobseeker') {
+      setErrorMessage('구직자만 지원할 수 있습니다.');
+      return;
+    }
+
+    // 에러 메시지 초기화 및 모달 오픈
+    setErrorMessage('');
+    setIsApplicationModalOpen(true);
+  };
+
+  const handleApplicationSubmit = async (message: string) => {
+    try {
+      const response = await fetch('/api/job-applications', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          jobId: job.id,
+          applicantId: user?.id,
+          message,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || '지원서 제출에 실패했습니다.');
+      }
+
+      // ✅ 성공 메시지 Toast
+      setErrorMessage('✅ 지원서가 성공적으로 제출되었습니다!');
+      setIsApplicationModalOpen(false);
+
+      // 1.5초 후 대시보드로 이동
+      setTimeout(() => {
+        router.push('/jobseeker-dashboard');
+      }, 1500);
+    } catch (error: any) {
+      throw error; // 모달에서 에러 메시지 표시
+    }
   };
 
   const formatSalary = (min: number, max: number) => {
@@ -361,33 +428,20 @@ export default function JobDetailPage() {
             <div className="sticky top-8 space-y-4">
               {/* Apply Button */}
               <button
-                onClick={() => alert('지원 기능은 준비 중입니다.')}
+                onClick={handleApplyClick}
                 className="w-full bg-gradient-to-r from-primary-600 to-cyan-600 text-white py-4 px-6 rounded-xl font-semibold hover:shadow-lg transition-all"
               >
                 지원하기
               </button>
 
               {/* Action Buttons */}
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  onClick={() => setIsBookmarked(!isBookmarked)}
-                  className={`flex items-center justify-center gap-2 py-3 px-4 rounded-xl border transition-all ${
-                    isBookmarked
-                      ? 'bg-primary-50 border-primary-600 text-primary-600'
-                      : 'bg-white border-gray-200 text-gray-700 hover:border-primary-600'
-                  }`}
-                >
-                  <Bookmark className="w-4 h-4" />
-                  저장
-                </button>
-                <button
-                  onClick={handleCopyLink}
-                  className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl border border-gray-200 bg-white text-gray-700 hover:border-primary-600 transition-all"
-                >
-                  <Share2 className="w-4 h-4" />
-                  공유
-                </button>
-              </div>
+              <button
+                onClick={handleCopyLink}
+                className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl border border-gray-200 bg-white text-gray-700 hover:border-primary-600 transition-all"
+              >
+                <Share2 className="w-4 h-4" />
+                공유
+              </button>
 
               {/* Company Info Card */}
               {job.company && (
@@ -426,6 +480,48 @@ export default function JobDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Toast Notification */}
+      {errorMessage && (
+        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 animate-bounce">
+          <div className={`${errorMessage.includes('✅') ? 'bg-green-600' : 'bg-red-600'} text-white px-6 py-4 rounded-xl shadow-2xl flex items-center gap-3 min-w-[320px]`}>
+            <div className={`w-8 h-8 ${errorMessage.includes('✅') ? 'bg-green-500' : 'bg-red-500'} rounded-full flex items-center justify-center shrink-0`}>
+              {errorMessage.includes('✅') ? (
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M20 6 9 17l-5-5"></path>
+                </svg>
+              ) : (
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" x2="12" y1="8" y2="12"></line>
+                  <line x1="12" x2="12.01" y1="16" y2="16"></line>
+                </svg>
+              )}
+            </div>
+            <div className="flex-1">
+              <p className="font-semibold">{errorMessage}</p>
+            </div>
+            <button
+              onClick={() => setErrorMessage('')}
+              className={`p-1 ${errorMessage.includes('✅') ? 'hover:bg-green-500' : 'hover:bg-red-500'} rounded-lg transition-colors`}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M18 6 6 18"></path>
+                <path d="m6 6 12 12"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Application Modal */}
+      <JobApplicationModal
+        isOpen={isApplicationModalOpen}
+        onClose={() => setIsApplicationModalOpen(false)}
+        onSubmit={handleApplicationSubmit}
+        jobTitle={job?.title || ''}
+        companyName={job?.company?.name || ''}
+      />
     </div>
   );
 }

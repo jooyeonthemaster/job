@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Header from '@/components/Header';
 import JobGridCard from '@/components/JobGridCard';
+import AdBanner from '@/components/ui/AdBanner';
 import { supabase } from '@/lib/supabase/config';
 import { jobs as dummyJobs } from '@/lib/data';
 import {
@@ -521,20 +522,10 @@ export default function JobsPage() {
           <aside className="hidden xl:block w-[160px] shrink-0">
             <div className="sticky top-20 space-y-4">
               {/* 배너 광고 1 */}
-              <div className="w-[160px] h-[600px] bg-gradient-to-br from-gray-50 to-gray-100 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center cursor-pointer hover:border-primary-400 hover:bg-gradient-to-br hover:from-primary-50 hover:to-blue-50 transition-all duration-300">
-                <div className="text-center">
-                  <div className="text-xs font-semibold text-gray-400">광고 배너</div>
-                  <div className="text-[10px] text-gray-400 mt-0.5">160x600</div>
-                </div>
-              </div>
+              <AdBanner position="jobs-sidebar-1" width={160} height={600} />
 
               {/* 배너 광고 2 */}
-              <div className="w-[160px] h-[600px] bg-gradient-to-br from-gray-50 to-gray-100 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center cursor-pointer hover:border-primary-400 hover:bg-gradient-to-br hover:from-primary-50 hover:to-blue-50 transition-all duration-300">
-                <div className="text-center">
-                  <div className="text-xs font-semibold text-gray-400">광고 배너</div>
-                  <div className="text-[10px] text-gray-400 mt-0.5">160x600</div>
-                </div>
-              </div>
+              <AdBanner position="jobs-sidebar-2" width={160} height={600} />
             </div>
           </aside>
         </div>

@@ -21,7 +21,15 @@
       "Bash(supabase --version:*)",
       "Bash(node check-tables.js:*)",
       "Bash(find:*)",
-      "Bash(dir /AD /B)"
+      "Bash(dir /AD /B)",
+      "Bash(dir:*)",
+      "Bash($null)",
+      "Bash(Get-Content \"app\\talent\\[id]\\page.tsx\")",
+      "Bash(Select-String -Pattern \"cloudinary|resumeFileUrl\" -Context 2,2)",
+      "Bash(rm:*)",
+      "Bash(if [ ! -d \"claudedocs\" ])",
+      "Bash(then mkdir claudedocs)",
+      "Bash(fi:*)"
     ],
     "deny": [],
     "ask": []

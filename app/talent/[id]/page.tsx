@@ -19,7 +19,15 @@ import {
   DollarSign,
   User,
   Send,
-  Mail
+  Mail,
+  Phone,
+  FileText,
+  Download,
+  Home,
+  Shield,
+  Settings,
+  Copy,
+  Check
 } from 'lucide-react';
 import { getTalentById, type TalentProfile } from '@/lib/supabase/talent-service';
 import { supabase } from '@/lib/supabase/config';
@@ -33,6 +41,8 @@ export default function TalentDetailPage() {
   const [hasPaid, setHasPaid] = useState(false);
   const [isCompany, setIsCompany] = useState(false);
   const [checkingPayment, setCheckingPayment] = useState(true);
+  const [copiedEmail, setCopiedEmail] = useState(false);
+  const [copiedPhone, setCopiedPhone] = useState(false);
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -188,6 +198,55 @@ export default function TalentDetailPage() {
     return 'bg-gray-100 text-gray-700';
   };
 
+  const calculateAge = (birthYear?: number) => {
+    if (!birthYear) return null;
+    const currentYear = new Date().getFullYear();
+    return currentYear - birthYear + 1; // 한국식 나이
+  };
+
+  const handleCopyEmail = () => {
+    if (talent?.email) {
+      navigator.clipboard.writeText(talent.email);
+      setCopiedEmail(true);
+      setTimeout(() => setCopiedEmail(false), 2000);
+    }
+  };
+
+  const handleCopyPhone = () => {
+    if (talent?.phone) {
+      const fullPhone = `${talent.phoneCountryCode || ''}${talent.phone}`;
+      navigator.clipboard.writeText(fullPhone);
+      setCopiedPhone(true);
+      setTimeout(() => setCopiedPhone(false), 2000);
+    }
+  };
+
+  const handleDownloadResume = async () => {
+    if (!talent?.id) return;
+
+    try {
+      const response = await fetch(`/api/download/resume/${talent.id}`);
+
+      if (!response.ok) {
+        alert('이력서 다운로드에 실패했습니다.');
+        return;
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = talent.resumeFileName || `${talent.name}_이력서.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Resume download error:', error);
+      alert('이력서 다운로드 중 오류가 발생했습니다.');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
@@ -260,10 +319,20 @@ export default function TalentDetailPage() {
               {talent.expectedSalary && (
                 <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary-50 rounded-lg">
                   <DollarSign className="w-4 h-4 text-primary-600" />
-                  <span className="text-sm font-medium text-gray-700">희망 연봉:</span>
-                  <span className="text-sm font-bold text-gray-900">
-                    {formatSalary(talent.expectedSalary.min, talent.expectedSalary.max)}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-gray-700">희망 연봉:</span>
+                    <span className="text-sm font-bold text-gray-900">
+                      {formatSalary(talent.expectedSalary.min, talent.expectedSalary.max)}
+                    </span>
+                    {talent.expectedSalary.currency && talent.expectedSalary.currency !== 'KRW' && (
+                      <span className="text-xs text-gray-600">({talent.expectedSalary.currency})</span>
+                    )}
+                    {talent.expectedSalary.negotiable && (
+                      <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs font-medium rounded">
+                        협상가능
+                      </span>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
@@ -376,10 +445,141 @@ export default function TalentDetailPage() {
                 </div>
               </div>
             )}
+
+            {/* Resume Preview */}
+            {talent.resumeFileUrl && (
+              <div className="bg-white rounded-xl shadow-sm p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                    <FileText className="w-5 h-5 text-primary-600" />
+                    이력서
+                  </h2>
+                  <button
+                    onClick={handleDownloadResume}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium"
+                  >
+                    <Download className="w-4 h-4" />
+                    다운로드
+                  </button>
+                </div>
+
+                {/* PDF Preview */}
+                <div className="border border-gray-200 rounded-lg overflow-hidden bg-gray-50">
+                  <iframe
+                    src={`/api/preview/resume/${talent.id}`}
+                    className="w-full h-[800px]"
+                    title="이력서 미리보기"
+                  />
+                </div>
+
+                {talent.resumeUploadedAt && (
+                  <p className="text-xs text-gray-500 mt-3 text-center">
+                    {new Date(talent.resumeUploadedAt).toLocaleDateString('ko-KR')} 업로드
+                  </p>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Right Column - Skills & Preferences */}
           <div className="space-y-6">
+            {/* Contact & Personal Info - 결제 완료 시 모든 정보 표시 */}
+            {(talent.email || talent.phone || talent.birthYear || talent.gender) && (
+              <div className="bg-white rounded-xl shadow-sm p-6 border-2 border-primary-100">
+                <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                  <Phone className="w-5 h-5 text-primary-600" />
+                  연락처 및 개인정보
+                </h2>
+
+                <div className="space-y-3">
+                  {talent.email && (
+                    <div className="flex items-center justify-between p-2.5 bg-gray-50 rounded-lg">
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <Mail className="w-4 h-4 text-gray-400 shrink-0" />
+                        <span className="text-sm text-gray-700 truncate">{talent.email}</span>
+                      </div>
+                      <button onClick={handleCopyEmail} className="ml-2 p-1.5 hover:bg-gray-200 rounded transition-colors shrink-0" title="이메일 복사">
+                        {copiedEmail ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4 text-gray-600" />}
+                      </button>
+                    </div>
+                  )}
+                  {talent.phone && (
+                    <div className="flex items-center justify-between p-2.5 bg-gray-50 rounded-lg">
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <Phone className="w-4 h-4 text-gray-400 shrink-0" />
+                        <span className="text-sm text-gray-700">{talent.phoneCountryCode || ''} {talent.phone}</span>
+                      </div>
+                      <button onClick={handleCopyPhone} className="ml-2 p-1.5 hover:bg-gray-200 rounded transition-colors shrink-0" title="전화번호 복사">
+                        {copiedPhone ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4 text-gray-600" />}
+                      </button>
+                    </div>
+                  )}
+                  {(talent.birthYear || talent.gender) && (
+                    <div className="pt-2 border-t border-gray-200 space-y-2 text-sm">
+                      {talent.birthYear && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-gray-600">나이</span>
+                          <span className="font-medium text-gray-900">{calculateAge(talent.birthYear)}세</span>
+                        </div>
+                      )}
+                      {talent.gender && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-gray-600">성별</span>
+                          <span className="font-medium text-gray-900">{talent.gender}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* 비자 정보 + 선호 조건 통합 */}
+            {(talent.koreanLevel || talent.visaSponsorship !== undefined || talent.desiredJobCategory || talent.workType) && (
+              <div className="bg-white rounded-xl shadow-sm p-6">
+                <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                  <Shield className="w-5 h-5 text-primary-600" />
+                  비자 및 근무 조건
+                </h2>
+                <div className="space-y-3 text-sm">
+                  {talent.koreanLevel && (
+                    <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                      <span className="text-gray-600">한국어 능력 ⭐</span>
+                      <span className="font-bold text-primary-700">{talent.koreanLevel}</span>
+                    </div>
+                  )}
+                  {talent.visaSponsorship !== undefined && (
+                    <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                      <span className="text-gray-600">비자 스폰서십</span>
+                      <span className={`px-2 py-0.5 text-xs font-medium rounded ${
+                        talent.visaSponsorship ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'
+                      }`}>
+                        {talent.visaSponsorship ? '필요함' : '불필요'}
+                      </span>
+                    </div>
+                  )}
+                  {talent.desiredJobCategory && (
+                    <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                      <span className="text-gray-600">희망 직군</span>
+                      <span className="font-medium text-gray-900">{talent.desiredJobCategory}</span>
+                    </div>
+                  )}
+                  {talent.workType && (
+                    <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                      <span className="text-gray-600">고용 형태</span>
+                      <span className="font-medium text-gray-900">{talent.workType}</span>
+                    </div>
+                  )}
+                  {talent.remoteWork && (
+                    <div className="flex items-center justify-between py-2">
+                      <span className="text-gray-600">재택근무</span>
+                      <span className="font-medium text-gray-900">{talent.remoteWork}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* Skills */}
             {talent.skills && talent.skills.length > 0 && (
               <div className="bg-white rounded-xl shadow-sm p-6">

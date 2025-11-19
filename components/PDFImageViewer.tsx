@@ -8,6 +8,7 @@ interface PDFImageViewerProps {
   pdfUrl: string;
   fileName?: string;
   className?: string;
+  userId?: string; // 타인 이력서인 경우 사용자 ID
 }
 
 interface PageImage {
@@ -19,7 +20,8 @@ interface PageImage {
 export default function PDFImageViewer({
   pdfUrl,
   fileName = 'PDF',
-  className = ''
+  className = '',
+  userId
 }: PDFImageViewerProps) {
   const [pages, setPages] = useState<PageImage[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -27,6 +29,38 @@ export default function PDFImageViewer({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [viewMode, setViewMode] = useState<'single' | 'scroll'>('single');
+
+  // 다운로드 핸들러
+  const handleDownload = async () => {
+    if (!userId) {
+      alert('사용자 정보를 찾을 수 없습니다.');
+      return;
+    }
+
+    try {
+      const downloadUrl = `/api/download/resume/${userId}`;
+
+      const response = await fetch(downloadUrl);
+
+      if (!response.ok) {
+        alert('PDF 다운로드에 실패했습니다.');
+        return;
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName || 'document.pdf';
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('PDF download error:', error);
+      alert('PDF 다운로드 중 오류가 발생했습니다.');
+    }
+  };
 
   useEffect(() => {
     const convertPdfToImages = async () => {
@@ -86,15 +120,13 @@ export default function PDFImageViewer({
         <div className="text-center">
           <div className="text-red-500 text-lg font-medium mb-2">변환 실패</div>
           <div className="text-gray-600 mb-4">{error}</div>
-          <a
-            href={pdfUrl}
-            target="_blank"
-            rel="noopener noreferrer"
+          <button
+            onClick={handleDownload}
             className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
           >
             <Download className="w-4 h-4" />
             PDF 다운로드
-          </a>
+          </button>
         </div>
       </div>
     );
@@ -188,14 +220,13 @@ export default function PDFImageViewer({
           </div>
 
           {/* 다운로드 버튼 */}
-          <a
-            href={pdfUrl}
-            download={fileName}
+          <button
+            onClick={handleDownload}
             className="p-2 rounded-md bg-white border hover:bg-gray-50"
             title="PDF 다운로드"
           >
             <Download className="w-5 h-5" />
-          </a>
+          </button>
         </div>
       </div>
 

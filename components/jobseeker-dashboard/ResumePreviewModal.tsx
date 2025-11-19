@@ -7,13 +7,15 @@ type Props = {
   onClose: () => void;
   resumeFileUrl: string | null | undefined;
   resumeFileName: string | null | undefined;
+  userId?: string;
 };
 
 export default function ResumePreviewModal({
   isOpen,
   onClose,
   resumeFileUrl,
-  resumeFileName
+  resumeFileName,
+  userId
 }: Props) {
   if (!isOpen || !resumeFileUrl) return null;
 
@@ -39,6 +41,7 @@ export default function ResumePreviewModal({
           <PDFImageViewer
             pdfUrl={resumeFileUrl}
             fileName={resumeFileName || 'Resume'}
+            userId={userId}
           />
         </div>
       </div>

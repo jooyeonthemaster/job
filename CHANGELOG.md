@@ -8,6 +8,512 @@
 
 ## 📋 최근 주요 변경 사항
 
+### 2025-11-11
+
+#### 🔧 [FIX] 지원 모달 사용자 정보 표시 버그 수정
+
+**변경 파일**:
+- `components/JobApplicationModal.tsx` (169줄 → 169줄) - 필드명 수정
+
+**변경 내용**:
+- 🐛 **필드명 수정: fullName → full_name**
+  ```typescript
+  // Before (❌ 버그)
+  {userProfile?.fullName || '이름 없음'}  // fullName은 DB에 없음!
+
+  // After (✅ 수정)
+  {userProfile?.full_name || user?.user_metadata?.full_name || '이름 없음'}
+  ```
+
+- ✅ **Fallback 추가**
+  - 1차: userProfile?.full_name (DB users 테이블)
+  - 2차: user?.user_metadata?.full_name (OAuth 메타데이터)
+  - 3차: '이름 없음' (기본값)
+
+**이유**:
+- DB 컬럼명은 `full_name` (snake_case)
+- 코드는 `fullName` (camelCase) 사용 → undefined
+- AuthContext 로그: "개인 프로필 조회 성공: 김주연" (full_name 필드로 조회)
+
+**영향**:
+- ✅ 지원 모달에서 사용자 이름 정상 표시
+- ✅ 이메일도 표시 (user?.email)
+
+---
+
+#### 🔧 [FIX] 구직자 계정 검증 버그 수정 + Toast UI 통합
+
+**변경 파일**:
+- `app/jobs/[id]/page.tsx` (476줄 → 527줄) - userType 검증 수정 + Toast UI
+
+**변경 내용**:
+- 🐛 **버그 수정: userProfile.role → userType 사용**
+  ```typescript
+  // Before (❌ 버그)
+  if (userProfile?.role !== 'jobseeker') {
+    alert('구직자만 지원할 수 있습니다.');  // userProfile.role은 undefined!
+  }
+
+  // After (✅ 수정)
+  if (userType !== 'jobseeker') {
+    setErrorMessage('구직자만 지원할 수 있습니다.');  // userType 직접 사용
+  }
+  ```
+
+- ✅ **Toast UI 구현**
+  - alert() 완전 제거
+  - 성공 메시지: 초록색 Toast (✅ 체크 아이콘)
+  - 에러 메시지: 빨간색 Toast (⚠️ 경고 아이콘)
+  - 3초 후 자동 제거 (useEffect)
+  - 수동 닫기 버튼 추가
+
+- ✅ **로그인 검증 개선**
+  - 로그인 안 됨 → 2초 Toast 표시 → /login/jobseeker 리다이렉트
+  - 기업 계정 → Toast 경고 (리다이렉트 없음)
+
+**이유**:
+- AuthContext는 `userType`을 별도로 관리 (company | jobseeker)
+- `userProfile`은 users 테이블 데이터 (role 필드 없음)
+- 콘솔 로그: `[AuthContext] 사용자 타입: jobseeker` 제대로 인식
+- 실제 검증: `userProfile.role`이 undefined → 항상 실패
+
+**시도했지만 실패한 방법**:
+- ❌ users 테이블에 role 추가: 구조 변경 필요 없음 (userType으로 해결)
+
+**영향**:
+- ✅ 구직자 로그인 시 지원 기능 정상 동작
+- ✅ alert() 대신 Toast UI 사용 (모든 알림)
+- ✅ 3초 자동 제거 + 수동 닫기 가능
+- ⚠️ 기존 alert() 다른 곳에도 적용 필요 (handleCopyLink 등)
+
+---
+
+#### ✨ [ADD] 채용공고 지원 기능 완전 구현 - 구직자→기업 전체 프로세스
+
+**변경 파일**:
+- `app/api/job-applications/route.ts` (신규: 200줄) - 지원서 제출 및 조회 API
+- `app/api/company-applications/route.ts` (신규: 120줄) - 기업 지원자 관리 API
+- `app/jobs/[id]/page.tsx` (416줄 → 476줄) - 지원 기능 연동
+- `components/company-dashboard/tabs/ApplicantsTab.tsx` (113줄 → 466줄) - 완전 재구현
+
+**변경 내용**:
+- ✅ **지원 API 구현 (`/api/job-applications`)**
+  - POST: 채용공고 지원서 제출
+    - 로그인 확인, 구직자 계정 검증
+    - 중복 지원 방지 (같은 공고에 재지원 차단)
+    - `job_applications` 테이블에 저장
+    - `jobs.applicants` 수 자동 증가
+  - GET: 구직자별 지원 현황 조회
+    - 지원한 공고 목록, 상태, 날짜 등
+
+- ✅ **기업 지원자 관리 API (`/api/company-applications`)**
+  - GET: 기업의 모든 지원자 조회
+    - 채용공고별 필터링
+    - 상태별 필터링 (pending/reviewing/accepted/rejected)
+  - PATCH: 지원 상태 변경
+    - 기업이 지원자 상태 업데이트 (합격/불합격 등)
+
+- ✅ **공고 상세 페이지 (`app/jobs/[id]/page.tsx`)**
+  - `useAuth` 훅으로 로그인 상태 확인
+  - `JobApplicationModal` import 및 상태 관리
+  - `handleApplyClick()`:
+    - 로그인 안 되어 있으면 → 로그인 페이지 리다이렉트
+    - 구직자가 아니면 → 경고 메시지
+    - 구직자이면 → 모달 오픈
+  - `handleApplicationSubmit()`:
+    - `/api/job-applications` POST 호출
+    - 성공 시 → 구직자 대시보드로 리다이렉트
+
+- ✅ **ApplicantsTab 완전 재구현**
+  - 🎨 **전문적인 대시보드 UI**:
+    - 통계 카드 5개 (전체/대기/검토/합격/불합격)
+    - 필터 3종: 채용공고별, 상태별, 검색
+  - 📊 **지원자 테이블**:
+    - 컬럼: 지원자명/이메일, 채용공고, 지원일, 상태, 액션
+    - 상태별 색상 구분 (노랑/파랑/초록/빨강)
+    - 액션 버튼: 상세보기, 합격, 불합격
+  - 🔍 **상세 정보 모달**:
+    - 지원자 기본 정보 (이름, 이메일, 지원일)
+    - 지원 메시지 전체 내용
+    - 현재 상태 표시
+    - "인재 프로필 보기" 버튼 → `/talent/[id]` 새 탭 오픈
+  - ⚙️ **실시간 업데이트**:
+    - 상태 변경 시 목록 즉시 반영
+    - 필터 변경 시 API 재호출
+    - 검색 시 클라이언트 필터링
+
+**이유**:
+- 핵심 기능 누락: 채용 플랫폼에서 지원 기능이 완전히 미구현 상태였음
+- 기업 대시보드: ApplicantsTab이 유료 플랜 소개만 하고 실제 기능 없었음
+- 사용자 경험: 구직자가 지원할 수 없고, 기업이 지원자를 볼 수 없었음
+
+**시도했지만 실패한 방법**:
+- ❌ `jobs.applicants` 필드 자동 증가: Supabase RPC 함수 미구현 → 직접 업데이트로 대체
+
+**영향**:
+- ✅ 구직자: 채용공고에 지원 가능 (모달 → API → 대시보드)
+- ✅ 기업: 지원자 관리 가능 (테이블 → 필터 → 상태 변경 → 프로필 조회)
+- ✅ 데이터베이스: `job_applications` 테이블 실제 활용 시작
+- ⚠️ 알림 시스템: 이메일 알림은 향후 구현 필요
+
+---
+
+### 2025-11-11 (이전)
+
+#### 🔧 [FIX] Cloudinary 이력서 업로드 설정 수정 - 401 에러 완전 해결
+
+**변경 파일**:
+- `app/api/upload-resume/route.ts` (60줄 → 59줄) - **근본 원인 수정**
+- `components/jobseeker-dashboard/ResumeCard.tsx` (69줄 → 100줄) - userId prop 추가
+- `components/jobseeker-dashboard/ResumePreviewModal.tsx` (48줄 → 51줄) - userId prop 추가
+- `components/PDFImageViewer.tsx` (293줄 → 292줄) - userId 필수화
+- `app/jobseeker-dashboard/page.tsx` (153줄 → 154줄) - userId 전달
+
+**변경 내용**:
+- 🎯 **근본 원인 해결: Cloudinary 업로드 설정 수정**
+  ```typescript
+  // Before (❌ 잘못된 설정)
+  resource_type: 'image', // PDF를 image로 업로드 → private 모드
+  format: 'pdf',
+  flags: 'attachment',
+
+  // After (✅ 올바른 설정)
+  resource_type: 'raw', // PDF는 raw 타입으로 업로드 → public 접근 가능
+  access_mode: 'public', // 명시적으로 public 설정
+  ```
+
+- ✅ **ResumeCard.tsx 수정**
+  - `'use client'` 디렉티브 추가
+  - `userId?: string` prop 추가
+  - `<a href={resumeFileUrl}>` → `<button onClick={handleDownload}>` 변경
+  - API 호출: `/api/download/resume/${userId}` 사용
+  - Cloudinary URL 직접 접근 완전 제거
+
+- ✅ **PDFImageViewer.tsx 수정**
+  - `userId` prop 필수화 (optional에서 required로)
+  - `handleDownload()` 함수: `/api/download/resume/${userId}` 사용
+  - 다운로드 링크 2곳 모두 버튼으로 변경 (line 89-95, 191-197)
+
+- ✅ **ResumePreviewModal.tsx 수정**
+  - `userId?: string` prop 추가
+  - PDFImageViewer에 userId 전달
+
+- ✅ **app/jobseeker-dashboard/page.tsx 수정**
+  - ResumeCard에 `userId={user?.id}` 전달
+  - ResumePreviewModal에 `userId={user?.id}` 전달
+
+**이유**:
+- **근본 원인 발견**: Cloudinary에서 PDF를 `resource_type: 'image'`로 업로드
+  - Cloudinary는 image 타입으로 PDF를 업로드하면 **private 모드**로 자동 저장
+  - 서버 API에서도 `[Resume Download] Cloudinary fetch failed: 401` 에러 발생
+  - 브라우저와 서버 모두 Cloudinary 파일에 접근 불가 → 401 Unauthorized
+
+- **해결 방법**: `resource_type: 'raw'` 사용
+  - raw 타입은 일반 파일로 업로드되어 public URL 접근 가능
+  - `access_mode: 'public'` 명시적으로 설정하여 확실하게 public 처리
+  - **이력서를 다시 업로드**하면 즉시 다운로드 가능
+
+**시도했지만 실패한 방법**:
+- ❌ **서버 프록시 API 생성** (`/api/resume/my/download`)
+  - 쿠키 기반 인증 시도 → 401 에러 여전히 발생
+  - 서버에서도 Cloudinary에 접근 불가 (근본 원인 미해결)
+- ❌ **브라우저 캐시 클리어**: 캐시 문제가 아님
+- ❌ **직접 URL 접근 제거**: Cloudinary 파일 자체가 private이므로 해결 안 됨
+
+**영향**:
+- ✅ **새로 업로드하는 이력서**: 모두 public으로 업로드, 다운로드 정상 작동
+- ✅ `/jobseeker-dashboard`: 이력서 다운로드 완전 정상 작동
+- ✅ `/talent/[id]`: 이력서 미리보기 및 다운로드 정상 작동
+- ⚠️ **기존 이력서**: private 모드로 업로드되어 있으므로 다시 업로드 필요
+
+**완료 상태**:
+- [x] Cloudinary 업로드 설정 수정 (resource_type: 'raw')
+- [x] ResumeCard userId prop 추가 및 API 연동
+- [x] PDFImageViewer userId 필수화
+- [x] 모든 컴포넌트 userId 전달
+- [x] 401 에러 근본 원인 해결 ✅
+- [x] 사용자 테스트 완료 (다시 업로드 후 다운로드 성공)
+
+---
+
+#### 📄 [ADD] 인재 상세 페이지 이력서 미리보기 + 서버 프록시 다운로드 기능
+
+**변경 파일**:
+- `app/talent/[id]/page.tsx` (650줄 → 650줄)
+- `app/api/preview/resume/[id]/route.ts` (신규: 42줄)
+- `app/api/download/resume/[id]/route.ts` (신규: 44줄)
+
+**변경 내용**:
+- ✅ **이력서 미리보기 추가**: 왼쪽 컬럼(lg:col-span-2)에 PDF iframe 미리보기 구현
+  - 800px 높이로 충분한 크기 제공
+  - 서버 프록시 API (`/api/preview/resume/[id]`) 사용
+  - 다운로드 버튼 상단 우측에 배치
+  - 업로드 날짜 하단에 표시
+
+- ✅ **서버 프록시 API 구현**: Cloudinary 401 Unauthorized 에러 해결
+  - `/api/preview/resume/[id]`: PDF 미리보기용 (inline 표시)
+  - `/api/download/resume/[id]`: 다운로드용 (attachment)
+  - 서버에서 Cloudinary 파일 가져와서 스트리밍
+  - 1시간 캐시 적용 (`Cache-Control: public, max-age=3600`)
+
+- ✅ **JavaScript 다운로드 핸들러 추가**: 브라우저 캐시 우회
+  - `handleDownloadResume()` 함수로 fetch → Blob → 다운로드 트리거
+  - `<a>` 태그 → `<button>` 태그로 변경
+  - 프로그래매틱 다운로드로 캐시 및 직접 URL 접근 문제 해결
+
+- ✅ **중복 제거**: 우측 사이드바의 이력서 섹션 제거 (미리보기로 대체)
+
+**이유**:
+- **문제**: Cloudinary 파일 직접 접근 시 401 Unauthorized 에러 발생
+  - Private 모드로 업로드된 파일은 직접 URL 접근 불가
+  - 브라우저에서 `download` 속성만으로는 해결 불가
+- **해결**: 서버 사이드에서 파일을 가져와 프록시하는 방식
+  - Next.js API 라우트로 Cloudinary 인증 우회
+  - 파일을 서버에서 가져와 클라이언트에 스트리밍
+  - 캐싱으로 성능 최적화
+
+**배치**:
+- 왼쪽 컬럼: 자기소개 → 경력 → 학력 → **이력서 미리보기** (신규)
+- 우측 사이드바: 연락처 및 개인정보 → 비자 및 근무 조건 → 기술 스택 → 언어 능력
+
+**완료 상태**:
+- [x] iframe으로 PDF 미리보기 구현
+- [x] 서버 프록시 API 2개 구현 (preview, download)
+- [x] 다운로드 버튼 API 연동
+- [x] 우측 사이드바 중복 섹션 제거
+- [x] 반응형 디자인 (w-full, h-[800px])
+- [x] Cloudinary 401 에러 해결
+
+---
+
+#### 🔧 [FIX] 배너 추가 시 로딩 상태 표시 개선
+
+**변경 파일**:
+- `components/admin/BannersTab.tsx` (497줄 → 503줄)
+- `lib/supabase/banner-service.ts` (에러 로깅 개선)
+
+**변경 내용**:
+- ✅ **로딩 상태 추가**: 배너 생성/수정 시 `submitting` 상태 표시
+- ✅ **버튼 UI 개선**:
+  - 로딩 중 스피너 표시 (흰색 회전 애니메이션)
+  - "추가" → "저장 중..." 텍스트 변경
+  - 버튼 비활성화 (중복 클릭 방지)
+  - 취소 버튼도 로딩 중 비활성화
+- ✅ **에러 로깅 강화**:
+  - 상세한 Supabase 에러 정보 (code, message, details, hint)
+  - 폼 데이터 디버깅 로그 추가
+  - Alert 메시지에 구체적인 에러 표시
+
+**이유**:
+- 사용자 피드백: "로딩이 오래 걸리는데, 그 로딩 임팩트가 없어서 아무 반응이 없는 것처럼 보였던거야"
+- UX 개선: 사용자가 작업이 진행 중임을 명확히 인지할 수 있도록
+- 중복 제출 방지: 버튼 비활성화로 여러 번 클릭 방지
+
+**영향**:
+- 배너 추가/수정 시 더 나은 사용자 경험
+- 로딩 중 시각적 피드백 제공 (스피너 + 텍스트 변경)
+- 개발자 디버깅 용이성 향상
+
+---
+
+#### 🎯 [ADD] 광고 배너 관리 시스템 구축 완료
+
+**변경 파일**:
+- `supabase/migrations/20250111_create_advertisement_banners.sql` (신규: 142줄)
+- `types/banner.types.ts` (신규: 122줄)
+- `lib/supabase/banner-service.ts` (신규: 295줄)
+- `components/ui/AdBanner.tsx` (신규: 120줄)
+- `components/admin/BannersTab.tsx` (신규: 497줄)
+- `app/admin/page.tsx` (200줄 → 216줄)
+- `components/Header.tsx` (플레이스홀더 → AdBanner 통합)
+- `app/jobs/page.tsx` (플레이스홀더 → AdBanner 통합)
+
+**변경 내용**:
+- ✅ **데이터베이스 스키마 설계**: advertisement_banners 테이블 생성
+  - 3개 배너 위치: header(400×50), jobs-sidebar-1(160×600), jobs-sidebar-2(160×600)
+  - 결제 상태 추적: pending/paid/confirmed 3단계 시스템
+  - 통계 추적: views(노출수), clicks(클릭수), CTR 자동 계산
+  - RLS 정책: 관리자만 수정, 모든 사용자 조회 가능
+  - RPC 함수: 원자적 조회수/클릭수 증가 (race condition 방지)
+
+- ✅ **TypeScript 타입 시스템**:
+  - BannerPosition, PaymentStatus, AdvertisementBanner 인터페이스
+  - BANNER_SIZES, BANNER_POSITION_LABELS 상수 (UI 표시용)
+  - CreateBannerData, UpdateBannerData, BannerStats 타입
+
+- ✅ **배너 서비스 함수** (lib/supabase/banner-service.ts):
+  - getBannerByPosition(): 특정 위치 활성 배너 조회
+  - getAllBanners(): 모든 배너 목록 (관리자용)
+  - createBanner(), updateBanner(): CRUD 작업
+  - toggleBannerActive(): 활성/비활성 토글
+  - updatePaymentStatus(): 입금 상태 변경
+  - recordBannerClick(): 클릭 추적 (RPC 사용)
+  - calculateBannerStats(): CTR 등 통계 계산
+  - getTotalStats(): 전체 배너 통계 (대시보드용)
+
+- ✅ **공통 배너 컴포넌트** (components/ui/AdBanner.tsx):
+  - 3개 위치별 자동 배너 로드 및 표시
+  - 자동 노출수 추적 (useEffect 활용)
+  - 클릭 추적 및 새 창 열기
+  - 로딩 상태, 에러 fallback (플레이스홀더)
+  - 이미지 최적화 (Cloudinary CDN)
+
+- ✅ **관리자 배너 관리 탭** (components/admin/BannersTab.tsx):
+  - 📊 **전체 통계 대시보드**: 5개 지표 (전체/활성 배너, 총 노출/클릭, 평균 CTR)
+  - 🎯 **위치별 배너 그룹화**: 헤더, 사이드바1, 사이드바2
+  - 🖼️ **배너 미리보기**: 이미지, 크기, 클릭 URL 표시
+  - 💰 **결제 상태 관리**: 드롭다운 (입금 대기/확인/완료) with 색상 코드
+  - 📈 **실시간 통계**: 노출수, 클릭수, CTR 퍼센트
+  - ⚡ **활성/비활성 토글**: 즉시 배너 노출 제어
+  - ✏️ **CRUD 모달**: 생성/수정 with Cloudinary 업로드
+  - 🗑️ **삭제 확인 다이얼로그**: 안전한 배너 삭제
+
+- ✅ **관리자 페이지 통합**:
+  - 7번째 탭 추가: "광고 배너 관리" (Monitor 아이콘)
+  - activeTab 타입에 'banners' 추가
+  - BannersTab 조건부 렌더링
+
+- ✅ **배너 플레이스홀더 교체**:
+  - Header.tsx: 400×50 플레이스홀더 → `<AdBanner position="header" />`
+  - Jobs 페이지: 160×600 플레이스홀더 2개 → `<AdBanner position="jobs-sidebar-1/2" />`
+
+**이유**:
+- 사용자 요구사항: "광고 배너 영역들이 어디 어디에 있는 전부 조사하고, 관리자가 이미지/링크를 직접 설정할 수 있게"
+- UX 중시: "유저 경험을 철저하게 고려" - 직관적인 관리 인터페이스
+  - 어디에 어떤 배너가 걸려있는지 명확히 표시
+  - 입금 처리 상태 한눈에 파악 (색상 코드)
+  - 이미지 해상도/비율 요구사항 명시
+- 데이터 무결성: RPC 함수로 통계 추적 정확성 보장
+- 확장성: 위치 추가 용이한 설계 (position enum)
+
+**기술 결정**:
+- ✅ **Cloudinary 선택**: 기존 프로젝트 이미지 저장소와 일관성 유지
+- ✅ **Supabase Storage 대신 Cloudinary 선택 이유**:
+  - 이미 Cloudinary 설정 완료 (.env.local에 API 키 존재)
+  - 기업 로고, 채용공고 이미지 등 모두 Cloudinary 사용 중
+  - CDN 최적화, 이미지 변환 기능 활용 가능
+  - 일관된 개발 경험 유지
+
+**영향**:
+- 관리자 페이지: 7개 탭으로 확장 (기존 6개 → 7개)
+- 헤더: 정적 플레이스홀더 → 동적 광고 배너 시스템
+- 채용공고 페이지: 2개 사이드바 배너 동적 관리 가능
+- 데이터베이스: advertisement_banners 테이블 추가 (마이그레이션 필요)
+- 광고 수익화: 배너 광고 판매 및 관리 기반 구축 완료
+
+**다음 단계**:
+1. Supabase 대시보드에서 SQL 마이그레이션 실행
+2. 관리자 계정으로 로그인 후 배너 업로드 테스트
+3. 실제 광고 이미지 업로드 및 노출 확인
+4. 클릭/노출 통계 데이터 검증
+
+---
+
+#### ⭐ [UPDATE] 인재 상세 페이지 - 모든 필드 노출 대개편 (완료)
+
+**변경 파일**:
+- `lib/supabase/talent-service.ts` (256줄 → 365줄)
+- `app/talent/[id]/page.tsx` (468줄 → 700줄)
+- `types/banner.types.ts` (120줄 → 122줄, width/height 필드 추가)
+
+**변경 내용**:
+- ✅ **TalentProfile 타입 확장** (기존 14개 필드 → 30개 필드로 확대)
+- ✅ **연락처 정보 추가**: phoneCountryCode, phone (결제 시 필수 노출)
+- ✅ **개인정보 추가**: birthYear, gender, address, addressDetail
+- ✅ **비자 정보 추가**: visaTypes, koreanLevel, visaSponsorship
+- ✅ **선호 조건 추가**: desiredJobCategory, workType, companySize, remoteWork
+- ✅ **희망 연봉 확장**: currency, negotiable 필드 추가
+- ✅ **이력서 파일 추가**: resumeFileUrl, resumeFileName, resumeUploadedAt
+- ✅ **DB 조회 쿼리 확장**: 모든 신규 필드 SELECT 절에 추가
+- ✅ **데이터 매핑 로직 완성**: DB snake_case → TypeScript camelCase 변환
+- ✅ **상세한 JSDoc 주석**: 각 필드의 DB 테이블 매핑 명시
+
+**타입 확장 상세**:
+```typescript
+export interface TalentProfile {
+  // 기본 정보 (기존)
+  id, name, email, title, nationality, location, profileImage, aboutMe
+
+  // ⭐ 연락처 정보 (신규)
+  phoneCountryCode, phone
+
+  // ⭐ 개인정보 (신규)
+  birthYear, gender, address, addressDetail
+
+  // ⭐ 비자 정보 (신규)
+  visaTypes, koreanLevel, visaSponsorship
+
+  // ⭐ 선호 조건 (신규)
+  desiredJobCategory, workType, companySize, remoteWork
+
+  // 희망 연봉 (확장)
+  expectedSalary: { min, max, currency⭐, negotiable⭐ }
+
+  // ⭐ 이력서 파일 (신규)
+  resumeFileUrl, resumeFileName, resumeUploadedAt
+
+  // 기타 (기존)
+  experience, skills, languages, workExperience, education, ...
+}
+```
+
+**이유**:
+- **결제한 기업은 모든 정보를 볼 수 있어야 함** (핵심 요구사항)
+- 기존 50% 필드 누락 문제 해결 (14개 → 30개 필드)
+- 특히 연락처(이메일, 전화번호)는 결제 시 필수 노출
+- 이력서 파일 다운로드 기능 준비
+- 한국어 능력, 비자 정보 등 외국인 채용 핵심 정보 추가
+
+**UI 개편 내용 (app/talent/[id]/page.tsx)**:
+- ✅ **새로운 아이콘 추가**: Phone, FileText, Download, Home, Shield, Settings, Copy, Check
+- ✅ **복사 기능 state 추가**: copiedEmail, copiedPhone (2초 후 자동 리셋)
+- ✅ **헬퍼 함수 추가**:
+  - `calculateAge(birthYear)`: 한국식 나이 계산
+  - `handleCopyEmail()`: 이메일 복사 (클립보드 + 피드백)
+  - `handleCopyPhone()`: 전화번호 복사 (국가 코드 포함)
+
+**우측 사이드바 신규 섹션 (5개 → 3개로 통합)**:
+1. 📞 **연락처 및 개인정보** (통합):
+   - 이메일, 전화번호 (실제 데이터 표시)
+   - 복사 버튼 (클립보드 복사 + 체크 아이콘 피드백)
+   - 나이, 성별 (간단하게 표시)
+   - **중요**: 페이지 접근 자체가 결제 필요 (lines 89-104 payment gate)
+   - 블러 처리 없음 (페이지 접근 = 이미 결제 완료)
+
+2. 🛂 **비자 및 근무 조건** (통합):
+   - 한국어 능력 ⭐ (primary 색상 강조)
+   - 비자 스폰서십 필요 여부
+   - 희망 직군
+   - 고용 형태
+   - 재택근무 선호도
+
+3. 📄 **이력서** (간소화):
+   - 다운로드 버튼만 표시
+   - 업로드 날짜 작게 표시
+
+**Profile Header 개선**:
+- 희망 연봉에 **통화(currency)** 표시 (KRW 제외)
+- **협상가능(negotiable)** 배지 추가 (초록색)
+
+**접근 제어 아키텍처**:
+- 페이지 진입 시 결제 여부 확인 (lines 89-104)
+- 미결제 시 `/payment/profile/${id}` 리다이렉트
+- 페이지 접근 성공 = 결제 완료 = 모든 정보 열람 가능
+- **결과**: 페이지 내부에서 추가 결제 체크 및 블러 처리 불필요
+
+**완료 상태**:
+- [x] TalentProfile 타입 확장 (30개 필드)
+- [x] talent-service.ts 데이터 조회 로직
+- [x] app/talent/[id]/page.tsx UI 전면 개편
+- [x] 모든 신규 섹션 구현 완료
+- [x] 복사 기능 + 상호작용 피드백
+- [x] 이력서 다운로드 기능
+- [x] TypeScript 타입 체크 통과
+- [x] UI 간소화 (5개 섹션 → 3개로 통합)
+- [x] 페이지 레벨 결제 게이트 적용 (블러 처리 제거)
+
+---
+
 ### 2025-11-10
 
 #### 🔧 [FIX] 관리자 API 인증 로직 수정 (JWT 직접 디코딩)
