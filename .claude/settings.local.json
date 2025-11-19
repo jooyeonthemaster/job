@@ -29,7 +29,8 @@
       "Bash(rm:*)",
       "Bash(if [ ! -d \"claudedocs\" ])",
       "Bash(then mkdir claudedocs)",
-      "Bash(fi:*)"
+      "Bash(fi:*)",
+      "Bash(git checkout:*)"
     ],
     "deny": [],
     "ask": []

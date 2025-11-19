@@ -152,7 +152,7 @@ export default function CompanySelectOrCreate({
         try {
           logoUrl = await uploadLogo(logoFile, tempCompanyId);
           console.log('로고 업로드 성공:', logoUrl);
-        } catch (logoError: any) {
+        } catch (logoError: unknown) {
           console.error('로고 업로드 실패:', logoError);
           alert('로고 업로드에 실패했습니다. 로고 없이 회사를 생성합니다.');
         }
@@ -234,19 +234,20 @@ export default function CompanySelectOrCreate({
       setLogoFile(null);
       setLogoPreview('');
       setErrors({});
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const err = error as any;
       console.error('=== 회사 생성 실패 ===');
       console.error('에러 상세:', error);
-      console.error('에러 메시지:', error.message);
-      console.error('에러 코드:', error.code);
-      console.error('에러 힌트:', error.hint);
+      console.error('에러 메시지:', err.message);
+      console.error('에러 코드:', err.code);
+      console.error('에러 힌트:', err.hint);
 
       let errorMessage = '회사 생성에 실패했습니다.';
-      if (error.message) {
-        errorMessage += `\n\n에러: ${error.message}`;
+      if (err.message) {
+        errorMessage += `\n\n에러: ${err.message}`;
       }
-      if (error.hint) {
-        errorMessage += `\n힌트: ${error.hint}`;
+      if (err.hint) {
+        errorMessage += `\n힌트: ${err.hint}`;
       }
 
       alert(errorMessage);

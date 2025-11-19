@@ -52,9 +52,9 @@ export const useDeleteAccount = (): UseDeleteAccountResult => {
       // 로그아웃 및 홈으로 이동
       await logout();
       window.location.href = '/';
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('[useDeleteAccount] 에러:', err);
-      setError(err.message || '계정 삭제 중 오류가 발생했습니다.');
+      setError((err as Error).message || '계정 삭제 중 오류가 발생했습니다.');
     } finally {
       setIsDeleting(false);
     }

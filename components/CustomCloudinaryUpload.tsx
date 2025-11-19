@@ -168,9 +168,9 @@ export default function CustomCloudinaryUpload({
       
       // 미리보기 URL 정리
       URL.revokeObjectURL(previewUrl);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Upload error:', error);
-      const errorMessage = error.message || '업로드 중 오류가 발생했습니다.';
+      const errorMessage = (error as Error).message || '업로드 중 오류가 발생했습니다.';
       setError(errorMessage);
       setPreview('');
       onUploadError?.(errorMessage);

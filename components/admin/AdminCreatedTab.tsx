@@ -165,9 +165,9 @@ export default function AdminCreatedTab() {
 
       alert('회사가 삭제되었습니다.');
       fetchAdminCreatedData();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('삭제 실패:', error);
-      alert(`삭제 실패: ${error.message}`);
+      alert(`삭제 실패: ${(error as Error).message}`);
     }
   };
 

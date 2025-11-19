@@ -210,16 +210,17 @@ export const useJobseekerOnboarding = () => {
 
       // 대시보드로 이동
       router.push('/jobseeker-dashboard');
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const err = error as any;
       console.error('[Jobseeker Onboarding] 에러 상세:', {
-        message: error?.message,
-        code: error?.code,
-        details: error?.details,
-        hint: error?.hint,
-        stack: error?.stack,
+        message: err?.message,
+        code: err?.code,
+        details: err?.details,
+        hint: err?.hint,
+        stack: err?.stack,
         fullError: JSON.stringify(error, null, 2)
       });
-      alert(error.message || '온보딩 처리 중 오류가 발생했습니다.');
+      alert(err?.message || '온보딩 처리 중 오류가 발생했습니다.');
       setIsSubmitting(false);
     }
   };

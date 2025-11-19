@@ -320,7 +320,7 @@ export const useSignup = (activeTab: SignupTab) => {
         console.log('[Signup] 구직자 회원 -> /onboarding/job-seeker/quick로 리다이렉트');
         router.push('/onboarding/job-seeker/quick');
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('[Signup] 에러 발생:', err);
       handleSignupError(err);
     } finally {
@@ -403,15 +403,16 @@ export const useSignup = (activeTab: SignupTab) => {
   };
 
   // 에러 처리
-  const handleSignupError = (err: any) => {
-    if (err?.message?.includes('already registered')) {
+  const handleSignupError = (err: unknown) => {
+    const error = err as Error;
+    if (error?.message?.includes('already registered')) {
       setError('이미 사용 중인 이메일입니다.');
-    } else if (err?.message?.includes('invalid email')) {
+    } else if (error?.message?.includes('invalid email')) {
       setError('유효하지 않은 이메일 형식입니다.');
-    } else if (err?.message?.includes('Password should be at least 6 characters')) {
+    } else if (error?.message?.includes('Password should be at least 6 characters')) {
       setError('비밀번호는 최소 6자 이상이어야 합니다.');
     } else {
-      setError(err?.message || '회원가입 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+      setError(error?.message || '회원가입 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
     }
   };
 
@@ -451,9 +452,9 @@ export const useSignup = (activeTab: SignupTab) => {
 
       console.log('[Signup] 구글 회원가입 리다이렉트 중...');
       clearFormData();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('[Signup] 구글 회원가입 에러:', err);
-      setError(err?.message || '구글 회원가입 중 오류가 발생했습니다.');
+      setError((err as Error)?.message || '구글 회원가입 중 오류가 발생했습니다.');
       setIsLoading(false);
     }
   };
@@ -491,9 +492,9 @@ export const useSignup = (activeTab: SignupTab) => {
 
       console.log('[Signup] 카카오 회원가입 리다이렉트 중...');
       clearFormData();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('[Signup] 카카오 회원가입 에러:', err);
-      setError(err?.message || '카카오 회원가입 중 오류가 발생했습니다.');
+      setError((err as Error)?.message || '카카오 회원가입 중 오류가 발생했습니다.');
       setIsLoading(false);
     }
   };
@@ -514,9 +515,9 @@ export const useSignup = (activeTab: SignupTab) => {
       // API Route로 리다이렉트 (type 파라미터 전달)
       window.location.href = `/api/auth/naver?type=${activeTab}`;
       clearFormData();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('[Signup] 네이버 회원가입 에러:', err);
-      setError(err?.message || '네이버 회원가입 중 오류가 발생했습니다.');
+      setError((err as Error)?.message || '네이버 회원가입 중 오류가 발생했습니다.');
       setIsLoading(false);
     }
   };

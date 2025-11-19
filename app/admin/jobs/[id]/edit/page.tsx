@@ -146,9 +146,9 @@ export default function AdminJobEditPage() {
       // 에디터 콘텐츠 설정
       setEditorContent(job.description || '');
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('공고 데이터 로딩 실패:', error);
-      alert(`공고 정보를 불러오는데 실패했습니다.\n\n${error.message}`);
+      alert(`공고 정보를 불러오는데 실패했습니다.\n\n${(error as Error).message}`);
       router.push('/admin');
     } finally {
       setLoading(false);
@@ -179,10 +179,11 @@ export default function AdminJobEditPage() {
 
       alert('공고가 수정되었습니다.');
       router.push('/admin');
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('공고 수정 실패:', err);
-      setError(err.message || '공고 수정에 실패했습니다.');
-      alert(err.message || '공고 수정에 실패했습니다.');
+      const errorMessage = (err as Error).message || '공고 수정에 실패했습니다.';
+      setError(errorMessage);
+      alert(errorMessage);
     } finally {
       setSaving(false);
     }

@@ -61,8 +61,8 @@ export default function JobApplicationModal({
       await onSubmit(message.trim());
       setMessage('');
       onClose();
-    } catch (err: any) {
-      setError(err.message || '지원서 제출에 실패했습니다.');
+    } catch (err: unknown) {
+      setError((err as Error).message || '지원서 제출에 실패했습니다.');
     } finally {
       setIsSubmitting(false);
     }

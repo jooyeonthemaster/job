@@ -116,12 +116,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.log('[AuthContext] 개인 프로필 조회 성공:', data?.full_name);
         return data;
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const err = error as any;
       console.error('[AuthContext] 프로필 조회 실패:', {
         error,
-        message: error?.message,
-        code: error?.code,
-        details: error?.details
+        message: err?.message,
+        code: err?.code,
+        details: err?.details
       });
       return null;
     }

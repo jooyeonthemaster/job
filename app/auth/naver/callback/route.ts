@@ -293,8 +293,8 @@ export async function GET(request: NextRequest) {
       response.cookies.delete('naver_oauth_state');
       return response;
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[Naver Callback] 처리 중 에러:', error);
-    return NextResponse.redirect(`${origin}/login?error=server_error&message=${encodeURIComponent(error.message)}`);
+    return NextResponse.redirect(`${origin}/login?error=server_error&message=${encodeURIComponent((error as Error).message)}`);
   }
 }

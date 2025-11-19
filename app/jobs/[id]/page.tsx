@@ -139,7 +139,7 @@ export default function JobDetailPage() {
       setTimeout(() => {
         router.push('/jobseeker-dashboard');
       }, 1500);
-    } catch (error: any) {
+    } catch (error: unknown) {
       throw error; // 모달에서 에러 메시지 표시
     }
   };

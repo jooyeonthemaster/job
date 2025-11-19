@@ -70,9 +70,9 @@ export const useCompanyAuth = (): UseCompanyAuthResult => {
         console.log('[useCompanyAuth] 로딩 완료! 기업명:', companyData.name);
         console.log('[useCompanyAuth] 복지 정보:', benefitsData?.length || 0, '개');
         setCompany(companyWithBenefits as Company);
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error('[useCompanyAuth] 예외 발생:', err);
-        setError(err.message || '인증 처리 중 오류가 발생했습니다.');
+        setError((err as Error).message || '인증 처리 중 오류가 발생했습니다.');
         router.push('/login');
       } finally {
         setLoading(false);

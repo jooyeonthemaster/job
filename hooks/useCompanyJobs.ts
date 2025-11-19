@@ -45,9 +45,9 @@ export const useCompanyJobs = (
       }
 
       setJobs((jobsData || []) as Job[]);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('[useCompanyJobs] Error:', err);
-      setError(err.message || '채용공고를 불러오는데 실패했습니다.');
+      setError((err as Error).message || '채용공고를 불러오는데 실패했습니다.');
     } finally {
       setLoading(false);
     }
@@ -67,7 +67,7 @@ export const useCompanyJobs = (
 
       // 로컬 상태에서도 제거
       setJobs(prevJobs => prevJobs.filter(job => job.id !== jobId));
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('[useCompanyJobs] Delete error:', err);
       throw err;
     }

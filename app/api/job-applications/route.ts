@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
         job_id: jobId,
         job_title: job.title,
         company_id: job.company_id,
-        company_name: job.companies.name,
+        company_name: ((job.companies as unknown) as { id: string; name: string }).name,
         applicant_id: applicantId,
         applicant_name: user.full_name || '이름 없음',
         applicant_email: user.email,
@@ -124,9 +124,17 @@ export async function POST(request: NextRequest) {
     if (updateError) {
       console.warn('RPC 함수 없음. 직접 업데이트:', updateError.message);
 
+      // 현재 applicants 값 조회
+      const { data: jobData } = await supabase
+        .from('jobs')
+        .select('applicants')
+        .eq('id', jobId)
+        .single();
+
+      // +1 업데이트
       const { error: directUpdateError } = await supabase
         .from('jobs')
-        .update({ applicants: supabase.raw('applicants + 1') })
+        .update({ applicants: (jobData?.applicants || 0) + 1 })
         .eq('id', jobId);
 
       if (directUpdateError) {

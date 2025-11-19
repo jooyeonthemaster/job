@@ -47,7 +47,7 @@ function NaverLoginContent() {
         console.log('[Naver Login] 리다이렉트:', redirect);
         router.push(redirect);
 
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error('[Naver Login] 에러 발생:', err);
         router.push('/login?error=auto_login_failed');
       }
