@@ -218,30 +218,12 @@ export const ApplicantsTab = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => setSelectedApplicant(application)}
-                          className="px-3 py-1.5 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700 transition-colors"
-                        >
-                          상세보기
-                        </button>
-                        {application.status !== 'accepted' && (
-                          <button
-                            onClick={() => handleStatusChange(application.id, 'accepted')}
-                            className="px-3 py-1.5 bg-gray-600 text-white rounded-lg text-sm font-medium hover:bg-gray-700 transition-colors"
-                          >
-                            합격
-                          </button>
-                        )}
-                        {application.status !== 'rejected' && (
-                          <button
-                            onClick={() => handleStatusChange(application.id, 'rejected')}
-                            className="px-3 py-1.5 bg-gray-800 text-white rounded-lg text-sm font-medium hover:bg-gray-900 transition-colors"
-                          >
-                            불합격
-                          </button>
-                        )}
-                      </div>
+                      <button
+                        onClick={() => setSelectedApplicant(application)}
+                        className="px-3 py-1.5 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700 transition-colors"
+                      >
+                        상세보기
+                      </button>
                     </td>
                   </tr>
                 ))}

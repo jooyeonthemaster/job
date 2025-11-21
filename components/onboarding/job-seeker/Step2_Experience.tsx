@@ -133,11 +133,11 @@ const Step2Experience = ({ data, onNext, onBack }: Props) => {
     }
     
     // 학력 검증 - 최소 1개 필요
-    const hasValidEducation = educations.some(edu => 
-      edu.school.trim() && edu.degree && edu.field.trim()
+    const hasValidEducation = educations.some(edu =>
+      edu.school.trim() && edu.degree && edu.field.trim() && edu.startYear
     );
     if (!hasValidEducation) {
-      errors.push('학력 사항을 최소 1개 이상 입력해주세요 (학교명, 학위, 전공 필수)');
+      errors.push('학력 사항을 최소 1개 이상 입력해주세요 (학교명, 학위, 전공, 시작년도 필수)');
     }
     
     // 개별 경력 항목 검증
@@ -151,10 +151,12 @@ const Step2Experience = ({ data, onNext, onBack }: Props) => {
     
     // 개별 학력 항목 검증
     educations.forEach((edu, index) => {
-      if (edu.school || edu.degree || edu.field) {
+      if (edu.school || edu.degree || edu.field || edu.startYear || edu.endYear) {
         if (!edu.school.trim()) errors.push(`학력 ${index + 1}번: 학교명을 입력해주세요`);
         if (!edu.degree) errors.push(`학력 ${index + 1}번: 학위를 선택해주세요`);
         if (!edu.field.trim()) errors.push(`학력 ${index + 1}번: 전공을 입력해주세요`);
+        if (!edu.startYear) errors.push(`학력 ${index + 1}번: 시작년도를 선택해주세요`);
+        if (!edu.current && !edu.endYear) errors.push(`학력 ${index + 1}번: 졸업년도를 선택해주세요 (또는 '재학 중' 체크)`);
       }
     });
     
@@ -217,7 +219,7 @@ const Step2Experience = ({ data, onNext, onBack }: Props) => {
                 </label>
                 <input
                   type="text"
-                  value={experience.company}
+                  value={experience.company || ''}
                   onChange={(e) => updateExperience(experience.id, 'company', e.target.value)}
                   placeholder="삼성전자"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
@@ -230,7 +232,7 @@ const Step2Experience = ({ data, onNext, onBack }: Props) => {
                 </label>
                 <input
                   type="text"
-                  value={experience.position}
+                  value={experience.position || ''}
                   onChange={(e) => updateExperience(experience.id, 'position', e.target.value)}
                   placeholder="예: 마케팅 매니저, 재무 분석가, 영업 대표, 프로젝트 매니저"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
@@ -243,7 +245,7 @@ const Step2Experience = ({ data, onNext, onBack }: Props) => {
                 </label>
                 <input
                   type="date"
-                  value={experience.startDate}
+                  value={experience.startDate || ''}
                   onChange={(e) => updateExperience(experience.id, 'startDate', e.target.value)}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
                 />
@@ -255,7 +257,7 @@ const Step2Experience = ({ data, onNext, onBack }: Props) => {
                 </label>
                 <input
                   type="date"
-                  value={experience.endDate}
+                  value={experience.endDate || ''}
                   onChange={(e) => updateExperience(experience.id, 'endDate', e.target.value)}
                   disabled={experience.current}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 disabled:bg-gray-100"
@@ -280,7 +282,7 @@ const Step2Experience = ({ data, onNext, onBack }: Props) => {
                 업무 설명
               </label>
               <textarea
-                value={experience.description}
+                value={experience.description || ''}
                 onChange={(e) => updateExperience(experience.id, 'description', e.target.value)}
                 placeholder="담당했던 업무나 성과를 간단히 설명해주세요"
                 rows={3}
@@ -330,7 +332,7 @@ const Step2Experience = ({ data, onNext, onBack }: Props) => {
                 </label>
                 <input
                   type="text"
-                  value={education.school}
+                  value={education.school || ''}
                   onChange={(e) => updateEducation(education.id, 'school', e.target.value)}
                   placeholder="서울대학교"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
@@ -342,7 +344,7 @@ const Step2Experience = ({ data, onNext, onBack }: Props) => {
                   학위
                 </label>
                 <select
-                  value={education.degree}
+                  value={education.degree || ''}
                   onChange={(e) => updateEducation(education.id, 'degree', e.target.value)}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
                 >
@@ -361,7 +363,7 @@ const Step2Experience = ({ data, onNext, onBack }: Props) => {
                 </label>
                 <input
                   type="text"
-                  value={education.field}
+                  value={education.field || ''}
                   onChange={(e) => updateEducation(education.id, 'field', e.target.value)}
                   placeholder="컴퓨터공학과"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
@@ -374,9 +376,15 @@ const Step2Experience = ({ data, onNext, onBack }: Props) => {
                 </label>
                 <input
                   type="text"
-                  value={education.startYear}
-                  onChange={(e) => updateEducation(education.id, 'startYear', e.target.value)}
+                  value={education.startYear || ''}
+                  onChange={(e) => {
+                    // 숫자만 입력 허용
+                    const value = e.target.value.replace(/[^0-9]/g, '');
+                    updateEducation(education.id, 'startYear', value);
+                  }}
                   placeholder="2018"
+                  maxLength={4}
+                  pattern="[0-9]{4}"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
                 />
               </div>
@@ -387,10 +395,16 @@ const Step2Experience = ({ data, onNext, onBack }: Props) => {
                 </label>
                 <input
                   type="text"
-                  value={education.endYear}
-                  onChange={(e) => updateEducation(education.id, 'endYear', e.target.value)}
+                  value={education.endYear || ''}
+                  onChange={(e) => {
+                    // 숫자만 입력 허용
+                    const value = e.target.value.replace(/[^0-9]/g, '');
+                    updateEducation(education.id, 'endYear', value);
+                  }}
                   disabled={education.current}
                   placeholder="2022"
+                  maxLength={4}
+                  pattern="[0-9]{4}"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 disabled:bg-gray-100"
                 />
               </div>

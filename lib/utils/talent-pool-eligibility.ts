@@ -20,15 +20,16 @@ export type EligibilityResult = {
  * 기업이 인재 상세 페이지에서 보는 필수 정보:
  * 1. 기본 정보 (이름, 프로필 사진, 헤드라인)
  * 2. 경력 또는 학력 (최소 하나)
- * 3. 스킬 (최소 3개)
+ * 3. 스킬 (최소 1개)
  * 4. 언어 능력 (최소 1개)
  * 5. 자기소개
- * 6. 희망 조건 (희망 직무, 지역)
+ * 6. 희망 조건 (희망 직무)
+ * 7. 이력서 파일 (필수)
  */
 export const checkTalentPoolEligibility = (profile: UserProfile | null): EligibilityResult => {
   const issues: EligibilityIssue[] = [];
   let completedFields = 0;
-  const totalRequiredFields = 7; // 총 필수 필드 수
+  const totalRequiredFields = 8; // 총 필수 필드 수 (이력서 추가로 7→8)
 
   if (!profile) {
     return {
@@ -114,6 +115,17 @@ export const checkTalentPoolEligibility = (profile: UserProfile | null): Eligibi
       field: '희망 직무',
       message: '최소 1개 이상의 희망 직무를 선택해주세요.',
       link: '/profile/edit/preferences'
+    });
+  }
+
+  // 7. 이력서 파일 (필수)
+  if (profile.resumeFileUrl && profile.resumeFileUrl.trim().length > 0) {
+    completedFields++;
+  } else {
+    issues.push({
+      field: '이력서',
+      message: '이력서 파일을 업로드해주세요.',
+      link: '/profile/edit/resume'
     });
   }
 

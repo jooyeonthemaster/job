@@ -90,7 +90,7 @@ export default function JobseekerSignupPage() {
               <div className="w-14 h-14 bg-gradient-to-br from-primary-500 to-primary-600 rounded-2xl flex items-center justify-center shadow-lg">
                 <Globe className="w-8 h-8 text-white" />
               </div>
-              <span className="text-3xl font-bold text-gray-900">GlobalTalent</span>
+              <span className="text-3xl font-bold text-gray-900">Bridge World</span>
             </Link>
           </div>
 

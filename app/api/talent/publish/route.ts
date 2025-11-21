@@ -142,7 +142,7 @@ async function verifyProfileCompleteness(userId: string): Promise<{
 }> {
   const missingFields: string[] = [];
   let completedFields = 0;
-  const totalRequiredFields = 7;
+  const totalRequiredFields = 8; // 이력서 추가로 7→8
 
   try {
     // 사용자 기본 정보 조회
@@ -154,7 +154,8 @@ async function verifyProfileCompleteness(userId: string): Promise<{
         profile_image_url,
         headline,
         introduction,
-        korean_level
+        korean_level,
+        resume_file_url
       `)
       .eq('id', userId)
       .single();
@@ -237,6 +238,13 @@ async function verifyProfileCompleteness(userId: string): Promise<{
       completedFields++;
     } else {
       missingFields.push('희망 직무 (최소 1개)');
+    }
+
+    // 8. 이력서 파일 (필수)
+    if (user.resume_file_url && user.resume_file_url.trim().length > 0) {
+      completedFields++;
+    } else {
+      missingFields.push('이력서 파일');
     }
 
     const completionRate = Math.round((completedFields / totalRequiredFields) * 100);

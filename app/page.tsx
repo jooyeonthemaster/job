@@ -22,10 +22,11 @@ import { motion } from 'framer-motion';
 
 export default function Home() {
   const router = useRouter();
-  const { isAuthenticated, userProfile } = useAuth();
+  const { isAuthenticated, userProfile, isLoading: authLoading } = useAuth();
   const [selectedCategory, setSelectedCategory] = useState('ai-match');
   const [topJobs, setTopJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // PublicJob → Job 변환 함수
   const convertToJob = (publicJob: any): Job => {
@@ -78,26 +79,72 @@ export default function Home() {
   };
   };
 
-  // 실제 공고 로드 (display_position 기준) + 더미 데이터 병합
+  // 🔍 데이터 로드 - AuthContext와 무관하게 진행
   useEffect(() => {
-    const loadJobs = async () => {
-      try {
-        const { topJobs: fetchedTopJobs } = await getActiveJobs();
-        const converted = fetchedTopJobs.map(convertToJob);
-
-        // 실제 DB 데이터 + 더미 데이터 병합
-        const allJobs = [...converted, ...dummyJobs];
-        setTopJobs(allJobs);
-      } catch (error) {
-        console.error('Failed to load jobs:', error);
-        // 에러 시에도 더미 데이터는 표시
-        setTopJobs(dummyJobs);
-      } finally {
-        setLoading(false);
+    let mounted = true;
+    let hasLoaded = false;
+    
+    // ✅ 2초 후 강제 시작 (AuthContext 기다리지 않음)
+    const forceStartTimeout = setTimeout(() => {
+      if (!hasLoaded && mounted) {
+        console.log('⚡ 2초 경과 - 강제 로드 시작');
+        loadJobs();
       }
+    }, 2000);
+    
+    // ✅ AuthContext 완료되면 즉시 시작
+    if (!authLoading && !hasLoaded) {
+      console.log('✅ AuthContext 완료 - 로드 시작');
+      clearTimeout(forceStartTimeout);
+      loadJobs();
+    }
+    
+    async function loadJobs() {
+      if (hasLoaded) return;
+      hasLoaded = true;
+      
+      let retryCount = 0;
+      const maxRetries = 3;
+      
+      while (retryCount < maxRetries && mounted) {
+        try {
+          console.log(`🔄 공고 로드 시도 (${retryCount + 1}/${maxRetries})...`);
+          
+          // 첫 시도가 아니면 1초 대기
+          if (retryCount > 0) {
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          }
+          
+          const { topJobs: fetchedTopJobs } = await getActiveJobs();
+          
+          if (mounted) {
+            console.log('✅ 공고 로드 성공:', fetchedTopJobs.length);
+            const converted = fetchedTopJobs.map(convertToJob);
+            setTopJobs(converted);
+            setLoading(false);
+            return; // 성공 시 종료
+          }
+        } catch (err: any) {
+          console.warn(`⚠️ 공고 로드 실패 (${retryCount + 1}/${maxRetries}):`, err.message);
+          retryCount++;
+          
+          if (retryCount >= maxRetries) {
+            console.error('❌ 최대 재시도 횟수 초과');
+            if (mounted) {
+              setError('공고를 불러올 수 없습니다. 페이지를 새로고침 해주세요.');
+              setTopJobs([]);
+              setLoading(false);
+            }
+          }
+        }
+      }
+    }
+    
+    return () => {
+      mounted = false;
+      clearTimeout(forceStartTimeout);
     };
-    loadJobs();
-  }, []);
+  }, [authLoading]);
 
   // 표시할 공고 (실제 DB + 더미 데이터 중 최대 2개)
   const featuredJobs = topJobs.slice(0, 2);
@@ -175,6 +222,31 @@ export default function Home() {
             <div className="text-center py-12">
               <div className="w-12 h-12 border-4 border-primary-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
               <p className="text-gray-600">공고를 불러오는 중...</p>
+              {error && (
+                <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-red-600 font-medium">에러 발생</p>
+                  <p className="text-sm text-red-500 mt-1">{error}</p>
+                  <button 
+                    onClick={() => window.location.reload()}
+                    className="mt-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+                  >
+                    새로고침
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : error ? (
+            <div className="text-center py-12">
+              <div className="p-6 bg-red-50 border border-red-200 rounded-lg max-w-md mx-auto">
+                <p className="text-red-600 font-medium mb-2">데이터를 불러올 수 없습니다</p>
+                <p className="text-sm text-red-500 mb-4">{error}</p>
+                <button 
+                  onClick={() => window.location.reload()}
+                  className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                >
+                  새로고침
+                </button>
+              </div>
             </div>
           ) : (
             <div className="grid lg:grid-cols-3 gap-6">

@@ -160,13 +160,14 @@ export default function ProfileChecklist({ checklist, checklistPercentage, profi
           <strong>💡 프로필 완성 혜택:</strong> 프로필이 완성되면 기업의 스카우트 제안을 받을 확률이 높아지고, AI 매칭 정확도도 향상됩니다.
         </p>
         <div className="flex flex-col sm:flex-row gap-2">
-          <Link
+          {/* 프로필 완성하기 버튼 숨김 처리 */}
+          {/* <Link
             href="/profile/edit"
             className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium"
           >
             <Edit3 className="w-4 h-4" />
             지금 프로필 완성하기
-          </Link>
+          </Link> */}
           <button
             onClick={handleTalentPoolClick}
             className={`inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg transition-colors text-sm font-medium ${

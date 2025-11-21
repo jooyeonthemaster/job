@@ -47,6 +47,16 @@ export async function getActiveJobs(): Promise<{
   bottomJobs: PublicJob[];
 }> {
   try {
+    console.log('[getActiveJobs] 쿼리 시작...');
+    const startTime = Date.now();
+    
+    // ✅ 5초 타임아웃 with AbortController
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => {
+      console.warn('[getActiveJobs] ⚠️ 5초 타임아웃 - 쿼리 중단');
+      controller.abort();
+    }, 5000);
+    
     const { data: jobs, error } = await supabase
       .from('jobs')
       .select(`
@@ -82,7 +92,20 @@ export async function getActiveJobs(): Promise<{
       .eq('status', 'active')
       .not('display_position', 'is', null)
       .order('display_priority', { ascending: true })
-      .order('posted_at', { ascending: false });
+      .order('posted_at', { ascending: false })
+      .limit(50)
+      .abortSignal(controller.signal); // ✅ 타임아웃 적용
+    
+    clearTimeout(timeoutId);
+    const elapsed = Date.now() - startTime;
+    console.log(`[getActiveJobs] ✅ 쿼리 완료 (${elapsed}ms)`);
+
+    if (error) {
+      if (error.message?.includes('aborted')) {
+        throw new Error('쿼리 타임아웃 (5초 초과)');
+      }
+      throw error;
+    }
 
     if (error) throw error;
 

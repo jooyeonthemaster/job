@@ -198,7 +198,7 @@ export default function Section1BusinessInfo({ formData, onChange, errors }: Pro
             type="text"
             value={formData.nameEn || ''}
             onChange={(e) => onChange('nameEn', e.target.value)}
-            placeholder="GlobalTalent Inc."
+            placeholder="Bridge World Inc."
             className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-colors"
           />
         </div>

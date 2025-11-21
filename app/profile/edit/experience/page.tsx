@@ -29,7 +29,31 @@ export default function ExperienceEditPage() {
           router.push('/onboarding/job-seeker/quick');
           return;
         }
-        setProfileData(profile);
+
+        // Transform DB data to UI format
+        const transformedProfile = {
+          ...profile,
+          experiences: profile.experiences?.map((exp: any) => ({
+            id: exp.id,
+            company: exp.company,
+            position: exp.position,
+            startDate: exp.start_date,      // snake_case → camelCase
+            endDate: exp.end_date,
+            current: exp.is_current,
+            description: exp.description
+          })) || [],
+          educations: profile.educations?.map((edu: any) => ({
+            id: edu.id,
+            school: edu.school,
+            degree: edu.degree,
+            field: edu.field,
+            startYear: edu.start_year?.toString() || '',  // integer → string
+            endYear: edu.end_year?.toString() || '',
+            current: edu.is_current
+          })) || []
+        };
+
+        setProfileData(transformedProfile);
       } catch (error) {
         console.error('Failed to load profile:', error);
       } finally {

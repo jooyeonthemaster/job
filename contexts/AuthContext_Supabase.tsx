@@ -67,12 +67,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       console.log('[AuthContext] 프로필 조회 시작:', { userId, type });
 
+      // ✅ 5초 타임아웃
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => {
+        console.warn('[AuthContext] ⚠️ 프로필 조회 5초 타임아웃');
+        controller.abort();
+      }, 5000);
+
       if (type === 'company') {
         const { data, error } = await supabase
           .from('companies')
           .select('*')
           .eq('id', userId)
+          .abortSignal(controller.signal)
           .maybeSingle();
+        
+        clearTimeout(timeoutId);
 
         if (error) {
           console.error('[AuthContext] companies 테이블 조회 에러:', {
@@ -94,9 +104,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } else {
         const { data, error } = await supabase
           .from('users')
-          .select('*')
+          .select(`
+            *,
+            skills:user_skills(skill_name),
+            languages:user_languages(language_name, proficiency),
+            experiences:user_experiences(*),
+            educations:user_educations(*),
+            desired_positions:user_desired_positions(position_name),
+            preferred_locations:user_preferred_locations(location_name),
+            salary_range:user_salary_range(*)
+          `)
           .eq('id', userId)
+          .abortSignal(controller.signal)
           .maybeSingle();
+        
+        clearTimeout(timeoutId);
 
         if (error) {
           console.error('[AuthContext] users 테이블 조회 에러:', {
@@ -114,10 +136,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
 
         console.log('[AuthContext] 개인 프로필 조회 성공:', data?.full_name);
+        console.log('[AuthContext] 경력 개수:', data?.experiences?.length || 0);
+        console.log('[AuthContext] 학력 개수:', data?.educations?.length || 0);
         return data;
       }
     } catch (error: unknown) {
       const err = error as any;
+      
+      if (err?.message?.includes('aborted')) {
+        console.warn('[AuthContext] 프로필 조회 타임아웃 - 계속 진행');
+        return null;
+      }
+      
       console.error('[AuthContext] 프로필 조회 실패:', {
         error,
         message: err?.message,
@@ -290,10 +320,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       }
 
-      setIsLoading(false);
     } catch (error) {
       console.error('[AuthContext] Auth 변경 처리 에러:', error);
+    } finally {
+      // ✅ 무조건 로딩 종료
       setIsLoading(false);
+      console.log('[AuthContext] ✅ 초기화 완료');
     }
   };
 

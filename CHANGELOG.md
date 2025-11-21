@@ -8,6 +8,314 @@
 
 ## 📋 최근 주요 변경 사항
 
+### 2025-11-22
+
+#### 🎨 [UPDATE] 서비스명 변경 및 푸터 추가
+
+**변경 파일**:
+- `app/layout.tsx` (메타데이터, 푸터 추가)
+- `components/Header.tsx` (로고 텍스트)
+- `app/login/page.tsx` (로고 텍스트)
+- `app/signup/page.tsx` (로고 텍스트)
+- `app/signup/company/page.tsx` (로고 텍스트)
+- `app/signup/jobseeker/page.tsx` (로고 텍스트)
+- `components/company-signup/Section1BusinessInfo.tsx` (placeholder)
+- `app/company-dashboard/edit/business/page.tsx` (placeholder)
+- `constants/company-terms.ts` (약관 전체)
+- `constants/jobseeker-terms.ts` (약관 전체)
+- `components/Footer.tsx` (신규: 116줄)
+
+**변경 내용**:
+- ✅ 서비스명 변경: "GlobalTalent" → "브릿지월드(Bridge World)"
+- ✅ 로고 텍스트 변경: 모든 페이지에서 "Bridge World" 사용
+- ✅ 메타데이터 title: "브릿지월드(Bridge World) - 외국인 구직자를 위한 채용 플랫폼"
+- ✅ 약관 내용 변경: 운영사 "선한이웃", 서비스명 "브릿지월드"
+- ✅ 푸터 컴포넌트 생성 및 추가
+- ✅ 사업자 정보 표시: 선한이웃 (사업자등록번호: 412-19-01752)
+- ✅ 연락처: support@bridgeworld.co.kr
+
+**이유**:
+- 사용자 요청: 가칭 "GlobalTalent"를 정식 서비스명 "브릿지월드"로 변경
+- 사업자 등록증 기반 하단 푸터 추가 필요
+
+**영향**:
+- 모든 페이지에 정식 서비스명 "Bridge World" 표시
+- 사업자 정보가 포함된 푸터가 모든 페이지 하단에 표시
+- 약관에 운영사 "선한이웃" 명시
+
+---
+
+### 2025-11-21
+
+#### 🔧 [UPDATE] 지원자 관리 페이지 합격/불합격 버튼 제거
+
+**변경 파일**:
+- `components/company-dashboard/tabs/ApplicantsTab.tsx` (Lines 220-227)
+
+**변경 내용**:
+- ✅ 지원자 목록에서 "합격" 버튼 제거
+- ✅ 지원자 목록에서 "불합격" 버튼 제거
+- ✅ "상세보기" 버튼만 유지
+
+**이유**:
+- 사용자 요청에 따른 UI 단순화
+- 지원자 관리 기능 제거
+
+**영향**:
+- 지원자 상태 변경 기능 제거됨
+- 상세보기 버튼만 남아 지원자 정보 조회만 가능
+
+---
+
+#### 🐛 [FIX] AuthContext 프로필 조회에 경력/학력 정보 추가
+
+**변경 파일**:
+- `contexts/AuthContext_Supabase.tsx` (Lines 95-128)
+
+**변경 내용**:
+- ✅ AuthContext의 fetchUserProfile 함수에 관련 테이블 조인 추가
+- ✅ experiences (user_experiences), educations (user_educations) 조회 추가
+- ✅ skills, languages, desired_positions, preferred_locations, salary_range 조회 추가
+- ✅ 디버깅 로그 추가 (경력/학력 개수 확인)
+
+**이유**:
+- 기존 코드는 `select('*')`로 users 테이블만 조회
+- 공고 지원 시 경력/학력 검증에서 실패하는 문제 발생
+- 사용자가 경력/학력을 입력했음에도 "경력 또는 학력 정보를 1개 이상 입력해야 지원할 수 있습니다" 에러 표시
+
+**영향**:
+- 공고 지원 시 경력/학력 정보가 제대로 검증됨
+- AuthContext를 사용하는 모든 컴포넌트에서 완전한 프로필 정보 접근 가능
+- 프로필 완성도 계산 정확도 향상
+
+---
+
+#### 🔒 [UPDATE] 인재풀 등록에 이력서 필수 조건 추가
+
+**변경 파일**:
+- `lib/utils/talent-pool-eligibility.ts` (Lines 17-32, 121-130)
+- `app/api/talent/publish/route.ts` (Lines 145, 158, 243-248)
+
+**변경 내용**:
+- ✅ 인재풀 등록 필수 조건에 **이력서 파일** 추가
+- ✅ 총 필수 필드 수: 7개 → 8개로 증가
+- ✅ 클라이언트 사이드 검증에 이력서 체크 추가
+- ✅ 서버 사이드 API 검증에 이력서 체크 추가
+- ✅ DB 쿼리에 `resume_file_url` 필드 추가
+
+**새로운 필수 조건 (8개)**:
+1. 프로필 사진
+2. 헤드라인
+3. 경력 또는 학력 (최소 1개)
+4. 스킬 (최소 1개)
+5. 언어 능력 (최소 1개)
+6. 자기소개
+7. 희망 직무
+8. **이력서 파일** ⭐ NEW
+
+**이유**:
+- 이력서 없이 경력/학력만으로 인재풀 등록이 가능했던 문제 해결
+- 기업이 인재를 제대로 평가할 수 있도록 이력서 필수화
+- 데이터 무결성 및 서비스 품질 향상
+
+**영향**:
+- 이력서를 업로드하지 않은 사용자는 인재풀 등록 불가
+- 인재풀 등록 시 이력서 누락 경고 표시
+- 프로필 완성률 계산에 이력서 반영
+
+---
+
+#### 🔧 [UPDATE] 프로필 완성하기 버튼 숨김 처리
+
+**변경 파일**:
+- `components/jobseeker-dashboard/ProfileChecklist.tsx` (Lines 163-170)
+
+**변경 내용**:
+- ✅ "지금 프로필 완성하기" 버튼 주석 처리로 숨김
+- ✅ 버튼 기능은 유지하되 UI에서 제거
+
+**이유**:
+- 사용자 요청에 따른 UI 개선
+
+**영향**:
+- 대시보드에서 "지금 프로필 완성하기" 버튼이 표시되지 않음
+- "인재풀 등록하기" 및 "내 프로필 미리보기" 버튼은 유지
+
+---
+
+#### 🐛 [FIX] 학력 정보 검증 로직 수정 + Controlled Component 경고 해결
+
+**변경 파일**:
+- `components/onboarding/job-seeker/Step2_Experience.tsx` (기존: 약 400줄 → 변경 후: 약 402줄)
+
+**변경 내용**:
+- ✅ 학력 검증 로직에 시작년도(startYear) 필수 검증 추가
+- ✅ 학력 검증 로직에 졸업년도(endYear) 조건부 검증 추가 (재학 중이 아닐 경우 필수)
+- ✅ 개별 학력 항목 검증 조건에 startYear, endYear 필드 추가
+- ✅ 사용자 친화적인 에러 메시지 제공
+- ✅ **모든 input/textarea/select에 `|| ''` 추가로 React Controlled Component 경고 해결**
+  - 경력: company, position, startDate, endDate, description
+  - 학력: school, degree, field, startYear, endYear
+
+**이유**:
+- DB 테이블 `user_educations`의 `start_year` 컬럼이 NOT NULL 제약조건을 가짐
+- 기존 검증 로직이 startYear를 검증하지 않아 DB 에러 발생
+- 사용자가 시작년도를 입력하지 않고 저장 시도 시 다음 에러 발생:
+  ```
+  null value in column "start_year" violates not-null constraint
+  Error code: 23502
+  ```
+
+**영향**:
+- 학력 정보 입력 시 시작년도가 필수 필드로 변경
+- 재학 중이 아닌 경우 졸업년도도 필수
+- 사용자에게 더 명확한 검증 메시지 제공
+- DB 에러 사전 방지
+
+---
+
+#### ✨ [UPDATE] 입학년도/졸업년도 입력 필드 숫자만 허용
+
+**변경 파일**:
+- `components/onboarding/job-seeker/Step2_Experience.tsx` (Lines 373-410)
+
+**변경 내용**:
+- ✅ 입학년도 필드에 숫자만 입력 가능하도록 제한
+- ✅ 졸업년도 필드에 숫자만 입력 가능하도록 제한
+- ✅ `maxLength={4}` 추가 - 4자리까지만 입력
+- ✅ `pattern="[0-9]{4}"` 추가 - 4자리 숫자만 허용
+- ✅ `onChange` 이벤트에서 정규식으로 숫자 이외 문자 자동 제거: `replace(/[^0-9]/g, '')`
+
+**이유**:
+- 년도 필드에 문자나 특수문자 입력 방지
+- 사용자 입력 실수 사전 차단
+- 데이터 무결성 향상
+
+**영향**:
+- 입학년도/졸업년도에 숫자만 입력 가능
+- 최대 4자리까지만 입력됨
+- 문자 입력 시 자동으로 무시됨
+
+---
+
+#### 🐛 [FIX] 경력 및 학력 데이터 불러오기 시 데이터 변환 추가 (데이터 지속성 문제 해결)
+
+**변경 파일**:
+- `app/profile/edit/experience/page.tsx` (기존: 98줄 → 변경 후: 122줄)
+
+**변경 내용**:
+- ✅ DB 데이터를 UI 포맷으로 변환하는 로직 추가 (Lines 33-56)
+- ✅ 경력 데이터 변환:
+  - `start_date` → `startDate`
+  - `end_date` → `endDate`
+  - `is_current` → `current`
+- ✅ 학력 데이터 변환:
+  - `start_year` (integer) → `startYear` (string)
+  - `end_year` (integer) → `endYear` (string)
+  - `is_current` → `current`
+
+**이유**:
+- 사용자가 경력 및 학력을 입력하고 저장한 뒤, 페이지를 다시 열면 입력한 데이터가 전부 사라지는 문제 발생
+- **근본 원인**: DB와 UI 간 데이터 포맷 불일치
+  - DB는 snake_case (start_year, end_year) + 정수형
+  - UI는 camelCase (startYear, endYear) + 문자열
+- 기존 코드(Line 32)는 `setProfileData(profile)` 로 DB 데이터를 그대로 전달
+- 변환 없이 전달하면 UI 컴포넌트가 undefined 값을 받아 빈 필드로 표시됨
+
+**영향**:
+- 저장된 경력 및 학력 데이터가 페이지 재진입 시 정상적으로 표시됨
+- DB ↔ UI 데이터 흐름 정합성 확보
+- 사용자가 여러 번 같은 정보를 재입력할 필요 없음
+
+---
+
+#### 🔄 [REFACTOR] 광고 배너 관리 페이지 - 500줄 제한 준수 (730줄 → 98줄, 86.6% 감소)
+
+**변경 파일**:
+- `components/admin/BannersTab.tsx` (730줄 → 98줄)
+- `hooks/useBannerData.ts` (신규: 36줄)
+- `hooks/useBannerForm.ts` (신규: 79줄)
+- `hooks/useBannerActions.ts` (신규: 104줄)
+- `components/admin/banners/BannerStats.tsx` (신규: 94줄)
+- `components/admin/banners/BannerCard.tsx` (신규: 189줄)
+- `components/admin/banners/BannerPositionList.tsx` (신규: 87줄)
+- `components/admin/banners/BannerModal.tsx` (신규: 238줄)
+
+**변경 내용**:
+- ✅ **데이터 로딩 로직 분리**: `useBannerData` 훅으로 추출 (배너 목록, 통계 로딩)
+- ✅ **폼 상태 관리 분리**: `useBannerForm` 훅으로 추출 (모달 상태, 이미지 업로드)
+- ✅ **CRUD 액션 분리**: `useBannerActions` 훅으로 추출 (생성, 수정, 삭제, 상태 변경)
+- ✅ **통계 컴포넌트 분리**: `BannerStats` (5개 통계 카드 표시)
+- ✅ **개별 배너 카드 분리**: `BannerCard` (이미지 미리보기, 통계, 액션 버튼)
+- ✅ **위치별 목록 분리**: `BannerPositionList` (헤더, 사이드바 위치별 그룹화)
+- ✅ **모달 폼 분리**: `BannerModal` (배너 추가/수정 218줄 폼)
+- ✅ **메인 파일 단순화**: 훅 조합 + 컴포넌트 렌더링만 담당
+
+**이유**:
+- 파일 크기: 730줄 (500줄 제한 초과)
+- 유지보수성 향상 필요
+- 재사용 가능한 구조로 개선
+- 테스트 가능한 단위로 분리
+
+**구조 개선**:
+```typescript
+// Before: 모든 로직이 단일 파일에 (730줄)
+export default function BannersTab() {
+  // 데이터 로딩 로직 (80줄)
+  // 폼 상태 관리 (120줄)
+  // CRUD 액션들 (150줄)
+  // 통계 표시 UI (80줄)
+  // 배너 카드 UI (145줄)
+  // 모달 폼 UI (218줄)
+}
+
+// After: 역할별로 분리 (98줄 메인 + 7개 파일)
+export default function BannersTab() {
+  const { banners, stats, loading, loadData } = useBannerData();
+  const { showModal, formData, ... } = useBannerForm(loadData);
+  const { handleSubmit, handleDelete, ... } = useBannerActions(...);
+
+  return (
+    <BannerStats />
+    <BannerPositionList />
+    <BannerModal />
+  );
+}
+```
+
+**기능 보존**:
+- ✅ 모든 console.log 디버깅 코드 유지
+- ✅ 에러 핸들링 로직 완전 보존
+- ✅ 폼 검증 로직 변경 없음
+- ✅ Cloudinary 업로드 동작 동일
+- ✅ 배너 CRUD 동작 완전 동일
+- ✅ 결제 상태 변경 로직 동일
+- ✅ 통계 계산 및 표시 동일
+
+**영향**:
+- ✅ 메인 파일 86.6% 크기 감소 (730줄 → 98줄)
+- ✅ 각 파일 500줄 이하 준수
+- ✅ 테스트 가능한 단위로 분리
+- ✅ 향후 기능 추가 용이
+- ✅ 재사용 가능한 컴포넌트 구조
+- ⚠️ 동작 변경 없음 (순수 리팩토링)
+
+**분리 패턴**:
+```
+BannersTab (730줄)
+├── Hooks (219줄)
+│   ├── useBannerData.ts (36줄) - 데이터 로딩
+│   ├── useBannerForm.ts (79줄) - 폼 상태 관리
+│   └── useBannerActions.ts (104줄) - CRUD 액션
+└── Components (608줄)
+    ├── BannerStats.tsx (94줄) - 통계 대시보드
+    ├── BannerCard.tsx (189줄) - 개별 배너 표시
+    ├── BannerPositionList.tsx (87줄) - 위치별 그룹
+    └── BannerModal.tsx (238줄) - 추가/수정 폼
+```
+
+---
+
 ### 2025-11-20
 
 #### 🗑️ [DELETE] 인재풀 페이지 - 더미 데이터 토글 제거 및 실제 데이터 전용화

@@ -24,9 +24,9 @@ export const JOBSEEKER_TERMS: Record<string, { title: string; summary: string; c
   },
   service: {
     title: '서비스 이용약관',
-    summary: 'GlobalTalent 플랫폼 서비스 이용에 관한 전반적인 약관',
+    summary: '브릿지월드 플랫폼 서비스 이용에 관한 전반적인 약관',
     content: `제1조 (목적)
-이 약관은 GlobalTalent(이하 "회사")가 제공하는 K-Work 플랫폼 및 관련 서비스(이하 "서비스")의 이용과 관련하여 회사와 회원 간의 권리, 의무 및 책임사항, 기타 필요한 사항을 규정함을 목적으로 합니다.
+이 약관은 선한이웃(이하 "회사")이 제공하는 브릿지월드 플랫폼 및 관련 서비스(이하 "서비스")의 이용과 관련하여 회사와 회원 간의 권리, 의무 및 책임사항, 기타 필요한 사항을 규정함을 목적으로 합니다.
 
 제2조 (정의)
 1. "서비스"란 회사가 제공하는 외국인 구직자와 기업을 연결하는 취업 매칭 플랫폼을 말합니다.
@@ -76,7 +76,7 @@ export const JOBSEEKER_TERMS: Record<string, { title: string; summary: string; c
     summary: '취업 연계 및 사업 추진 관련 정보를 이메일로 수신',
     content: `이메일 수신 동의 안내
 
-GlobalTalent는 다음과 같은 정보를 이메일로 제공합니다:
+브릿지월드는 다음과 같은 정보를 이메일로 제공합니다:
 
 1. 제공 정보
    - 맞춤형 채용공고 안내

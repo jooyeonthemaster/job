@@ -128,12 +128,6 @@ export default function Header() {
     // 로그아웃 상태: 로그인/회원가입 버튼
     return (
       <>
-        <Link
-          href="/company-auth"
-          className="text-sm font-medium text-gray-700 hover:text-primary-600 transition-colors"
-        >
-          기업 서비스
-        </Link>
         <Link href="/login" className="btn-outline text-sm">
           로그인
         </Link>
@@ -168,7 +162,7 @@ export default function Header() {
                   <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl flex items-center justify-center shadow-md">
                     <Globe className="w-6 h-6 text-white" />
                   </div>
-                  <span className="text-xl font-bold text-gray-900">GlobalTalent</span>
+                  <span className="text-xl font-bold text-gray-900">Bridge World</span>
                 </Link>
 
                 {/* Search Bar - Desktop */}
@@ -300,13 +294,6 @@ export default function Header() {
                     </div>
                   ) : (
                     <div className="flex flex-col gap-3">
-                      <Link
-                        href="/company-auth"
-                        className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-primary-600"
-                        onClick={() => setMobileMenuOpen(false)}
-                      >
-                        기업 서비스
-                      </Link>
                       <div className="flex gap-3 px-4">
                         <Link href="/login" className="flex-1 btn-outline text-sm text-center">
                           로그인
