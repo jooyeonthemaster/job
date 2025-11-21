@@ -43,7 +43,7 @@ export default function JobCreatePage() {
   const [paymentError, setPaymentError] = useState('');
   const [isPaymentCompleted, setIsPaymentCompleted] = useState(false);
 
-  const tierOrder: PostingTier[] = ['standard', 'top', 'premium', 'test'];
+  const tierOrder: PostingTier[] = ['standard', 'top', 'premium']; // 'test' 제거 - 테스트 상품 숨김 처리
 
   const tierDetails: Record<PostingTier, { label: string; duration: string; description: string; badge?: '인기' | '프리미엄'; highlight?: string }> = {
     standard: {
