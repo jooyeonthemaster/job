@@ -1,9 +1,10 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { Search, Globe, User, Menu, X, Bell, LogOut, Settings, ChevronDown } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext_Supabase';
 import OptimizedImage from './OptimizedImage';
@@ -16,6 +17,94 @@ export default function Header() {
   const { user, userProfile, userType, logout, isAuthenticated, isLoading } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const [languageMenuOpen, setLanguageMenuOpen] = useState(false);
+  const [currentLanguage, setCurrentLanguage] = useState('한국어');
+
+  // 언어 매핑
+  const langMap: Record<string, string> = {
+    '': '한국어',
+    'ko': '한국어',
+    'en': 'English',
+    'zh-CN': '中文(简体)',
+    'zh-TW': '中文(繁體)',
+    'ja': '日本語',
+    'vi': 'Tiếng Việt',
+    'th': 'ไทย',
+    'id': 'Bahasa Indonesia',
+    'es': 'Español',
+    'fr': 'Français',
+    'de': 'Deutsch',
+    'ru': 'Русский',
+    'pt': 'Português',
+    'ar': 'العربية',
+  };
+
+  // Cookie에서 언어 코드 읽기
+  const getLanguageFromCookie = () => {
+    if (typeof document === 'undefined') return '';
+    
+    const cookies = document.cookie.split(';');
+    const googtransCookie = cookies.find(c => c.trim().startsWith('googtrans='));
+    
+    if (googtransCookie) {
+      const value = googtransCookie.split('=')[1];
+      // googtrans=/ko/en 형식에서 언어 코드 추출
+      const match = value.match(/\/[^\/]+\/(.+)/);
+      if (match) {
+        return match[1];
+      }
+    }
+    return '';
+  };
+
+  // Google Translate 초기화 - Cookie에서만 언어 확인 (빠른 로딩)
+  useEffect(() => {
+    // Cookie에서 언어 확인
+    const cookieLang = getLanguageFromCookie();
+    if (cookieLang && langMap[cookieLang]) {
+      setCurrentLanguage(langMap[cookieLang]);
+      console.log('[Header] 현재 언어:', langMap[cookieLang], `(${cookieLang})`);
+    } else {
+      console.log('[Header] 현재 언어: 한국어 (기본값)');
+    }
+  }, []);
+
+  // 언어 변경 핸들러 (간소화 - 빠른 번역)
+  const handleLanguageChange = (langCode: string, langName: string) => {
+    if (typeof window === 'undefined') return;
+
+    setLanguageMenuOpen(false);
+    setCurrentLanguage(langName);
+
+    console.log(`[언어 변경] ${langName} (${langCode}) 선택됨`);
+
+    // 언어 코드가 'ko'인 경우 원래 언어로 복원
+    if (langCode === 'ko' || langCode === '') {
+      // 한국어로 복원 - cookie 삭제
+      document.cookie = 'googtrans=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+      document.cookie = 'googtrans=; path=/; domain=' + window.location.hostname + '; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+      
+      console.log('[언어 변경] 한국어로 복원, 새로고침...');
+      
+      // 즉시 새로고침
+      setTimeout(() => {
+        window.location.reload();
+      }, 100);
+      return;
+    }
+
+    // Cookie 직접 설정 (Google Translate Widget 기다리지 않음)
+    const cookieValue = `/ko/${langCode}`;
+    document.cookie = `googtrans=${cookieValue}; path=/; max-age=31536000`;
+    document.cookie = `googtrans=${cookieValue}; path=/; domain=${window.location.hostname}; max-age=31536000`;
+    
+    console.log('[언어 변경] Cookie 설정 완료, 즉시 새로고침...');
+    
+    // 즉시 새로고침 (100ms만 대기)
+    setTimeout(() => {
+      window.location.reload();
+    }, 100);
+  };
 
   const handleLogout = async () => {
     try {
@@ -158,11 +247,15 @@ export default function Header() {
             <div className="flex items-center justify-between h-16">
               {/* Logo + Search Bar */}
               <div className="flex items-center gap-4">
-                <Link href="/" className="flex items-center gap-2.5">
-                  <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl flex items-center justify-center shadow-md">
-                    <Globe className="w-6 h-6 text-white" />
-                  </div>
-                  <span className="text-xl font-bold text-gray-900">Bridge World</span>
+                <Link href="/" className="flex items-center">
+                  <Image
+                    src="/logo.jpg"
+                    alt="Bridge World"
+                    width={160}
+                    height={45}
+                    className="h-11 w-auto object-contain"
+                    priority
+                  />
                 </Link>
 
                 {/* Search Bar - Desktop */}
@@ -183,6 +276,63 @@ export default function Header() {
 
               {/* Desktop Actions */}
               <div className="hidden lg:flex items-center gap-4">
+                {/* Language Selector */}
+                <div className="relative">
+                  <button
+                    onClick={() => setLanguageMenuOpen(!languageMenuOpen)}
+                    className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg transition-colors border border-gray-200"
+                  >
+                    <Globe className="w-4 h-4" />
+                    <span>{currentLanguage}</span>
+                    <ChevronDown className="w-4 h-4" />
+                  </button>
+
+                  {/* Language Dropdown */}
+                  {languageMenuOpen && (
+                    <>
+                      <div 
+                        className="fixed inset-0 z-10" 
+                        onClick={() => setLanguageMenuOpen(false)}
+                      />
+                      <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-20 max-h-96 overflow-y-auto">
+                        <div className="px-4 py-2 border-b border-gray-100">
+                          <p className="text-xs font-semibold text-gray-500 uppercase">언어 선택</p>
+                        </div>
+                        {[
+                          { code: 'ko', name: '한국어', native: '한국어' },
+                          { code: 'en', name: 'English', native: 'English' },
+                          { code: 'zh-CN', name: '中文(简体)', native: '中文(简体)' },
+                          { code: 'zh-TW', name: '中文(繁體)', native: '中文(繁體)' },
+                          { code: 'ja', name: '日本語', native: '日本語' },
+                          { code: 'vi', name: 'Tiếng Việt', native: 'Tiếng Việt' },
+                          { code: 'th', name: 'ไทย', native: 'ไทย' },
+                          { code: 'id', name: 'Bahasa Indonesia', native: 'Bahasa Indonesia' },
+                          { code: 'es', name: 'Español', native: 'Español' },
+                          { code: 'fr', name: 'Français', native: 'Français' },
+                          { code: 'de', name: 'Deutsch', native: 'Deutsch' },
+                          { code: 'ru', name: 'Русский', native: 'Русский' },
+                          { code: 'pt', name: 'Português', native: 'Português' },
+                          { code: 'ar', name: 'العربية', native: 'العربية' },
+                        ].map((lang) => (
+                          <button
+                            key={lang.code}
+                            onClick={() => handleLanguageChange(lang.code, lang.native)}
+                            className={cn(
+                              "w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center justify-between",
+                              currentLanguage === lang.native && "bg-primary-50 text-primary-600"
+                            )}
+                          >
+                            <span>{lang.native}</span>
+                            {currentLanguage === lang.native && (
+                              <span className="text-primary-600">✓</span>
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
+
                 {renderAuthButtons()}
               </div>
 
@@ -258,6 +408,56 @@ export default function Header() {
                 ))}
 
                 <div className="border-t border-gray-100 pt-4 mt-4">
+                  {/* Mobile Language Selector */}
+                  <div className="px-4 mb-4">
+                    <div className="relative">
+                      <button
+                        onClick={() => setLanguageMenuOpen(!languageMenuOpen)}
+                        className="w-full flex items-center justify-between px-4 py-3 text-sm font-medium text-gray-700 bg-gray-50 rounded-lg border border-gray-200"
+                      >
+                        <div className="flex items-center gap-2">
+                          <Globe className="w-4 h-4" />
+                          <span>{currentLanguage}</span>
+                        </div>
+                        <ChevronDown className="w-4 h-4" />
+                      </button>
+                      {languageMenuOpen && (
+                        <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-20 max-h-64 overflow-y-auto">
+                          {[
+                            { code: 'ko', name: '한국어', native: '한국어' },
+                            { code: 'en', name: 'English', native: 'English' },
+                            { code: 'zh-CN', name: '中文(简体)', native: '中文(简体)' },
+                            { code: 'zh-TW', name: '中文(繁體)', native: '中文(繁體)' },
+                            { code: 'ja', name: '日本語', native: '日本語' },
+                            { code: 'vi', name: 'Tiếng Việt', native: 'Tiếng Việt' },
+                            { code: 'th', name: 'ไทย', native: 'ไทย' },
+                            { code: 'id', name: 'Bahasa Indonesia', native: 'Bahasa Indonesia' },
+                            { code: 'es', name: 'Español', native: 'Español' },
+                            { code: 'fr', name: 'Français', native: 'Français' },
+                            { code: 'de', name: 'Deutsch', native: 'Deutsch' },
+                            { code: 'ru', name: 'Русский', native: 'Русский' },
+                            { code: 'pt', name: 'Português', native: 'Português' },
+                            { code: 'ar', name: 'العربية', native: 'العربية' },
+                          ].map((lang) => (
+                            <button
+                              key={lang.code}
+                              onClick={() => handleLanguageChange(lang.code, lang.native)}
+                              className={cn(
+                                "w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center justify-between",
+                                currentLanguage === lang.native && "bg-primary-50 text-primary-600"
+                              )}
+                            >
+                              <span>{lang.native}</span>
+                              {currentLanguage === lang.native && (
+                                <span className="text-primary-600">✓</span>
+                              )}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
                   {isLoading ? (
                     <div className="px-4 space-y-3">
                       <div className="h-10 bg-gray-200 rounded-lg animate-pulse" />

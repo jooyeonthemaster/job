@@ -42,6 +42,22 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Google Translate Widget 스타일링 */
+#google_translate_element {
+  display: none !important;
+}
+
+/* Google Translate 기본 UI 숨기기 */
+.goog-te-banner-frame,
+.goog-te-menu-value,
+.goog-te-menu-frame {
+  display: none !important;
+}
+
+.goog-te-combo {
+  display: none !important;
+}
+
 @layer components {
   /* Glassmorphism card styles */
   .glass-card {
