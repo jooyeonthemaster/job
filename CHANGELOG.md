@@ -8,6 +8,66 @@
 
 ## 📋 최근 주요 변경 사항
 
+### 2025-12-01
+
+#### 🔧 [FIX] Supabase 무한 로딩 해결 - 워밍업 + 개별 타임아웃 제거
+
+**변경 파일**:
+- `lib/supabase/config.ts` (워밍업 코드 추가)
+- `lib/supabase/public-job-service.ts` (5초 타임아웃 제거)
+- `contexts/AuthContext_Supabase.tsx` (5초 타임아웃 제거)
+
+**변경 내용**:
+- ✅ Supabase 연결 워밍업 코드 추가 (config.ts)
+- ✅ getActiveJobs()의 개별 5초 타임아웃(AbortController) 제거
+- ✅ AuthContext fetchUserProfile()의 개별 5초 타임아웃 제거
+- ✅ 전역 config.ts의 10초 타임아웃 + 2번 재시도에 통합
+
+**이유**:
+- 메인 페이지 및 여러 페이지에서 간헐적 무한 로딩 발생
+- 원인 1: Supabase Cold Start로 첫 연결 지연
+- 원인 2: 개별 파일의 5초 타임아웃이 전역 설정보다 먼저 터짐
+- 새로고침하면 연결이 이미 있어서 정상 작동하던 현상
+
+**기대 효과**:
+- 첫 방문 시에도 연결이 미리 준비됨 (워밍업)
+- 전역 10초 타임아웃 + 자동 재시도로 안정성 향상
+- 무한 로딩 현상 해결
+
+**영향**:
+- 모든 페이지의 Supabase 쿼리 성능 개선
+- 콘솔에 `[Supabase] ✅ 연결 워밍업 완료` 로그 출력
+
+---
+
+### 2025-11-28
+
+#### 🔧 [UPDATE] 포트원 API 키 변경 - 선한이웃 계정으로 전환
+
+**변경 파일**:
+- `.env.local` (포트원 환경변수 4개 변경)
+
+**변경 내용**:
+- ✅ `NEXT_PUBLIC_PORTONE_STORE_ID`: 선한이웃 계정 Store ID로 변경
+- ✅ `NEXT_PUBLIC_PORTONE_CHANNEL_KEY`: 선한이웃 계정 Channel Key로 변경
+- ✅ `PORTONE_API_SECRET`: 선한이웃 계정 V2 API Secret으로 변경
+- ✅ `PORTONE_WEBHOOK_SECRET`: 선한이웃 계정 Webhook Secret으로 변경
+
+**이유**:
+- 기존: 다른 포트원 계정의 테스트 API 사용 중
+- 포트원에서 카카오페이 PG 계약 심사 진행을 위해 선한이웃 계정으로 전환 필요
+- 심사 시 테스트 결제 호출 기록이 해당 계정에 남아야 함
+
+**⚠️ 주의사항**:
+- Vercel 환경변수도 동일하게 업데이트 필요!
+- 로컬 개발 서버 재시작 필요 (`npm run dev`)
+
+**영향**:
+- 결제 API 호출이 선한이웃 계정으로 연결됨
+- 카카오페이 PG 심사 진행 가능
+
+---
+
 ### 2025-11-27
 
 #### 📜 [UPDATE] 기업 회원 약관 개정 - 환불 규정 신설 및 서비스 요금 현실화

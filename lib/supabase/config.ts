@@ -22,29 +22,61 @@ async function fetchWithTimeoutAndRetry(
   retries = 2
 ): Promise<Response> {
   const timeoutMs = 10000; // 10초 타임아웃
-  
-  if (typeof input === 'string' && input.includes('/rest/v1/jobs')) {
-    console.log(`[Supabase Fetch] 요청 시작: ${input.substring(0, 100)}...`);
-  }
 
   for (let attempt = 0; attempt < retries; attempt++) {
+    const originalSignal = init?.signal;
     const controller = new AbortController();
+    let abortedByTimeout = false;
+    let abortedByUpstream = false;
+
+    const handleUpstreamAbort = () => {
+      abortedByUpstream = true;
+      if (!controller.signal.aborted) {
+        controller.abort(
+          // Node 18은 AbortController.abort(reason)를 지원
+          (originalSignal as any)?.reason ?? undefined
+        );
+      }
+    };
+
+    if (typeof input === 'string' && input.includes('/rest/v1/jobs')) {
+      console.log(`[Supabase Fetch] 요청 시작: ${input.substring(0, 100)}...`);
+    }
+
+    if (originalSignal) {
+      if (originalSignal.aborted) {
+        handleUpstreamAbort();
+      } else {
+        originalSignal.addEventListener('abort', handleUpstreamAbort, { once: true });
+      }
+    }
+
     const timeoutId = setTimeout(() => {
+      abortedByTimeout = true;
       console.warn(`[Supabase Fetch] ${timeoutMs}ms 타임아웃!`);
-      controller.abort();
+      if (!controller.signal.aborted) {
+        controller.abort(new DOMException('Request timed out', 'AbortError'));
+      }
     }, timeoutMs);
+
+    const cleanup = () => {
+      clearTimeout(timeoutId);
+      if (originalSignal) {
+        originalSignal.removeEventListener('abort', handleUpstreamAbort);
+      }
+    };
 
     try {
       const response = await fetch(input, {
         ...init,
         signal: controller.signal,
       });
-      clearTimeout(timeoutId);
-      
+      cleanup();
+
       if (typeof input === 'string' && input.includes('/rest/v1/jobs')) {
         console.log(`[Supabase Fetch] 응답 성공 (${attempt + 1}번째 시도)`);
       }
-      
+
       // 응답 성공 (재시도 후 성공한 경우만 로그)
       if (attempt > 0) {
         console.log(`✅ Supabase 쿼리 성공 (${attempt + 1}번째 시도)`);
@@ -52,15 +84,20 @@ async function fetchWithTimeoutAndRetry(
       return response;
       
     } catch (error: any) {
-      clearTimeout(timeoutId);
-      
-      const isTimeout = error.name === 'AbortError';
+      cleanup();
+
+      if (abortedByUpstream) {
+        // 상위에서 명시적으로 취소한 요청은 그대로 전파
+        throw error;
+      }
+
+      const isTimeout = abortedByTimeout || error.name === 'AbortError';
       const isLastAttempt = attempt === retries - 1;
       
       if (isLastAttempt) {
         // 마지막 시도 실패
         console.error(`❌ Supabase 쿼리 최종 실패 (${retries}번 시도)`, {
-          error: isTimeout ? 'Timeout (3초 초과)' : error.message,
+          error: isTimeout ? 'Timeout (10초 초과)' : error.message,
         });
         throw new Error(
           isTimeout 
@@ -124,6 +161,23 @@ export type Database = {
 };
 
 export default supabase;
+
+// =====================================================
+// 🔥 Supabase 연결 워밍업 (Cold Start 방지)
+// 앱 로드 시 미리 연결을 열어두어 첫 쿼리 지연 방지
+// =====================================================
+if (typeof window !== 'undefined') {
+  // 클라이언트에서만 실행
+  (async () => {
+    try {
+      await supabase.from('jobs').select('id').limit(1);
+      console.log('[Supabase] ✅ 연결 워밍업 완료');
+    } catch (err: unknown) {
+      const error = err as Error;
+      console.warn('[Supabase] ⚠️ 워밍업 실패 (무시 가능):', error.message);
+    }
+  })();
+}
 
 
 

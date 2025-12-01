@@ -67,22 +67,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       console.log('[AuthContext] 프로필 조회 시작:', { userId, type });
 
-      // ✅ 5초 타임아웃
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => {
-        console.warn('[AuthContext] ⚠️ 프로필 조회 5초 타임아웃');
-        controller.abort();
-      }, 5000);
-
+      // ✅ 개별 타임아웃 제거 - 전역 config.ts의 10초 타임아웃 + 재시도에 맡김
       if (type === 'company') {
         const { data, error } = await supabase
           .from('companies')
           .select('*')
           .eq('id', userId)
-          .abortSignal(controller.signal)
           .maybeSingle();
-        
-        clearTimeout(timeoutId);
 
         if (error) {
           console.error('[AuthContext] companies 테이블 조회 에러:', {
@@ -115,10 +106,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             salary_range:user_salary_range(*)
           `)
           .eq('id', userId)
-          .abortSignal(controller.signal)
           .maybeSingle();
-        
-        clearTimeout(timeoutId);
 
         if (error) {
           console.error('[AuthContext] users 테이블 조회 에러:', {
@@ -141,19 +129,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return data;
       }
     } catch (error: unknown) {
-      const err = error as any;
-      
-      if (err?.message?.includes('aborted')) {
-        console.warn('[AuthContext] 프로필 조회 타임아웃 - 계속 진행');
-        return null;
-      }
-      
-      console.error('[AuthContext] 프로필 조회 실패:', {
-        error,
-        message: err?.message,
-        code: err?.code,
-        details: err?.details
-      });
+      const err = error as Error;
+      console.error('[AuthContext] 프로필 조회 실패:', err.message);
       return null;
     }
   };
