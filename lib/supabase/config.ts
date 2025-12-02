@@ -13,15 +13,32 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 // =====================================================
-// Custom Fetch with Timeout + Auto Retry
+// Custom Fetch with Timeout + Auto Retry + 자동 워밍업 대기
 // 모든 Supabase 쿼리에 자동 적용
 // =====================================================
+
+// 워밍업 상태 (순환 대기 방지용)
+let isWarmingUp = false;
+let warmupPromise: Promise<void> | null = null;
+let isWarmupComplete = false;
+
+const waitForWarmup = async (): Promise<void> => {
+  if (isWarmupComplete) return;
+  if (warmupPromise) return warmupPromise;
+  return Promise.resolve();
+};
+
 async function fetchWithTimeoutAndRetry(
   input: RequestInfo | URL,
   init?: RequestInit,
   retries = 2
 ): Promise<Response> {
   const timeoutMs = 10000; // 10초 타임아웃
+
+  // 🔥 모든 쿼리 전에 워밍업 완료 대기 (워밍업 쿼리 자체는 제외)
+  if (!isWarmingUp && typeof window !== 'undefined') {
+    await waitForWarmup();
+  }
 
   for (let attempt = 0; attempt < retries; attempt++) {
     const originalSignal = init?.signal;
@@ -166,15 +183,25 @@ export default supabase;
 // 🔥 Supabase 연결 워밍업 (Cold Start 방지)
 // 앱 로드 시 미리 연결을 열어두어 첫 쿼리 지연 방지
 // =====================================================
+
+// waitForWarmup을 외부에서도 사용할 수 있도록 export (기존 코드 호환성)
+export { waitForWarmup };
+
 if (typeof window !== 'undefined') {
   // 클라이언트에서만 실행
-  (async () => {
+  warmupPromise = (async () => {
     try {
+      isWarmingUp = true; // 워밍업 쿼리는 워밍업 대기 건너뜀
+      console.log('[Supabase] 🔄 연결 워밍업 시작...');
       await supabase.from('jobs').select('id').limit(1);
       console.log('[Supabase] ✅ 연결 워밍업 완료');
+      isWarmupComplete = true;
     } catch (err: unknown) {
       const error = err as Error;
       console.warn('[Supabase] ⚠️ 워밍업 실패 (무시 가능):', error.message);
+      isWarmupComplete = true; // 실패해도 완료 처리
+    } finally {
+      isWarmingUp = false;
     }
   })();
 }

@@ -60,6 +60,14 @@ export default function Footer() {
                 </a>
               </li>
               <li>
+                <a
+                  href="tel:01091394423"
+                  className="hover:text-white transition-colors"
+                >
+                  담당 번호: 010-9139-4423
+                </a>
+              </li>
+              <li>
                 <Link href="/terms" className="hover:text-white transition-colors">
                   서비스 이용약관
                 </Link>

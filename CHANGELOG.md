@@ -8,6 +8,121 @@
 
 ## 📋 최근 주요 변경 사항
 
+### 2025-12-02
+
+#### 🧹 [CLEANUP] 중복 waitForWarmup 호출 제거 - 코드 정리
+
+**변경 파일**:
+- `contexts/AuthContext_Supabase.tsx` (waitForWarmup import/call 제거)
+- `hooks/useCompanyAuth.ts` (90줄 → 87줄)
+- `hooks/useCompanyJobs.ts` (92줄 → 88줄)
+- `app/company-dashboard/edit/page.tsx` (249줄 → 245줄)
+- `components/company-dashboard/tabs/PaymentsTab.tsx` (661줄 → 652줄)
+- `hooks/useTalentAuth.ts` (55줄 → 49줄)
+- `hooks/useTalentData.ts` (33줄 → 28줄)
+- `hooks/useDashboardData.ts` (83줄 → 77줄)
+
+**변경 내용**:
+- ✅ 중앙화된 워밍업 수정 후 불필요해진 개별 `waitForWarmup()` 호출 제거
+- ✅ `waitForWarmup` import 문 제거
+- ✅ 관련 주석 정리
+
+**이유**:
+- `lib/supabase/config.ts`의 `fetchWithTimeoutAndRetry()` 내부에서 자동 워밍업 대기
+- 개별 파일의 `waitForWarmup()` 호출은 중복 (해롭지는 않지만 불필요)
+- 코드 정리 및 유지보수성 향상
+
+**영향**:
+- 동작 변화 없음 (이미 중앙에서 처리)
+- 코드베이스 간결화
+
+---
+
+#### 🔧 [REFACTOR] Supabase 무한 로딩 근본 해결 - 중앙화된 워밍업 대기
+
+**변경 파일**:
+- `lib/supabase/config.ts` (15-41줄 대폭 수정)
+
+**변경 내용**:
+- ✅ `fetchWithTimeoutAndRetry()` 함수 내부에서 자동으로 워밍업 대기
+- ✅ `isWarmingUp` 플래그로 워밍업 쿼리 자체는 대기 건너뜀 (순환 대기 방지)
+- ✅ 모든 Supabase 쿼리가 자동으로 워밍업 완료 후 실행됨
+
+**이유**:
+- 이전 방식: 각 파일(22개)에 수동으로 `waitForWarmup()` 추가 → 유지보수 어려움
+- 새 방식: Supabase 클라이언트 레벨에서 자동 처리 → 1곳 수정으로 전체 해결
+- 새 파일 만들 때 깜빡해도 자동으로 워밍업 대기됨
+
+**기대 효과**:
+- 모든 페이지에서 무한 로딩 자동 방지
+- 새로운 파일/컴포넌트 추가 시 별도 처리 불필요
+- 기존에 추가한 `waitForWarmup()` 호출은 그대로 두어도 무해함
+
+**영향**:
+- 전체 프로젝트의 모든 Supabase 쿼리에 자동 적용
+
+---
+
+#### 🔧 [FIX] Supabase 무한 로딩 종합 해결 - 전체 프로젝트 waitForWarmup 적용
+
+**변경 파일**:
+- `hooks/useCompanyAuth.ts` (5, 27-28줄 수정)
+- `hooks/useCompanyJobs.ts` (4, 35-36줄 수정)
+- `app/company-dashboard/edit/page.tsx` (5, 65-66줄 수정)
+- `components/company-dashboard/tabs/PaymentsTab.tsx` (5, 71-72, 158-159줄 수정)
+- `hooks/useTalentAuth.ts` (5, 15-16줄 수정)
+- `hooks/useTalentData.ts` (5, 16-17줄 수정)
+- `hooks/useDashboardData.ts` (5, 26-27줄 수정)
+
+**변경 내용**:
+- ✅ 모든 Supabase 쿼리 훅에 `waitForWarmup()` 추가
+- ✅ 기업 대시보드 관련: useCompanyAuth, useCompanyJobs, edit/page.tsx
+- ✅ 결제 내역: PaymentsTab (loadPayments, loadStats 모두 적용)
+- ✅ 인재풀 관련: useTalentAuth, useTalentData
+- ✅ 구직자 대시보드: useDashboardData
+
+**이유**:
+- AuthContext만 수정했지만 다른 컴포넌트/훅들은 직접 Supabase 쿼리 실행
+- 워밍업 완료 전 쿼리 시도 → 경쟁 조건 → 무한 로딩
+- 관리자 페이지, 기업 대시보드 등에서 동일한 증상 발생
+
+**기대 효과**:
+- 모든 페이지에서 무한 로딩 방지
+- 워밍업 완료 후 안전하게 DB 쿼리 실행
+
+**영향**:
+- 전체 프로젝트의 Supabase 쿼리 안정성 향상
+
+---
+
+#### 🔧 [FIX] Supabase 쿼리 무한 대기 해결 - 워밍업 경쟁 조건 수정
+
+**변경 파일**:
+- `lib/supabase/config.ts` (174-194줄 수정)
+- `contexts/AuthContext_Supabase.tsx` (5, 237-238줄 수정)
+
+**변경 내용**:
+- ✅ 워밍업 Promise를 외부에서 참조 가능하도록 `waitForWarmup()` 함수 export
+- ✅ `isWarmupComplete` 상태 플래그 추가
+- ✅ AuthContext의 `handleAuthChange()`에서 워밍업 완료 대기 추가
+- ✅ 워밍업 시작/완료 로그 개선
+
+**이유**:
+- 워밍업 쿼리가 비동기로 시작되고 완료를 기다리지 않음
+- AuthContext가 워밍업 완료 전에 DB 쿼리 시도
+- Supabase SDK 내부에서 연결 경쟁 조건 발생 → 쿼리가 pending 상태로 무한 대기
+- Network 탭에 요청 자체가 나타나지 않는 증상
+
+**기대 효과**:
+- 모든 DB 쿼리가 워밍업 완료 후 실행됨
+- 연결 경쟁 조건으로 인한 무한 대기 해결
+- 더 안정적인 초기 로드
+
+**영향**:
+- 첫 로드 시 약간의 지연이 있을 수 있으나, 무한 대기보다 훨씬 나음
+
+---
+
 ### 2025-12-01
 
 #### 🔧 [FIX] Supabase 무한 로딩 해결 - 워밍업 + 개별 타임아웃 제거
