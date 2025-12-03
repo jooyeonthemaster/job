@@ -491,6 +491,16 @@ export default function GlobalHiringPage() {
                   <Mail className="w-6 h-6" />
                   <span>KOREAJOB@SSMHR.COM</span>
                 </a>
+                <a
+                  href="https://ssmhrsite.vercel.app/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-3 bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-all px-8 py-4 rounded-xl text-white font-semibold text-lg"
+                >
+                  <Globe className="w-6 h-6" />
+                  <span>회사 소개</span>
+                  <ExternalLink className="w-5 h-5" />
+                </a>
                 <p className="text-white/80 text-sm">
                   비자, 취업, 정착 관련 모든 문의를 환영합니다
                 </p>

@@ -35,7 +35,8 @@ export default function AdminPage() {
         'admin@ssmhr.com',
         'joo.y.oh.ko@gmail.com',
         'nadr110619@gmail.com',
-        'admin@gmail.com' // 추가된 관리자 계정
+        'admin@gmail.com', // 추가된 관리자 계정
+        'yjpark@ssmhr.com' // 추가된 관리자 계정
       ];
 
       if (!adminEmails.includes(user.email || '')) {

@@ -54,7 +54,9 @@ export default function AdminJobEditPage() {
         const adminEmails = [
           'admin@ssmhr.com',
           'joo.y.oh.ko@gmail.com',
-          'nadr110619@gmail.com'
+          'nadr110619@gmail.com',
+          'admin@gmail.com',
+          'yjpark@ssmhr.com'
         ];
 
         if (!adminEmails.includes(user.email || '')) {
