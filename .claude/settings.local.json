@@ -38,7 +38,11 @@
       "Bash(git push:*)",
       "Bash(while read f)",
       "Bash(done)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(vercel ls:*)",
+      "Bash(npm view:*)",
+      "Bash(npx fix-react2shell-next:*)",
+      "Bash(npm audit fix:*)"
     ],
     "deny": [],
     "ask": []
