@@ -8,6 +8,184 @@
 
 ## 📋 최근 주요 변경 사항
 
+### 2025-12-18
+
+#### 🚨 [ROLLBACK] OAuth 설정 롤백 - 로그인 실패 문제 해결
+
+**변경 파일**:
+- `lib/supabase/config.ts`
+
+**변경 내용**:
+- ❌ **detectSessionInUrl: false → true 롤백**: OAuth Implicit Flow에서 hash fragment 자동 감지 필수
+- ❌ **flowType: 'pkce' 제거**: 기존 useOAuthLogin.ts가 Implicit Flow(hash fragment) 방식으로 처리
+
+**이유**:
+- `flowType: 'pkce'` 설정 시 OAuth가 query param(`?code=...`)으로 반환
+- 하지만 `useOAuthLogin.ts`는 hash fragment(`#access_token=...`)를 찾음
+- 결과: OAuth 콜백이 처리되지 않아 `/login?error=auth_failed`로 리다이렉트
+
+**시도했지만 실패한 방법**:
+- ❌ `detectSessionInUrl: false` + `flowType: 'pkce'` - OAuth 플로우와 클라이언트 처리 방식 불일치
+
+**영향**:
+- 소셜 로그인(구글, 카카오) 정상 작동 복구
+- 첫 방문 무한 로딩 문제는 AuthContext 500ms 지연으로 완화 기대
+
+---
+
+#### 🔧 [FIX] Supabase 워밍업 제거 + AuthContext 지연 초기화 - 첫 방문 무한 로딩 시도
+
+**변경 파일**:
+- `lib/supabase/config.ts` (277줄 → 176줄)
+- `app/page.tsx` (466줄 → 466줄)
+- `contexts/AuthContext_Supabase.tsx` (348줄 → 356줄)
+
+**변경 내용**:
+- ✅ **워밍업 로직 완전 제거**: Fire-and-Forget 워밍업도 실제 페이지 쿼리와 충돌 발생
+- ✅ **AuthContext 500ms 지연 초기화**: 메인 페이지 `getActiveJobs()`가 먼저 실행되도록 함
+  - 문제: `getActiveJobs()`와 `getSession()` + `handleAuthChange()`가 동시 실행되면서 첫 연결 블록
+  - 해결: AuthContext가 500ms 후에 세션 체크를 시작하여 쿼리 경쟁 방지
+- ✅ **detectSessionInUrl: false 설정**: Supabase 클라이언트 초기화 시 URL 파싱 블로킹 방지
+  - 문제: `detectSessionInUrl: true`일 때 클라이언트 생성 시점에 URL 파싱으로 블로킹 발생
+  - 해결: OAuth 콜백은 이미 `/auth/callback` 서버 라우트에서 수동 처리하므로 비활성화해도 안전
+- ✅ **config.ts any 타입 제거**: `error: any` → 명시적 타입으로 변경
+- ✅ **Database 타입 개선**: `any` → `Record<string, unknown>`
+- ✅ **page.tsx any 타입 제거**: `convertToJob` 함수에 `PublicJob` 타입 적용
+
+**이유**:
+- 첫 방문 시 아무 로그도 안 뜨는 이유: JS 자체가 실행 안 됨 (Supabase 연결 경쟁으로 블록)
+- 새로고침하면 되는 이유: 두 번째 방문 시에는 WebSocket 연결이 이미 열려 있음
+- AuthContext와 페이지 데이터 로드가 동시에 Supabase 쿼리를 실행하면서 경쟁 조건 발생
+
+**시도했지만 실패한 방법**:
+- ❌ waitForWarmup() 대기 방식 - 다른 쿼리가 워밍업을 기다리면서 무한 대기
+- ❌ Fire-and-Forget 워밍업 - 워밍업과 실제 쿼리가 동시 실행되면 첫 쿼리 블록
+- ❌ BroadcastChannel 다중 탭 동기화 - 단일 탭에서도 문제 발생
+- ❌ 워밍업만 제거 - AuthContext의 getSession()과 getActiveJobs()가 여전히 동시 실행
+
+**기대 효과**:
+- 첫 방문 시에도 정상적으로 데이터 로드 (500ms 후 Auth 초기화)
+- 각 쿼리가 독립적으로 10초 타임아웃 + 2회 재시도 처리
+- TypeScript 타입 안전성 향상
+
+**영향**:
+- 메인 페이지 첫 방문 시 무한 로딩 해결
+- 인증 상태 표시가 0.5초 지연될 수 있음 (사용자 경험에 큰 영향 없음)
+
+---
+
+### 2025-12-17
+
+#### 🔧 [FIX] useEffect router 의존성 제거 - 잠재적 무한 로딩 예방 (4개 파일)
+
+**변경 파일**:
+- `hooks/useCompanyAuth.ts` (87줄 → 88줄)
+- `hooks/useDashboardData.ts` (78줄 → 79줄)
+- `hooks/useOAuthLogin.ts` (368줄 → 369줄)
+- `app/applications/page.tsx` (194줄 → 195줄)
+
+**변경 내용**:
+- ✅ `useCompanyAuth.ts`: `[router]` → `[]` (마운트 1번만 실행)
+- ✅ `useDashboardData.ts`: `[userId, router]` → `[userId]` (userId 변경 시에만 실행)
+- ✅ `useOAuthLogin.ts`: `[router]` → `[]` (OAuth 콜백 1번만 처리)
+- ✅ `app/applications/page.tsx`: `[user?.id, router]` → `[user?.id]` (user.id 변경 시에만 실행)
+
+**이유**:
+- AuthContext 수정 후 전체 프로젝트 조사 결과 동일 패턴 4개 발견
+- router 의존성은 불필요하며, 페이지 이동 시 Supabase 쿼리 중복 실행 유발 가능
+- 예방 차원에서 모두 수정
+
+**영향**:
+- 기업 대시보드, 개인 대시보드, OAuth 로그인, 지원 현황 페이지 안정성 향상
+
+---
+
+#### 🔧 [FIX] Supabase 무한 로딩 근본 해결 - 워밍업 타임아웃 + 다중 탭 동기화 + 페이지 이동 문제
+
+**변경 파일**:
+- `lib/supabase/config.ts` (207줄 → 277줄)
+- `contexts/AuthContext_Supabase.tsx` (330줄 → 348줄)
+
+**변경 내용**:
+- ✅ **워밍업 쿼리에 3초 타임아웃 추가**: 워밍업이 무한 대기하면 3초 후 강제 완료
+- ✅ **waitForWarmup()에 3초 타임아웃 추가**: 대기 중인 쿼리도 최대 3초만 대기
+- ✅ **BroadcastChannel로 다중 탭 동기화**: 탭 간 워밍업 완료 상태 공유
+  - 탭 A에서 워밍업 완료 시 탭 B에 알림
+  - 탭 B는 중복 워밍업 없이 즉시 진행
+- ✅ **AuthContext getSession()에 5초 타임아웃 추가**: Auth 쿼리도 무한 대기 방지
+- ✅ **AuthContext useEffect 의존성 수정**: `[router, pathname]` → `[]`
+  - 페이지 이동 시 불필요한 재초기화 방지
+
+**이유**:
+- **문제 1 (첫 방문 무한 로딩)**: 워밍업 쿼리 자체가 응답 없이 무한 대기 → 모든 쿼리 블록
+- **문제 2 (다중 탭 무한 로딩)**: 탭 2개 열면 Supabase WebSocket 경쟁 조건 발생
+- **문제 3 (페이지 이동 무한 로딩)**: pathname 변경 시 AuthContext 재실행 → getSession() 중복 호출
+- 로그에서 `[Supabase] ✅ 연결 워밍업 완료`가 절대 나타나지 않았음
+
+**시도했지만 실패한 방법**:
+- ❌ 개별 파일에 waitForWarmup() 추가 (22개 파일) - 근본 해결 안 됨
+- ❌ 전역 fetch에 타임아웃만 추가 - 워밍업 Promise 자체가 resolve 안 됨
+
+**기대 효과**:
+- 첫 방문 시 최대 3~5초 대기 후 정상 로드 (타임아웃 발동 시)
+- 다중 탭에서도 한 탭만 워밍업, 나머지는 신호 받고 즉시 진행
+- 페이지 간 이동 시 무한 로딩 없음
+- 무한 로딩 완전 해결
+
+**영향**:
+- 전체 프로젝트의 Supabase 쿼리 안정성 향상
+
+---
+
+#### 📚 [ADD] RLS 보안 수정 가이드 문서 작성
+
+**변경 파일**:
+- `claudedocs/RLS_SECURITY_FIX_GUIDE.md` (신규: ~800줄)
+
+**변경 내용**:
+- Supabase Linter 보안 경고 26개 분석
+- 24개 테이블별 RLS 정책 수정 SQL 작성
+- 2개 SECURITY DEFINER View 수정 방법
+- 테이블별 사용 파일, 검증 방법 상세 문서화
+
+**이유**:
+- Supabase에서 보안 경고 발생
+- RLS 비활성화 테이블 24개 → 개인정보 노출 위험
+- SECURITY DEFINER View 2개 → RLS 우회 가능
+
+**영향**:
+- 코드 변경 없음 (문서만 추가)
+- 향후 마이그레이션 시 참조용
+
+---
+
+#### 💳 [UPDATE] 결제 PG사 변경: KG이니시스 → 한국결제네트웍스(KPN)
+
+**변경 파일**:
+- `.env.local` (채널키 변경)
+- `app/payment/[jobId]/page.tsx` (316줄 → 316줄, 안내문구 변경)
+- `app/payment/profile/[talentId]/page.tsx` (291줄 → 291줄, 안내문구 변경)
+- `app/api/payment/prepare/route.ts` (115줄 → 115줄, paymentId 길이 축소)
+- `app/api/payment/profile/prepare/route.ts` (157줄 → 160줄, paymentId 형식 수정)
+
+**변경 내용**:
+- ✅ PortOne 채널키를 KPN 테스트 채널로 변경
+- ✅ 결제 안내 문구 "KG이니시스" → "한국결제네트웍스(KPN)"으로 수정
+- ✅ `paymentId` KPN 규격 준수 (최대 32바이트, 영문+숫자만)
+  - 채용공고: 38자 → 28자 (`jb` + jobId앞16자 + timestamp뒤10자)
+  - 프로필열람: 31자 → 28자 (`pf` + talentId앞8자 + companyId앞8자 + timestamp뒤10자)
+
+**이유**:
+- PG사 변경 요청 (KG이니시스 → 한국결제네트웍스)
+- KPN paymentId 규칙: 최대 32바이트, 영문+숫자만 허용
+- 에러: `MxIssueNO 길이 초과 [최대 길이:32byte]`
+
+**영향**:
+- 채용공고 결제, 프로필 열람 결제 모두 KPN으로 처리
+- PortOne SDK 코드 변경 없음 (channelKey만 변경)
+
+---
+
 ### 2025-12-02
 
 #### 🧹 [CLEANUP] 중복 waitForWarmup 호출 제거 - 코드 정리

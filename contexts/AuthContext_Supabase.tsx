@@ -193,17 +193,44 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // ===================================================
   useEffect(() => {
     console.log('[AuthContext] 초기화 시작');
+    let isMounted = true;
 
-    // 1. 초기 세션 체크
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        console.log('[AuthContext] 초기 세션 발견:', session.user.id);
-        handleAuthChange(session.user);
-      } else {
-        console.log('[AuthContext] 초기 세션 없음');
-        setIsLoading(false);
+    // 1. 초기 세션 체크 (5초 타임아웃 추가 - 무한 대기 방지)
+    const sessionCheck = async () => {
+      try {
+        // ✅ 500ms 지연 - 메인 페이지 데이터 로드와의 경쟁 방지
+        // 첫 Supabase 연결이 안정화된 후 Auth 쿼리 실행
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        if (!isMounted) return;
+
+        console.log('[AuthContext] 세션 체크 시작 (500ms 지연 후)');
+
+        const sessionPromise = supabase.auth.getSession();
+        const timeoutPromise = new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('getSession timeout (5s)')), 5000)
+        );
+
+        const { data: { session } } = await Promise.race([sessionPromise, timeoutPromise]);
+
+        if (!isMounted) return;
+
+        if (session) {
+          console.log('[AuthContext] 초기 세션 발견:', session.user.id);
+          handleAuthChange(session.user);
+        } else {
+          console.log('[AuthContext] 초기 세션 없음');
+          setIsLoading(false);
+        }
+      } catch (err) {
+        console.warn('[AuthContext] 세션 체크 실패/타임아웃:', (err as Error).message);
+        if (isMounted) {
+          setIsLoading(false); // 타임아웃 시에도 로딩 종료
+        }
       }
-    });
+    };
+
+    sessionCheck();
 
     // 2. Auth 상태 변경 리스너 등록
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
@@ -222,9 +249,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
 
     return () => {
+      isMounted = false;
       subscription.unsubscribe();
     };
-  }, [router, pathname]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // ✅ 의존성 제거 - 최초 마운트 시 1번만 실행
 
   // ===================================================
   // Auth 변경 처리 로직

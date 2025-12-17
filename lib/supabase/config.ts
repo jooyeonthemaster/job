@@ -13,20 +13,9 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 // =====================================================
-// Custom Fetch with Timeout + Auto Retry + 자동 워밍업 대기
+// Custom Fetch with Timeout + Auto Retry
 // 모든 Supabase 쿼리에 자동 적용
 // =====================================================
-
-// 워밍업 상태 (순환 대기 방지용)
-let isWarmingUp = false;
-let warmupPromise: Promise<void> | null = null;
-let isWarmupComplete = false;
-
-const waitForWarmup = async (): Promise<void> => {
-  if (isWarmupComplete) return;
-  if (warmupPromise) return warmupPromise;
-  return Promise.resolve();
-};
 
 async function fetchWithTimeoutAndRetry(
   input: RequestInfo | URL,
@@ -34,11 +23,6 @@ async function fetchWithTimeoutAndRetry(
   retries = 2
 ): Promise<Response> {
   const timeoutMs = 10000; // 10초 타임아웃
-
-  // 🔥 모든 쿼리 전에 워밍업 완료 대기 (워밍업 쿼리 자체는 제외)
-  if (!isWarmingUp && typeof window !== 'undefined') {
-    await waitForWarmup();
-  }
 
   for (let attempt = 0; attempt < retries; attempt++) {
     const originalSignal = init?.signal;
@@ -51,7 +35,7 @@ async function fetchWithTimeoutAndRetry(
       if (!controller.signal.aborted) {
         controller.abort(
           // Node 18은 AbortController.abort(reason)를 지원
-          (originalSignal as any)?.reason ?? undefined
+          (originalSignal as AbortSignal & { reason?: unknown })?.reason ?? undefined
         );
       }
     };
@@ -99,8 +83,8 @@ async function fetchWithTimeoutAndRetry(
         console.log(`✅ Supabase 쿼리 성공 (${attempt + 1}번째 시도)`);
       }
       return response;
-      
-    } catch (error: any) {
+
+    } catch (error: unknown) {
       cleanup();
 
       if (abortedByUpstream) {
@@ -108,44 +92,47 @@ async function fetchWithTimeoutAndRetry(
         throw error;
       }
 
-      const isTimeout = abortedByTimeout || error.name === 'AbortError';
+      const err = error as Error;
+      const isTimeout = abortedByTimeout || err.name === 'AbortError';
       const isLastAttempt = attempt === retries - 1;
-      
+
       if (isLastAttempt) {
         // 마지막 시도 실패
         console.error(`❌ Supabase 쿼리 최종 실패 (${retries}번 시도)`, {
-          error: isTimeout ? 'Timeout (10초 초과)' : error.message,
+          error: isTimeout ? 'Timeout (10초 초과)' : err.message,
         });
         throw new Error(
-          isTimeout 
-            ? 'Request timeout - 서버 응답이 없습니다. 네트워크 연결을 확인해주세요.' 
-            : error.message
+          isTimeout
+            ? 'Request timeout - 서버 응답이 없습니다. 네트워크 연결을 확인해주세요.'
+            : err.message
         );
       }
-      
+
       // 재시도 전 대기 (1초, 2초)
       const waitTime = 1000 * (attempt + 1);
       console.warn(`⚠️ Supabase 쿼리 재시도 중... (${attempt + 1}/${retries})`, {
         url: typeof input === 'string' ? input : 'Request object',
         isTimeout,
-        error: error.message
+        error: err.message
       });
       await new Promise(resolve => setTimeout(resolve, waitTime));
     }
   }
-  
+
   throw new Error('All retries failed');
 }
 
 // Public client (클라이언트 사이드에서 사용)
+// ⚠️ detectSessionInUrl: true 필수 - OAuth Implicit Flow가 hash fragment를 사용함
+// flowType: 기본값(implicit) 사용 - useOAuthLogin.ts가 hash fragment 방식으로 처리
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
-    detectSessionInUrl: true
+    detectSessionInUrl: true  // ✅ OAuth hash fragment 자동 감지 (필수)
   },
   global: {
-    fetch: fetchWithTimeoutAndRetry as any, // ✅ 모든 쿼리에 타임아웃+재시도 적용
+    fetch: fetchWithTimeoutAndRetry as typeof fetch,
   }
 });
 
@@ -167,12 +154,11 @@ export const createAdminClient = () => {
 export type Database = {
   public: {
     Tables: {
-      users: any;
-      companies: any;
-      jobs: any;
-      talent_applications: any;
-      job_applications: any;
-      // ... 추가 테이블들
+      users: Record<string, unknown>;
+      companies: Record<string, unknown>;
+      jobs: Record<string, unknown>;
+      talent_applications: Record<string, unknown>;
+      job_applications: Record<string, unknown>;
     };
   };
 };
@@ -180,54 +166,12 @@ export type Database = {
 export default supabase;
 
 // =====================================================
-// 🔥 Supabase 연결 워밍업 (Cold Start 방지)
-// 앱 로드 시 미리 연결을 열어두어 첫 쿼리 지연 방지
+// 🔥 Supabase 연결 워밍업 완전 제거
 // =====================================================
-
-// waitForWarmup을 외부에서도 사용할 수 있도록 export (기존 코드 호환성)
-export { waitForWarmup };
-
-if (typeof window !== 'undefined') {
-  // 클라이언트에서만 실행
-  warmupPromise = (async () => {
-    try {
-      isWarmingUp = true; // 워밍업 쿼리는 워밍업 대기 건너뜀
-      console.log('[Supabase] 🔄 연결 워밍업 시작...');
-      await supabase.from('jobs').select('id').limit(1);
-      console.log('[Supabase] ✅ 연결 워밍업 완료');
-      isWarmupComplete = true;
-    } catch (err: unknown) {
-      const error = err as Error;
-      console.warn('[Supabase] ⚠️ 워밍업 실패 (무시 가능):', error.message);
-      isWarmupComplete = true; // 실패해도 완료 처리
-    } finally {
-      isWarmingUp = false;
-    }
-  })();
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+// 이유: 워밍업 쿼리와 실제 페이지 쿼리가 동시에 실행되면서
+// 첫 방문 시 무한 로딩이 발생하는 문제가 있었음.
+//
+// 해결: 워밍업을 제거하고, fetchWithTimeoutAndRetry가
+// 각 쿼리에 대해 자동으로 타임아웃과 재시도를 처리하도록 함.
+// 이 방식이 더 안정적임.
+// =====================================================

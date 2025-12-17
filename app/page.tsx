@@ -6,7 +6,7 @@ import Header from '@/components/Header';
 import JobCard from '@/components/JobCard';
 import CompanyCard from '@/components/CompanyCard';
 import { jobs as dummyJobs, companies } from '@/lib/data';
-import { getActiveJobs } from '@/lib/supabase/public-job-service';
+import { getActiveJobs, PublicJob } from '@/lib/supabase/public-job-service';
 import { Job } from '@/types';
 import { useAuth } from '@/contexts/AuthContext_Supabase';
 import {
@@ -22,18 +22,18 @@ import { motion } from 'framer-motion';
 
 export default function Home() {
   const router = useRouter();
-  const { isAuthenticated, userProfile, isLoading: authLoading } = useAuth();
+  const { isAuthenticated, userProfile } = useAuth();
   const [selectedCategory, setSelectedCategory] = useState('ai-match');
   const [topJobs, setTopJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   // PublicJob → Job 변환 함수
-  const convertToJob = (publicJob: any): Job => {
+  const convertToJob = (publicJob: PublicJob): Job => {
     return {
       id: publicJob.id,
       title: publicJob.title,
-      titleEn: publicJob.title_en,
+      titleEn: publicJob.title_en || publicJob.title,
       companyId: publicJob.company.id,
       company: {
         id: publicJob.company.id,
@@ -52,71 +52,52 @@ export default function Home() {
         techStack: [],
         established: ''
       },
-    location: publicJob.location,
-    department: publicJob.department,
-    employmentType: publicJob.employment_type,
-    experienceLevel: publicJob.experience_level,
-    salary: {
-      min: publicJob.salary_min || 0,
-      max: publicJob.salary_max || 0,
-      currency: 'KRW',
-      negotiable: publicJob.salary_negotiable || false
-    },
-    visaSponsorship: publicJob.visa_sponsorship || false,
-    languageRequirements: {
-      korean: publicJob.korean_level || 'NONE',
-      english: 'NONE'
-    },
-    deadline: publicJob.deadline || '',
-    benefits: [],
-    postedAt: publicJob.posted_at,
-    views: publicJob.views || 0,
-    applicants: publicJob.applicants || 0,
-    tags: [],
-    description: '',
-    requirements: [],
-    preferredQualifications: []
-  };
+      location: publicJob.location,
+      department: publicJob.department || '',
+      employmentType: (publicJob.employment_type as Job['employmentType']) || 'FULL_TIME',
+      experienceLevel: (publicJob.experience_level as Job['experienceLevel']) || 'ENTRY',
+      salary: {
+        min: publicJob.salary_min || 0,
+        max: publicJob.salary_max || 0,
+        currency: 'KRW',
+        negotiable: publicJob.salary_negotiable || false
+      },
+      visaSponsorship: publicJob.visa_sponsorship || false,
+      languageRequirements: {
+        korean: (publicJob.korean_level as Job['languageRequirements']['korean']) || 'NONE',
+        english: 'NONE'
+      },
+      deadline: publicJob.deadline || '',
+      benefits: [],
+      postedAt: publicJob.posted_at || '',
+      views: publicJob.views || 0,
+      applicants: publicJob.applicants || 0,
+      tags: [],
+      description: '',
+      requirements: [],
+      preferredQualifications: []
+    };
   };
 
-  // 🔍 데이터 로드 - AuthContext와 무관하게 진행
+  // 🔍 데이터 로드 - AuthContext 완전히 무시하고 즉시 시작
   useEffect(() => {
     let mounted = true;
-    let hasLoaded = false;
-    
-    // ✅ 2초 후 강제 시작 (AuthContext 기다리지 않음)
-    const forceStartTimeout = setTimeout(() => {
-      if (!hasLoaded && mounted) {
-        console.log('⚡ 2초 경과 - 강제 로드 시작');
-        loadJobs();
-      }
-    }, 2000);
-    
-    // ✅ AuthContext 완료되면 즉시 시작
-    if (!authLoading && !hasLoaded) {
-      console.log('✅ AuthContext 완료 - 로드 시작');
-      clearTimeout(forceStartTimeout);
-      loadJobs();
-    }
-    
+
     async function loadJobs() {
-      if (hasLoaded) return;
-      hasLoaded = true;
-      
       let retryCount = 0;
       const maxRetries = 3;
-      
+
       while (retryCount < maxRetries && mounted) {
         try {
           console.log(`🔄 공고 로드 시도 (${retryCount + 1}/${maxRetries})...`);
-          
+
           // 첫 시도가 아니면 1초 대기
           if (retryCount > 0) {
             await new Promise(resolve => setTimeout(resolve, 1000));
           }
-          
+
           const { topJobs: fetchedTopJobs } = await getActiveJobs();
-          
+
           if (mounted) {
             console.log('✅ 공고 로드 성공:', fetchedTopJobs.length);
             const converted = fetchedTopJobs.map(convertToJob);
@@ -124,10 +105,11 @@ export default function Home() {
             setLoading(false);
             return; // 성공 시 종료
           }
-        } catch (err: any) {
-          console.warn(`⚠️ 공고 로드 실패 (${retryCount + 1}/${maxRetries}):`, err.message);
+        } catch (err: unknown) {
+          const error = err as Error;
+          console.warn(`⚠️ 공고 로드 실패 (${retryCount + 1}/${maxRetries}):`, error.message);
           retryCount++;
-          
+
           if (retryCount >= maxRetries) {
             console.error('❌ 최대 재시도 횟수 초과');
             if (mounted) {
@@ -139,12 +121,16 @@ export default function Home() {
         }
       }
     }
-    
+
+    // ✅ 마운트 즉시 시작 - AuthContext 기다리지 않음
+    console.log('🚀 메인 페이지 - 공고 로드 즉시 시작');
+    loadJobs();
+
     return () => {
       mounted = false;
-      clearTimeout(forceStartTimeout);
     };
-  }, [authLoading]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // ✅ 의존성 없음 - 마운트 1번만 실행
 
   // 표시할 공고 (실제 DB + 더미 데이터 중 최대 2개)
   const featuredJobs = topJobs.slice(0, 2);
@@ -251,7 +237,7 @@ export default function Home() {
           ) : (
             <div className="grid lg:grid-cols-3 gap-6">
               {/* Featured Jobs - 앞 2개만 표시 */}
-              {featuredJobs.slice(0, 2).map((job: any, index: number) => (
+              {featuredJobs.slice(0, 2).map((job, index) => (
                 <motion.div
                   key={job.id}
                   initial={{ opacity: 0, y: 20 }}
