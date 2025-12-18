@@ -42,7 +42,8 @@
       "Bash(vercel ls:*)",
       "Bash(npm view:*)",
       "Bash(npx fix-react2shell-next:*)",
-      "Bash(npm audit fix:*)"
+      "Bash(npm audit fix:*)",
+      "Bash(curl:*)"
     ],
     "deny": [],
     "ask": []

@@ -281,7 +281,7 @@ export default function ProfilePaymentPage() {
 
         {/* 결제 수단 안내 */}
         <div className="mt-8 text-center text-sm text-gray-500">
-          <p>KG이니시스 안전결제 시스템을 통해 결제됩니다</p>
+          <p>한국결제네트웍스(KPN) 안전결제 시스템을 통해 결제됩니다</p>
           <p className="mt-1">신용카드 결제가 지원됩니다</p>
         </div>
       </div>

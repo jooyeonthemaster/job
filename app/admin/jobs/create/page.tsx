@@ -48,10 +48,10 @@ function AdminJobCreateContent() {
         // 이메일 기반 관리자 체크 (admin 페이지와 동일)
         const adminEmails = [
           'admin@ssmhr.com',
+          'yjpark@ssmhr.com',
           'joo.y.oh.ko@gmail.com',
           'nadr110619@gmail.com',
-          'admin@gmail.com',
-          'yjpark@ssmhr.com'
+          'admin@gmail.com'
         ];
 
         if (!adminEmails.includes(user.email || '')) {

@@ -10,6 +10,105 @@
 
 ### 2025-12-18
 
+#### 🔧 [FIX] 환불 시 결제 트랜잭션 ID 누락 문제 수정
+
+**변경 파일**:
+- `app/api/payment/complete/route.ts` (기존: 265줄 → 변경 후: 262줄)
+- `app/api/payment/webhook/route.ts` (기존: 108줄 → 변경 후: 105줄)
+- `supabase/migrations/20251218_002_add_payment_transaction_id_to_jobs.sql` (신규: 20줄)
+
+**변경 내용**:
+- jobs 테이블에 `payment_transaction_id` 컬럼 추가 마이그레이션 생성
+- 결제 완료 시 `payment_transaction_id` 저장 추가
+- `payment_method`, `payment_paid_at`은 jobs 테이블에 없는 컬럼이므로 제거
+
+**이유**:
+- 환불 처리 시 "결제 트랜잭션 정보를 찾을 수 없습니다" 에러 발생
+- jobs 테이블에 `payment_transaction_id` 컬럼이 없었음
+- `payment_method`, `payment_paid_at` 컬럼도 없어서 DB 업데이트 실패
+
+**영향**:
+- Supabase에서 마이그레이션 실행 필요
+- 새로운 결제부터 환불 기능 정상 작동
+
+---
+
+#### 🧪 [ADD] 100원 테스트 결제 상품 추가
+
+**변경 파일**:
+- `constants/job-posting.ts` (가격: 1,000원 → 100원)
+- `app/company-dashboard/jobs/create/page.tsx` (테스트 상품 UI 노출)
+
+**변경 내용**:
+- 테스트 상품 가격을 100원으로 변경 (VAT 포함)
+- 채용공고 작성 시 테스트 상품이 첫 번째로 노출되도록 변경
+- 테스트 배지 (🧪 테스트) 추가
+- VAT 포함 여부에 따른 텍스트 동적 표시
+
+**이유**:
+- 결제 기능 테스트를 위한 최소 금액 상품 필요
+
+---
+
+#### 💰 [ADD] 환불 기능 구현 - 서비스 약관 기반 환불 시스템
+
+**변경 파일**:
+- `types/payment.types.ts` (기존: 154줄 → 변경 후: 337줄)
+- `app/api/payment/refund/request/route.ts` (신규: 280줄)
+- `app/api/payment/refund/process/route.ts` (신규: 250줄)
+- `supabase/migrations/20251218_001_refund_requests.sql` (신규: 97줄)
+- `components/company-dashboard/RefundRequestModal.tsx` (신규: 270줄)
+- `components/company-dashboard/tabs/PaymentsTab.tsx` (기존: 655줄 → 변경 후: 798줄)
+- `components/admin/AdminRefundsTab.tsx` (신규: 420줄)
+- `app/admin/page.tsx` (기존: 175줄 → 변경 후: 190줄)
+
+**변경 내용**:
+1. **환불 타입 정의 추가** (`types/payment.types.ts`)
+   - `RefundStatus`: pending, approved, rejected, completed, cancelled
+   - `RefundReasonType`: before_publish, within_3days, before_view, service_error, duplicate_payment, other
+   - `REFUND_POLICY`: 서비스 약관(제8조 환불규정) 기반 환불 비율 상수
+   - `RefundRequest`, `CreateRefundRequestDTO`, `ProcessRefundDTO` 인터페이스
+
+2. **환불 요청 API** (`/api/payment/refund/request`)
+   - GET: 환불 가능 여부 확인 (결제 유형별 정책 적용)
+   - POST: 환불 요청 생성 (채용공고: 게시 전 100%, 3일 이내 70% / 프로필: 열람 후 환불 불가)
+   - 중복 요청 방지, 권한 확인, 결제 상태 검증
+
+3. **환불 처리 API** (`/api/payment/refund/process`) - 관리자용
+   - GET: 환불 요청 목록 조회 (상태별 필터링)
+   - POST: 환불 승인/거절 처리 (포트원 환불 API 연동)
+
+4. **DB 마이그레이션** (`refund_requests` 테이블)
+   - ENUM 타입: refund_status, payment_type, refund_reason_type
+   - RLS 정책: 기업은 자신의 환불 요청만 조회/생성 가능
+
+5. **기업 마이페이지 결제 내역 탭 개선**
+   - 환불 요청 버튼 추가 (결제 완료 건에 표시)
+   - 환불 요청 상태 배지 표시 (대기/승인/완료/거절)
+   - 환불 요청 모달 (정책 안내, 사유 선택/입력)
+
+6. **관리자 환불 관리 탭 추가** (`/admin` → 환불 관리)
+   - 통계 카드: 전체/대기/완료/거절 건수, 총 환불액
+   - 환불 요청 목록: 상태별 필터, 검색 기능
+   - 상세 모달: 환불 승인/거절 처리 (거절 사유 입력)
+
+**이유**:
+- 전자상거래법 및 서비스 약관(제8조) 준수
+- 사용자 환불 요청 → 관리자 승인 워크플로우 구현
+- 포트원 V2 API 연동으로 실제 환불 처리 자동화
+
+**환불 정책 (서비스 약관 기반)**:
+- 채용공고: 게시 전 100%, 게시 후 3일 이내 70%, 3일 초과 환불 불가
+- 프로필 열람: 열람 전 100%, 열람 후 환불 불가 (디지털 콘텐츠)
+- 서비스 오류/중복 결제: 100% 환불 (관리자 판단)
+
+**영향**:
+- 기업 마이페이지에서 결제 건별 환불 요청 가능
+- 관리자 페이지에서 환불 요청 승인/거절 처리 가능
+- 승인 시 포트원 API를 통해 실제 환불 처리됨
+
+---
+
 #### 🚨 [ROLLBACK] OAuth 설정 롤백 - 로그인 실패 문제 해결
 
 **변경 파일**:

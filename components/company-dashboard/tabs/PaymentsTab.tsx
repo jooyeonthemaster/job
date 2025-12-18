@@ -8,7 +8,6 @@ import {
   PaymentFilters,
   PaymentSortBy,
   PaymentType,
-  PaymentStatus,
   PAYMENT_TYPE_LABELS,
   PAYMENT_STATUS_LABELS,
   PAYMENT_STATUS_COLORS,
@@ -16,6 +15,9 @@ import {
   POSTING_TIER_LABELS,
   POSTING_TIER_COLORS,
   PaymentStats,
+  REFUND_STATUS_LABELS,
+  REFUND_STATUS_COLORS,
+  RefundStatus,
 } from '@/types/payment.types';
 import {
   CreditCard,
@@ -29,7 +31,9 @@ import {
   Search,
   X,
   ChevronDown,
+  RotateCcw,
 } from 'lucide-react';
+import RefundRequestModal from '../RefundRequestModal';
 
 interface PaymentsTabProps {
   companyId: string;
@@ -56,11 +60,19 @@ export function PaymentsTab({ companyId }: PaymentsTabProps) {
   // 선택된 결제 내역 (상세 모달용)
   const [selectedPayment, setSelectedPayment] = useState<PaymentHistoryItem | null>(null);
 
+  // 환불 요청 모달
+  const [refundModalOpen, setRefundModalOpen] = useState(false);
+  const [refundTarget, setRefundTarget] = useState<PaymentHistoryItem | null>(null);
+
+  // 환불 요청 목록
+  const [refundRequests, setRefundRequests] = useState<Record<string, { status: RefundStatus; id: string }>>({});
+
   // 데이터 로드
   useEffect(() => {
     if (companyId) {
       loadPayments();
       loadStats();
+      loadRefundRequests();
     }
   }, [companyId]);
 
@@ -208,6 +220,67 @@ export function PaymentsTab({ companyId }: PaymentsTabProps) {
     } catch (error) {
       console.error('Error loading stats:', error);
     }
+  };
+
+  // 환불 요청 목록 조회
+  const loadRefundRequests = async () => {
+    try {
+      const { data: requests, error } = await supabase
+        .from('refund_requests')
+        .select('id, payment_id, payment_type, status')
+        .eq('company_id', companyId);
+
+      if (error) {
+        console.error('Error loading refund requests:', error);
+        return;
+      }
+
+      // payment_id를 키로 하는 맵 생성
+      const requestMap: Record<string, { status: RefundStatus; id: string }> = {};
+      (requests || []).forEach((req) => {
+        const key = `${req.payment_type}_${req.payment_id}`;
+        requestMap[key] = { status: req.status as RefundStatus, id: req.id };
+      });
+      setRefundRequests(requestMap);
+    } catch (error) {
+      console.error('Error loading refund requests:', error);
+    }
+  };
+
+  // 환불 요청 가능 여부 확인
+  const canRequestRefund = (payment: PaymentHistoryItem): boolean => {
+    // 이미 환불된 경우 불가
+    if (payment.payment_status === 'refunded') return false;
+    // 결제 완료 상태가 아닌 경우 불가
+    if (payment.payment_status !== 'paid' && payment.payment_status !== 'confirmed') return false;
+
+    // 이미 환불 요청이 있는 경우 확인
+    const key = `${payment.type}_${payment.id}`;
+    const existingRequest = refundRequests[key];
+    if (existingRequest && (existingRequest.status === 'pending' || existingRequest.status === 'approved')) {
+      return false;
+    }
+
+    return true;
+  };
+
+  // 환불 요청 상태 가져오기
+  const getRefundRequestStatus = (payment: PaymentHistoryItem): { status: RefundStatus; id: string } | null => {
+    const key = `${payment.type}_${payment.id}`;
+    return refundRequests[key] || null;
+  };
+
+  // 환불 요청 모달 열기
+  const openRefundModal = (payment: PaymentHistoryItem, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setRefundTarget(payment);
+    setRefundModalOpen(true);
+  };
+
+  // 환불 요청 성공 후 처리
+  const handleRefundSuccess = () => {
+    loadRefundRequests();
+    loadPayments();
   };
 
   // 필터링 및 정렬된 결제 내역
@@ -537,16 +610,42 @@ export function PaymentsTab({ companyId }: PaymentsTabProps) {
                     </div>
                   </div>
 
-                  {/* 금액 및 상태 */}
-                  <div className="text-right ml-4">
-                    <p className="text-xl font-bold text-gray-900 mb-2">
+                  {/* 금액, 상태 및 환불 */}
+                  <div className="text-right ml-4 flex flex-col items-end gap-2">
+                    <p className="text-xl font-bold text-gray-900">
                       {formatCurrency(payment.payment_total)}
                     </p>
-                    <span className={`inline-flex px-3 py-1 rounded-full text-sm font-medium border ${
-                      PAYMENT_STATUS_COLORS[payment.payment_status]
-                    }`}>
-                      {PAYMENT_STATUS_LABELS[payment.payment_status]}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className={`inline-flex px-3 py-1 rounded-full text-sm font-medium border ${
+                        PAYMENT_STATUS_COLORS[payment.payment_status]
+                      }`}>
+                        {PAYMENT_STATUS_LABELS[payment.payment_status]}
+                      </span>
+                      {/* 환불 요청 상태 표시 */}
+                      {(() => {
+                        const refundStatus = getRefundRequestStatus(payment);
+                        if (refundStatus) {
+                          return (
+                            <span className={`inline-flex px-3 py-1 rounded-full text-sm font-medium border ${
+                              REFUND_STATUS_COLORS[refundStatus.status]
+                            }`}>
+                              {REFUND_STATUS_LABELS[refundStatus.status]}
+                            </span>
+                          );
+                        }
+                        return null;
+                      })()}
+                    </div>
+                    {/* 환불 요청 버튼 */}
+                    {canRequestRefund(payment) && (
+                      <button
+                        onClick={(e) => openRefundModal(payment, e)}
+                        className="flex items-center gap-1 px-3 py-1.5 text-sm text-gray-600 hover:text-red-600 hover:bg-red-50 border border-gray-300 hover:border-red-300 rounded-lg transition-colors"
+                      >
+                        <RotateCcw className="w-4 h-4" />
+                        환불 요청
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -638,7 +737,35 @@ export function PaymentsTab({ companyId }: PaymentsTabProps) {
               )}
             </div>
 
-            <div className="p-6 border-t border-gray-200 flex justify-end gap-3">
+            <div className="p-6 border-t border-gray-200 flex justify-between items-center">
+              {/* 환불 요청 버튼 */}
+              <div>
+                {canRequestRefund(selectedPayment) && (
+                  <button
+                    onClick={(e) => {
+                      setSelectedPayment(null);
+                      openRefundModal(selectedPayment, e);
+                    }}
+                    className="flex items-center gap-2 px-4 py-2 text-red-600 hover:text-red-700 hover:bg-red-50 border border-red-300 rounded-lg transition-colors"
+                  >
+                    <RotateCcw className="w-5 h-5" />
+                    환불 요청
+                  </button>
+                )}
+                {(() => {
+                  const refundStatus = getRefundRequestStatus(selectedPayment);
+                  if (refundStatus) {
+                    return (
+                      <span className={`inline-flex px-4 py-2 rounded-lg font-medium border ${
+                        REFUND_STATUS_COLORS[refundStatus.status]
+                      }`}>
+                        {REFUND_STATUS_LABELS[refundStatus.status]}
+                      </span>
+                    );
+                  }
+                  return null;
+                })()}
+              </div>
               <button
                 onClick={() => setSelectedPayment(null)}
                 className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
@@ -648,6 +775,22 @@ export function PaymentsTab({ companyId }: PaymentsTabProps) {
             </div>
           </div>
         </div>
+      )}
+
+      {/* 환불 요청 모달 */}
+      {refundTarget && (
+        <RefundRequestModal
+          isOpen={refundModalOpen}
+          onClose={() => {
+            setRefundModalOpen(false);
+            setRefundTarget(null);
+          }}
+          paymentId={refundTarget.id}
+          paymentType={refundTarget.type}
+          paymentTitle={refundTarget.title}
+          paymentAmount={refundTarget.payment_total}
+          onSuccess={handleRefundSuccess}
+        />
       )}
     </div>
   );

@@ -264,7 +264,8 @@ export function useOAuthLogin({ activeTab, setError, setIsLoading }: UseOAuthLog
     };
 
     handleOAuthCallback();
-  }, [router]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // ✅ 마운트 1번만 실행 (router 의존성 제거 - OAuth 콜백 중복 방지)
 }
 
 // 소셜 로그인 헬퍼 함수들

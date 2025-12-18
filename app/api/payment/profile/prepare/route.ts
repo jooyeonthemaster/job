@@ -120,9 +120,12 @@ export async function POST(request: NextRequest) {
     const vatAmount = Math.floor(PROFILE_VIEW_PRICE * VAT_RATE);
     const taxFreeAmount = PROFILE_VIEW_PRICE - vatAmount;
 
-    // 6. paymentId 생성 (이니시스 제한: 최대 40자)
-    // UUID 앞 8자 + timestamp로 고유성 보장 (약 35자)
-    const paymentId = `pf_${talentId.substring(0, 8)}_${company.id.substring(0, 8)}_${Date.now()}`;
+    // 6. paymentId 생성 (KPN 제한: 최대 32바이트, 영문+숫자만)
+    // pf(2) + talentId앞8자 + companyId앞8자 + timestamp뒤10자 = 28자
+    const compactTalentId = talentId.replace(/-/g, '').substring(0, 8);
+    const compactCompanyId = company.id.replace(/-/g, '').substring(0, 8);
+    const timestamp = Date.now().toString().slice(-10);
+    const paymentId = `pf${compactTalentId}${compactCompanyId}${timestamp}`;
 
     // 7. 결제 정보 반환
     const paymentInfo = {

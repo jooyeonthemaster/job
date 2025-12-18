@@ -43,9 +43,15 @@ export default function JobCreatePage() {
   const [paymentError, setPaymentError] = useState('');
   const [isPaymentCompleted, setIsPaymentCompleted] = useState(false);
 
-  const tierOrder: PostingTier[] = ['standard', 'top', 'premium']; // 'test' 제거 - 테스트 상품 숨김 처리
+  const tierOrder: PostingTier[] = ['test', 'standard', 'top', 'premium']; // 테스트 상품 포함
 
-  const tierDetails: Record<PostingTier, { label: string; duration: string; description: string; badge?: '인기' | '프리미엄'; highlight?: string }> = {
+  const tierDetails: Record<PostingTier, { label: string; duration: string; description: string; badge?: '인기' | '프리미엄' | '테스트'; highlight?: string }> = {
+    test: {
+      label: '테스트 (100원)',
+      duration: '7일',
+      description: '개발/QA용 테스트 결제 상품입니다',
+      badge: '테스트'
+    },
     standard: {
       label: '중상단 (일반)',
       duration: '1개월',
@@ -62,12 +68,6 @@ export default function JobCreatePage() {
       duration: '2개월',
       description: '메인 페이지 + 채용공고 목록 최상단에 고정 노출됩니다',
       badge: '프리미엄'
-    },
-    test: {
-      label: '테스트 상품',
-      duration: '7일',
-      description: '내부 QA/개발용 1,000원 상품입니다',
-      badge: undefined
     }
   };
 
@@ -367,6 +367,11 @@ export default function JobCreatePage() {
                             {isSelected && <div className="w-3 h-3 rounded-full bg-primary-600"></div>}
                           </div>
                           <span className="text-lg font-bold text-gray-900">{meta.label}</span>
+                          {meta.badge === '테스트' && (
+                            <span className="px-3 py-1 bg-orange-100 text-orange-700 text-sm font-medium rounded-full flex items-center gap-1">
+                              🧪 테스트
+                            </span>
+                          )}
                           {meta.badge === '인기' && (
                             <span className="px-3 py-1 bg-primary-100 text-primary-700 text-sm font-medium rounded-full flex items-center gap-1">
                               <Star className="w-3 h-3" />
@@ -387,12 +392,14 @@ export default function JobCreatePage() {
                         <div className="flex items-baseline gap-2 ml-8">
                           <span
                             className={`text-3xl font-bold ${
-                              tier === 'premium' ? 'text-secondary-600' : 'text-primary-600'
+                              tier === 'premium' ? 'text-secondary-600' : tier === 'test' ? 'text-orange-600' : 'text-primary-600'
                             }`}
                           >
                             {formatWonLabel(POSTING_PRICES[tier].price)}
                           </span>
-                          <span className="text-sm text-gray-500">(부가세 별도)</span>
+                          <span className="text-sm text-gray-500">
+                            {POSTING_PRICES[tier].vatIncluded ? '(VAT 포함)' : '(부가세 별도)'}
+                          </span>
                         </div>
                       </div>
 

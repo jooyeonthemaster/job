@@ -72,14 +72,12 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ success: true, message: 'Already paid' });
       }
 
-      // 결제 완료 상태로 업데이트
+      // 결제 완료 상태로 업데이트 (jobs 테이블에는 payment_method, payment_paid_at 컬럼 없음)
       const { error: updateError } = await supabase
         .from('jobs')
         .update({
           payment_status: 'paid',
-          payment_paid_at: new Date().toISOString(),
           payment_transaction_id: payment.id,
-          payment_method: payment.method?.type || null,
           updated_at: new Date().toISOString()
         })
         .eq('id', jobId);

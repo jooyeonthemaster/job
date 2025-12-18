@@ -68,7 +68,8 @@ export const useDashboardData = (userId: string | undefined) => {
     };
 
     fetchProfile();
-  }, [userId, router]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId]); // ✅ userId 변경 시에만 실행 (router 의존성 제거 - 무한 로딩 방지)
 
   return {
     loading,

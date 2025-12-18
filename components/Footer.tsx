@@ -18,17 +18,6 @@ export default function Footer() {
               글로벌 인재와 한국 기업을 연결하는<br />
               채용 매칭 플랫폼
             </p>
-            <a
-              href="https://ssmhrsite.vercel.app/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sm text-gray-400 hover:text-white transition-colors inline-flex items-center gap-1"
-            >
-              회사 소개
-              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-              </svg>
-            </a>
           </div>
 
           {/* 서비스 링크 */}
@@ -71,14 +60,6 @@ export default function Footer() {
                 </a>
               </li>
               <li>
-                <a
-                  href="tel:01091394423"
-                  className="hover:text-white transition-colors"
-                >
-                  담당 번호: 010-9139-4423
-                </a>
-              </li>
-              <li>
                 <Link href="/terms" className="hover:text-white transition-colors">
                   서비스 이용약관
                 </Link>
@@ -98,8 +79,7 @@ export default function Footer() {
             <p className="font-bold text-gray-400 mb-2">사업자 정보</p>
             <p>상호: 선한이웃 | 대표자: 박윤미</p>
             <p>사업자등록번호: 412-19-01752 | 개업일: 2022년 05월 09일</p>
-            <p>주소: 경기도 수원시 팔달구 팔달로33 웨일에비뉴 713호</p>
-            <p>전화번호: 070-4060-0805</p>
+            <p>주소: 경기도 수원시 팔달구 팔달로 33, 7층 713호(고등동, 제일에비뉴)</p>
             <p>사업 종류: 고용 알선업, 생활식품 관리, 도매 및 소매업, SNS마켓</p>
           </div>
 

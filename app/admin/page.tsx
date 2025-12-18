@@ -8,11 +8,12 @@ import AdminCreatedTab from '@/components/admin/AdminCreatedTab';
 import ProfileViewsTab from '@/components/admin/ProfileViewsTab';
 import BannersTab from '@/components/admin/BannersTab';
 import AdminPaymentsTab from '@/components/admin/AdminPaymentsTab';
-import { Settings, Briefcase, LogOut, Star, Eye, Monitor, CreditCard } from 'lucide-react';
+import AdminRefundsTab from '@/components/admin/AdminRefundsTab';
+import { Settings, Briefcase, LogOut, Star, Eye, Monitor, CreditCard, RotateCcw } from 'lucide-react';
 
 export default function AdminPage() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<'jobs' | 'admin-created' | 'profile-views' | 'payments' | 'banners'>('jobs');
+  const [activeTab, setActiveTab] = useState<'jobs' | 'admin-created' | 'profile-views' | 'payments' | 'refunds' | 'banners'>('jobs');
   const [loading, setLoading] = useState(true);
   const [authorized, setAuthorized] = useState(false);
 
@@ -33,10 +34,10 @@ export default function AdminPage() {
       // 프로덕션에서는 더 강력한 권한 체크 필요
       const adminEmails = [
         'admin@ssmhr.com',
+        'yjpark@ssmhr.com',
         'joo.y.oh.ko@gmail.com',
         'nadr110619@gmail.com',
-        'admin@gmail.com', // 추가된 관리자 계정
-        'yjpark@ssmhr.com' // 추가된 관리자 계정
+        'admin@gmail.com'
       ];
 
       if (!adminEmails.includes(user.email || '')) {
@@ -149,6 +150,17 @@ export default function AdminPage() {
               결제 내역
             </button>
             <button
+              onClick={() => setActiveTab('refunds')}
+              className={`flex items-center gap-2 px-6 py-4 border-b-2 font-medium transition-colors whitespace-nowrap ${
+                activeTab === 'refunds'
+                  ? 'border-primary-600 text-primary-600'
+                  : 'border-transparent text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <RotateCcw className="w-5 h-5" />
+              환불 관리
+            </button>
+            <button
               onClick={() => setActiveTab('banners')}
               className={`flex items-center gap-2 px-6 py-4 border-b-2 font-medium transition-colors whitespace-nowrap ${
                 activeTab === 'banners'
@@ -169,6 +181,7 @@ export default function AdminPage() {
         {activeTab === 'admin-created' && <AdminCreatedTab />}
         {activeTab === 'profile-views' && <ProfileViewsTab />}
         {activeTab === 'payments' && <AdminPaymentsTab />}
+        {activeTab === 'refunds' && <AdminRefundsTab />}
         {activeTab === 'banners' && <BannersTab />}
       </div>
     </div>

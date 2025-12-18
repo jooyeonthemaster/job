@@ -68,11 +68,13 @@ export async function POST(request: NextRequest) {
         throw portoneError;
       }
 
-      // DB 업데이트
+      // DB 업데이트 (환불을 위해 payment_transaction_id도 저장)
       const { error: updateError } = await supabaseAdmin
         .from('jobs')
         .update({
           payment_status: 'paid',
+          payment_transaction_id: paymentId,
+          payment_paid_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         })
         .eq('id', jobId);
@@ -217,12 +219,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 7. 결제 완료 상태로 업데이트
+    // 7. 결제 완료 상태로 업데이트 (환불을 위해 payment_transaction_id도 저장)
     console.log('🔵 [STEP 8] DB 업데이트 시작');
     const { error: updateError } = await supabaseAdmin
       .from('jobs')
       .update({
         payment_status: 'paid',
+        payment_transaction_id: paymentId,
         updated_at: new Date().toISOString()
       })
       .eq('id', jobId);

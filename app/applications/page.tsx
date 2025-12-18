@@ -85,7 +85,8 @@ export default function ApplicationsPage() {
     };
 
     fetchApplications();
-  }, [user?.id, router]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]); // ✅ user.id 변경 시에만 실행 (router 의존성 제거 - 무한 로딩 방지)
 
   if (loading) {
     return (

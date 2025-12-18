@@ -77,10 +77,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 3. paymentId 생성 (≤ 40자). jobId(36) 기반 + 4자리 난수로 유니크 보장
-    const compactJobId = jobId.replace(/-/g, ''); // 32자리
-    const randomSuffix = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
-    const paymentId = `jb${compactJobId}${randomSuffix}`; // 총 38자리
+    // 3. paymentId 생성 (KPN 제한: 최대 32바이트, 영문+숫자만)
+    // jobId 앞 16자 + timestamp 뒤 10자 = 28자 (여유 있게)
+    const compactJobId = jobId.replace(/-/g, '').substring(0, 16);
+    const timestamp = Date.now().toString().slice(-10);
+    const paymentId = `jb${compactJobId}${timestamp}`; // 총 28자
 
     // 4. 결제 정보 반환
     const paymentInfo = {

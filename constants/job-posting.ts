@@ -22,9 +22,9 @@ export const POSTING_PRICES: Record<PostingTier, PostingPrice> = {
     desc: '메인 페이지 + 목록 최상단 고정'
   },
   test: {
-    price: 1000,
+    price: 100,
     duration: 7,
-    label: '테스트 상품',
+    label: '테스트 (100원)',
     desc: '개발/QA용 테스트 결제',
     vatIncluded: true
   }

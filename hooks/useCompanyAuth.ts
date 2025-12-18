@@ -80,7 +80,8 @@ export const useCompanyAuth = (): UseCompanyAuthResult => {
     };
 
     checkAuth();
-  }, [router]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // ✅ 마운트 1번만 실행 (router 의존성 제거 - 무한 로딩 방지)
 
   return { company, loading, error };
 };
