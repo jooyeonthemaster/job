@@ -51,7 +51,7 @@ export const OverviewTab = ({ company, jobs, onTabChange }: OverviewTabProps) =>
       )}
 
       {/* Quick Actions */}
-      <div className="bg-white rounded-xl p-6 shadow-sm">
+      <div className="bg-white rounded-md p-6 shadow-sm">
         <h2 className="text-xl font-bold text-gray-900 mb-4">빠른 작업</h2>
         <div className="grid md:grid-cols-4 gap-4">
           <Link

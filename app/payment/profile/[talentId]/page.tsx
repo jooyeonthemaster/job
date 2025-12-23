@@ -189,7 +189,7 @@ export default function ProfilePaymentPage() {
 
       <div className="container mx-auto px-4 py-12 max-w-2xl">
         {/* 헤더 */}
-        <div className="bg-gradient-to-r from-primary-600 to-cyan-600 rounded-xl p-8 mb-8 text-white">
+        <div className="bg-gradient-to-r from-primary-600 to-cyan-600 rounded-md p-8 mb-8 text-white">
           <div className="flex items-center gap-3 mb-4">
             <User className="w-8 h-8" />
             <h1 className="text-3xl font-bold">프로필 열람 결제</h1>
@@ -199,7 +199,7 @@ export default function ProfilePaymentPage() {
 
         {/* SDK 에러 메시지 */}
         {sdkError && (
-          <div className="bg-red-50 border-2 border-red-200 rounded-xl p-4 mb-6">
+          <div className="bg-red-50 border-2 border-red-200 rounded-md p-4 mb-6">
             <div className="flex items-start gap-3">
               <svg className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
@@ -214,7 +214,7 @@ export default function ProfilePaymentPage() {
         )}
 
         {/* 결제 정보 */}
-        <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
+        <div className="bg-white rounded-md shadow-sm p-6 mb-6">
           <div className="flex items-center gap-2 mb-6">
             <User className="w-5 h-5 text-primary-600" />
             <h2 className="text-xl font-bold text-gray-900">프로필 정보</h2>
@@ -247,7 +247,7 @@ export default function ProfilePaymentPage() {
         </div>
 
         {/* 안내 사항 */}
-        <div className="bg-blue-50 rounded-xl p-4 mb-6 border border-blue-200">
+        <div className="bg-blue-50 rounded-md p-4 mb-6 border border-blue-200">
           <div className="flex items-start gap-2">
             <CheckCircle className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
             <div className="text-sm text-blue-900">
@@ -265,7 +265,7 @@ export default function ProfilePaymentPage() {
         <div className="flex gap-4">
           <button
             onClick={() => router.back()}
-            className="flex-1 py-4 px-6 rounded-xl border-2 border-gray-300 text-gray-700 font-semibold hover:bg-gray-50 transition-colors"
+            className="flex-1 py-4 px-6 rounded-md border-2 border-gray-300 text-gray-700 font-semibold hover:bg-gray-50 transition-colors"
             disabled={processing}
           >
             이전으로
@@ -273,7 +273,7 @@ export default function ProfilePaymentPage() {
           <button
             onClick={handlePayment}
             disabled={processing}
-            className="flex-1 bg-gradient-to-r from-primary-600 to-cyan-600 text-white py-4 px-6 rounded-xl font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 bg-gradient-to-r from-primary-600 to-cyan-600 text-white py-4 px-6 rounded-md font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {processing ? '결제 처리 중...' : `${formatPrice(paymentInfo.totalAmount)}원 결제하기`}
           </button>

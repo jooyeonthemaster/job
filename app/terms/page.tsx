@@ -22,9 +22,9 @@ export default function TermsPage() {
         </button>
 
         {/* 헤더 */}
-        <div className="bg-white rounded-2xl shadow-lg p-8 mb-6">
+        <div className="bg-white rounded-lg shadow-lg p-8 mb-6">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-12 h-12 bg-primary-100 rounded-xl flex items-center justify-center">
+            <div className="w-12 h-12 bg-primary-100 rounded-md flex items-center justify-center">
               <FileText className="w-6 h-6 text-primary-600" />
             </div>
             <div>
@@ -35,7 +35,7 @@ export default function TermsPage() {
         </div>
 
         {/* 약관 내용 */}
-        <div className="bg-white rounded-2xl shadow-lg p-8">
+        <div className="bg-white rounded-lg shadow-lg p-8">
           <div className="prose prose-slate max-w-none">
             <div
               className="whitespace-pre-wrap text-gray-700 leading-relaxed"

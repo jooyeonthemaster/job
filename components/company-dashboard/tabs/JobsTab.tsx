@@ -42,14 +42,14 @@ export const JobsTab = ({ jobs, loading, onDeleteJob }: JobsTabProps) => {
       </div>
 
       {loading ? (
-        <div className="bg-white rounded-xl p-8 shadow-sm">
+        <div className="bg-white rounded-md p-8 shadow-sm">
           <div className="text-center py-12">
             <div className="w-16 h-16 border-4 border-primary-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
             <p className="text-gray-600">채용공고를 불러오는 중...</p>
           </div>
         </div>
       ) : jobs.length === 0 ? (
-        <div className="bg-white rounded-xl p-8 shadow-sm">
+        <div className="bg-white rounded-md p-8 shadow-sm">
           <div className="text-center py-12">
             <Briefcase className="w-16 h-16 text-gray-300 mx-auto mb-4" />
             <p className="text-gray-500 mb-4">아직 등록된 채용공고가 없습니다</p>
@@ -64,7 +64,7 @@ export const JobsTab = ({ jobs, loading, onDeleteJob }: JobsTabProps) => {
       ) : (
         <div className="grid gap-6">
           {jobs.map((job) => (
-            <div key={job.id} className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+            <div key={job.id} className="bg-white rounded-md p-6 shadow-sm hover:shadow-md transition-shadow">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">

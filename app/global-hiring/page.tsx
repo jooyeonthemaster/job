@@ -1,9 +1,9 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { 
-  Globe, Shield, AlertCircle, CheckCircle, FileText, 
-  Users, Building, Phone, Mail, MapPin, Calendar, 
+import {
+  Globe, Shield, AlertCircle, CheckCircle, FileText,
+  Users, Building, Phone, Mail, MapPin, Calendar,
   Briefcase, GraduationCap, Heart, Award, Clock,
   ChevronRight, ExternalLink, Info, BookOpen,
   AlertTriangle, HelpCircle, Star, ArrowRight, Sparkles
@@ -112,393 +112,363 @@ export default function GlobalHiringPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      
-      {/* Hero Section */}
-      <section className="hero-gradient relative overflow-hidden">
-        <div className="container mx-auto px-4 lg:px-8 pt-20 pb-24">
-          <div className="max-w-5xl mx-auto text-center">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-            >
-              <span className="badge badge-primary mb-4">
-                외국인 취업 가이드
-              </span>
-              <h1 className="text-5xl lg:text-6xl font-bold text-gray-900 mb-6">
-                한국에서의 합법적인 취업을
-                <span className="block mt-2 text-gradient">완벽하게 준비하세요</span>
-              </h1>
-              <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-                복잡한 비자 절차부터 취업 후 정착까지,
-                모든 과정을 전문가와 함께 준비하세요
-              </p>
-            </motion.div>
-          </div>
-        </div>
 
-        {/* Background decoration */}
-        <div className="absolute top-20 -right-20 w-96 h-96 bg-primary-200 rounded-full blur-3xl opacity-20" />
-        <div className="absolute -bottom-20 -left-20 w-96 h-96 bg-secondary-200 rounded-full blur-3xl opacity-20" />
-      </section>
-
-      {/* Essential Requirements */}
-      <section className="py-16 bg-white">
-        <div className="container mx-auto px-4 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">
-              합법 취업을 위한 필수 조건
-            </h2>
-            <p className="text-gray-600">한국에서 합법적으로 일하기 위해 반드시 갖춰야 할 요건</p>
-          </div>
-          
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[
-              { icon: Shield, title: '적절한 비자', desc: '취업 가능한 체류자격' },
-              { icon: FileText, title: '외국인등록증', desc: '신분증명 및 체류 증명' },
-              { icon: Briefcase, title: '취업허가', desc: '체류자격 외 활동허가' },
-              { icon: Award, title: '4대보험', desc: '의무 가입 대상' },
-            ].map((item, index) => (
-              <motion.div
-                key={index}
-                className="card p-6 text-center"
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-                viewport={{ once: true }}
-              >
-                <div className="w-12 h-12 gradient-bg rounded-xl flex items-center justify-center mx-auto mb-4">
-                  <item.icon className="w-6 h-6 text-white" />
+      <div className="container mx-auto px-4 lg:px-8 py-8">
+        <div className="grid lg:grid-cols-[1fr_350px] gap-8 items-start">
+          {/* Left Main Content */}
+          <div className="space-y-8 w-full min-w-0">
+            {/* Hero Section */}
+            <section className="hero-gradient relative overflow-hidden rounded-2xl">
+              <div className="px-6 py-12 md:p-12">
+                <div className="text-center">
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5 }}
+                  >
+                    <span className="badge badge-primary mb-4">
+                      외국인 취업 가이드
+                    </span>
+                    <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-6">
+                      한국에서의 합법적인 취업을
+                      <span className="block mt-2 text-gradient">완벽하게 준비하세요</span>
+                    </h1>
+                    <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+                      복잡한 비자 절차부터 취업 후 정착까지,
+                      모든 과정을 전문가와 함께 준비하세요
+                    </p>
+                  </motion.div>
                 </div>
-                <h3 className="font-semibold text-gray-900 mb-2">{item.title}</h3>
-                <p className="text-sm text-gray-600">{item.desc}</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
+              </div>
 
-      {/* Visa Types */}
-      <section className="py-16 bg-gray-50">
-        <div className="container mx-auto px-4 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">
-              비자 종류별 상세 안내
-            </h2>
-            <p className="text-gray-600 mb-8">귀하에게 적합한 비자 유형을 확인하세요</p>
-            
-            <div className="inline-flex bg-white p-1 rounded-xl shadow-sm">
-              <button
-                onClick={() => setActiveTab('professional')}
-                className={`px-6 py-2 rounded-lg font-medium transition-all ${
-                  activeTab === 'professional' 
-                    ? 'gradient-bg text-white' 
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                전문직 비자
-              </button>
-              <button
-                onClick={() => setActiveTab('general')}
-                className={`px-6 py-2 rounded-lg font-medium transition-all ${
-                  activeTab === 'general' 
-                    ? 'gradient-bg text-white' 
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                일반 취업 비자
-              </button>
-            </div>
-          </div>
+              {/* Background decoration */}
+              <div className="absolute top-20 -right-20 w-96 h-96 bg-primary-200 rounded-full blur-3xl opacity-20" />
+              <div className="absolute -bottom-20 -left-20 w-96 h-96 bg-secondary-200 rounded-full blur-3xl opacity-20" />
+            </section>
 
-          <div className="max-w-5xl mx-auto">
-            <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-              <table className="w-full">
-                <thead className="gradient-bg text-white">
-                  <tr>
-                    <th className="px-6 py-4 text-left font-semibold">비자 코드</th>
-                    <th className="px-6 py-4 text-left font-semibold">종류</th>
-                    <th className="px-6 py-4 text-left font-semibold hidden md:table-cell">취업 가능처</th>
-                    <th className="px-6 py-4 text-left font-semibold hidden lg:table-cell">주요 요건</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {visaTypes[activeTab as keyof typeof visaTypes].map((visa, index) => (
-                    <motion.tr 
-                      key={visa.code}
-                      className="hover:bg-gray-50 transition-colors"
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.05 }}
-                    >
-                      <td className="px-6 py-4">
-                        <span className="badge badge-primary">
-                          {visa.code}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 font-medium text-gray-900">{visa.type}</td>
-                      <td className="px-6 py-4 text-gray-600 hidden md:table-cell">{visa.workplace}</td>
-                      <td className="px-6 py-4 text-gray-600 text-sm hidden lg:table-cell">{visa.requirements}</td>
-                    </motion.tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </section>
+            {/* Essential Requirements */}
+            <section className="bg-white rounded-2xl p-6 md:p-8 shadow-sm">
+              <div className="mb-8">
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                  합법 취업을 위한 필수 조건
+                </h2>
+                <p className="text-gray-600">한국에서 합법적으로 일하기 위해 반드시 갖춰야 할 요건</p>
+              </div>
 
-      {/* Process Steps */}
-      <section className="py-16 bg-white">
-        <div className="container mx-auto px-4 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">
-              비자 변경 프로세스
-            </h2>
-            <p className="text-gray-600">관광비자에서 취업비자로 변경하는 3단계</p>
-          </div>
-
-          <div className="max-w-4xl mx-auto">
-            <div className="grid md:grid-cols-3 gap-8">
-              {processSteps.map((step, index) => (
-                <motion.div
-                  key={step.step}
-                  className="text-center"
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.2 }}
-                  viewport={{ once: true }}
-                >
-                  <div className="relative">
-                    {index < processSteps.length - 1 && (
-                      <div className="hidden md:block absolute top-12 left-[60%] w-[calc(100%-20%)]">
-                        <div className="w-full h-[2px] bg-gradient-to-r from-primary-400 to-primary-200"></div>
-                        <div className="absolute -right-2 top-1/2 -translate-y-1/2 w-0 h-0 
-                          border-t-[6px] border-t-transparent
-                          border-b-[6px] border-b-transparent
-                          border-l-[8px] border-l-primary-400"></div>
-                      </div>
-                    )}
-                    
-                    <div className="w-24 h-24 gradient-bg rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-                      <step.icon className="w-12 h-12 text-white" />
+              <div className="grid md:grid-cols-2 gap-4">
+                {[
+                  { icon: Shield, title: '적절한 비자', desc: '취업 가능한 체류자격' },
+                  { icon: FileText, title: '외국인등록증', desc: '신분증명 및 체류 증명' },
+                  { icon: Briefcase, title: '취업허가', desc: '체류자격 외 활동허가' },
+                  { icon: Award, title: '4대보험', desc: '의무 가입 대상' },
+                ].map((item, index) => (
+                  <motion.div
+                    key={index}
+                    className="card p-6 flex flex-col items-center text-center"
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    viewport={{ once: true }}
+                  >
+                    <div className="w-12 h-12 gradient-bg rounded-md flex items-center justify-center mb-4">
+                      <item.icon className="w-6 h-6 text-white" />
                     </div>
-                    
-                    <span className="badge badge-primary mb-2">
+                    <h3 className="font-semibold text-gray-900 mb-1">{item.title}</h3>
+                    <p className="text-sm text-gray-600">{item.desc}</p>
+                  </motion.div>
+                ))}
+              </div>
+            </section>
+
+            {/* Visa Types */}
+            <section className="bg-white rounded-2xl p-6 md:p-8 shadow-sm">
+              <div className="mb-8">
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                  비자 종류별 상세 안내
+                </h2>
+                <p className="text-gray-600 mb-6">귀하에게 적합한 비자 유형을 확인하세요</p>
+
+                <div className="inline-flex bg-gray-100 p-1 rounded-md">
+                  <button
+                    onClick={() => setActiveTab('professional')}
+                    className={`px-4 py-2 rounded-md font-medium text-sm transition-all ${activeTab === 'professional'
+                        ? 'bg-white text-primary-600 shadow-sm'
+                        : 'text-gray-600 hover:text-gray-900'
+                      }`}
+                  >
+                    전문직 비자
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('general')}
+                    className={`px-4 py-2 rounded-md font-medium text-sm transition-all ${activeTab === 'general'
+                        ? 'bg-white text-primary-600 shadow-sm'
+                        : 'text-gray-600 hover:text-gray-900'
+                      }`}
+                  >
+                    일반 취업 비자
+                  </button>
+                </div>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm text-left">
+                  <thead className="bg-gray-50 text-gray-700 uppercase">
+                    <tr>
+                      <th className="px-4 py-3 rounded-l-lg">비자 코드</th>
+                      <th className="px-4 py-3">종류</th>
+                      <th className="px-4 py-3">취업 가능처</th>
+                      <th className="px-4 py-3 rounded-r-lg">주요 요건</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {visaTypes[activeTab as keyof typeof visaTypes].map((visa, index) => (
+                      <motion.tr
+                        key={visa.code}
+                        className="hover:bg-gray-50"
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.05 }}
+                      >
+                        <td className="px-4 py-3 font-semibold text-primary-600">
+                          {visa.code}
+                        </td>
+                        <td className="px-4 py-3 font-medium text-gray-900">{visa.type}</td>
+                        <td className="px-4 py-3 text-gray-600">{visa.workplace}</td>
+                        <td className="px-4 py-3 text-gray-600">{visa.requirements}</td>
+                      </motion.tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
+            {/* Process Steps */}
+            <section className="bg-white rounded-2xl p-6 md:p-8 shadow-sm">
+              <div className="mb-8">
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                  비자 변경 프로세스
+                </h2>
+                <p className="text-gray-600">관광비자에서 취업비자로 변경하는 3단계</p>
+              </div>
+
+              <div className="grid md:grid-cols-3 gap-6">
+                {processSteps.map((step, index) => (
+                  <motion.div
+                    key={step.step}
+                    className="relative text-center p-4 rounded-xl bg-gray-50"
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.2 }}
+                    viewport={{ once: true }}
+                  >
+                    <div className="w-16 h-16 gradient-bg rounded-lg flex items-center justify-center mx-auto mb-4 shadow-md">
+                      <step.icon className="w-8 h-8 text-white" />
+                    </div>
+
+                    <span className="text-xs font-bold text-primary-600 bg-primary-50 px-2 py-1 rounded-full mb-2 inline-block">
                       STEP {step.step}
                     </span>
-                    <h3 className="font-bold text-xl text-gray-900 mb-2">{step.title}</h3>
-                    <p className="text-gray-600 text-sm">{step.description}</p>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Important Notice */}
-      <section className="py-16 bg-gray-50">
-        <div className="container mx-auto px-4 lg:px-8">
-          <motion.div 
-            className="max-w-4xl mx-auto"
-            initial={{ opacity: 0, scale: 0.95 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5 }}
-            viewport={{ once: true }}
-          >
-            <div className="bg-red-50 border-2 border-red-200 rounded-2xl p-8">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center">
-                  <AlertTriangle className="w-6 h-6 text-red-600" />
-                </div>
-                <h2 className="text-2xl font-bold text-gray-900">불법 취업 시 처벌</h2>
+                    <h3 className="font-bold text-lg text-gray-900 mb-1">{step.title}</h3>
+                    <p className="text-gray-500 text-sm">{step.description}</p>
+                  </motion.div>
+                ))}
               </div>
-              
-              <div className="grid md:grid-cols-2 gap-6">
+            </section>
+
+            {/* Important Notice */}
+            <section className="bg-red-50 border border-red-100 rounded-2xl p-6 md:p-8">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                  <AlertTriangle className="w-5 h-5 text-red-600" />
+                </div>
+                <h2 className="text-xl font-bold text-gray-900">불법 취업 시 처벌</h2>
+              </div>
+
+              <div className="grid gap-6">
                 <div>
-                  <h3 className="font-semibold text-red-600 mb-3">처벌 내용</h3>
-                  <ul className="space-y-2">
+                  <h3 className="font-semibold text-red-700 mb-2">처벌 내용</h3>
+                  <div className="grid sm:grid-cols-2 gap-2">
                     {[
                       '강제퇴거 및 출국명령',
                       '입국금지 (1년~10년)',
                       '벌금 최대 2천만원',
                       '징역 3년 이하'
                     ].map((item, idx) => (
-                      <li key={idx} className="flex items-center gap-2 text-gray-700">
+                      <div key={idx} className="flex items-center gap-2 text-gray-700 bg-white px-3 py-2 rounded-lg border border-red-100">
                         <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
-                        <span className="text-sm">{item}</span>
-                      </li>
+                        <span className="text-sm font-medium">{item}</span>
+                      </div>
                     ))}
-                  </ul>
+                  </div>
                 </div>
-                
-                <div>
-                  <h3 className="font-semibold text-gray-900 mb-3">절대 금지 행위</h3>
-                  <ul className="space-y-2">
-                    {[
-                      '관광비자로 아르바이트',
-                      '허가받지 않은 업종 근무',
-                      '불법 브로커 이용',
-                      '허위 서류 제출'
-                    ].map((item, idx) => (
-                      <li key={idx} className="flex items-center gap-2 text-gray-700">
-                        <AlertCircle className="w-4 h-4 text-orange-500 flex-shrink-0" />
-                        <span className="text-sm">{item}</span>
-                      </li>
-                    ))}
-                  </ul>
+              </div>
+            </section>
+
+            {/* Support Centers */}
+            <section className="bg-white rounded-2xl p-6 md:p-8 shadow-sm">
+              <div className="mb-8">
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                  도움받을 수 있는 기관
+                </h2>
+                <p className="text-gray-600">문제 발생 시 연락 가능한 공식 지원 기관</p>
+              </div>
+
+              <div className="grid sm:grid-cols-2 gap-4">
+                {supportCenters.map((center, index) => (
+                  <motion.div
+                    key={index}
+                    className="border border-gray-100 rounded-xl p-4 hover:border-primary-100 transition-colors"
+                  >
+                    <div className="flex items-start gap-4">
+                      <div className="w-10 h-10 bg-gray-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <center.icon className="w-5 h-5 text-primary-600" />
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-gray-900 mb-1">{center.name}</h3>
+                        <p className="text-xs text-gray-500 mb-2">{center.description}</p>
+                        <a href={`tel:${center.contact}`} className="inline-flex items-center gap-1.5 text-sm text-primary-600 font-medium hover:underline">
+                          <Phone className="w-3 h-3" />
+                          {center.contact}
+                        </a>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </section>
+
+            {/* Tips Section */}
+            <section className="gradient-bg rounded-2xl p-6 md:p-8 text-white">
+              <h2 className="text-2xl font-bold mb-6">
+                성공적인 한국 취업을 위한 팁
+              </h2>
+              <div className="grid sm:grid-cols-2 gap-4">
+                {[
+                  { icon: GraduationCap, title: '한국어 능력', desc: 'TOPIK 3급 이상' },
+                  { icon: Users, title: '문화 이해', desc: '직장 문화 학습' },
+                  { icon: Globe, title: '네트워킹', desc: '커뮤니티 참여' },
+                  { icon: Star, title: '장기 계획', desc: '영주권 준비' }
+                ].map((tip, index) => (
+                  <div key={index} className="bg-white/10 backdrop-blur-sm rounded-xl p-4 flex items-center gap-4">
+                    <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <tip.icon className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-sm">{tip.title}</h3>
+                      <p className="text-xs text-white/80">{tip.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          </div>
+
+          {/* Right Sidebar */}
+          <div className="hidden lg:block space-y-6 sticky top-24">
+            {/* Contact Section - Prominent */}
+            <div className="bg-white border md:border-2 border-primary-100/50 md:border-primary-100 rounded-2xl p-6 shadow-[0_2px_20px_rgba(59,130,246,0.1)] relative overflow-hidden group">
+              <div className="relative z-10">
+                <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                  <Mail className="w-5 h-5 text-primary-600" />
+                  취업 관련 문의
+                </h3>
+                <p className="text-sm text-gray-600 mb-6 leading-relaxed">
+                  궁금하신 점이 있으시면 아래 메일로 문의해 주시면 신속하게 답변해 드립니다.
+                </p>
+
+                <div className="space-y-3">
+                  <a href="mailto:support@linkbw.com" className="flex items-center p-3 bg-primary-50/50 rounded-xl border border-primary-100 hover:bg-primary-50 hover:border-primary-200 transition-all shadow-sm gap-4 group/item">
+                    <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-primary-600 shadow-sm group-hover/item:text-primary-700 transition-colors">
+                      <Mail className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <span className="text-xs text-primary-600 font-medium block mb-0.5">고객 지원</span>
+                      <span className="font-bold text-gray-900 text-sm">support@linkbw.com</span>
+                    </div>
+                  </a>
+
+                  <a href="mailto:yjpark@ssmhr.com" className="flex items-center p-3 bg-primary-50/50 rounded-xl border border-primary-100 hover:bg-primary-50 hover:border-primary-200 transition-all shadow-sm gap-4 group/item">
+                    <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-primary-600 shadow-sm group-hover/item:text-primary-700 transition-colors">
+                      <Mail className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <span className="text-xs text-primary-600 font-medium block mb-0.5">채용 담당자</span>
+                      <span className="font-bold text-gray-900 text-sm">yjpark@ssmhr.com</span>
+                    </div>
+                  </a>
                 </div>
+              </div>
+
+              {/* Decorative circle */}
+              <div className="absolute -top-12 -right-12 w-48 h-48 bg-gradient-to-br from-primary-100 to-primary-50 rounded-full opacity-50 group-hover:scale-110 transition-transform duration-700 blur-2xl"></div>
+            </div>
+
+            {/* FAQ Section */}
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+              <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <HelpCircle className="w-5 h-5 text-primary-600" />
+                자주 묻는 질문
+              </h3>
+
+              <div className="space-y-2">
+                {faqs.map((faq, index) => (
+                  <div key={index} className="border-b border-gray-50 last:border-0 pb-2 last:pb-0">
+                    <button
+                      onClick={() => setExpandedFaq(expandedFaq === index ? null : index)}
+                      className="w-full text-left py-2 flex items-start justify-between group"
+                    >
+                      <span className={`font-medium text-sm transition-colors ${expandedFaq === index ? 'text-primary-600' : 'text-gray-700 group-hover:text-gray-900'}`}>
+                        {faq.question}
+                      </span>
+                      <ChevronRight className={`w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0 transition-transform ${expandedFaq === index ? 'rotate-90' : ''}`} />
+                    </button>
+
+                    {expandedFaq === index && (
+                      <div className="pb-2">
+                        <p className="text-xs text-gray-500 bg-gray-50 p-3 rounded-lg leading-relaxed">
+                          {faq.answer}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
             </div>
-          </motion.div>
-        </div>
-      </section>
 
-      {/* Support Centers */}
-      <section className="py-16 bg-white">
-        <div className="container mx-auto px-4 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">
-              도움받을 수 있는 기관
-            </h2>
-            <p className="text-gray-600">문제 발생 시 연락 가능한 공식 지원 기관</p>
+            {/* Additional Sticky Call to Action or Info if needed */}
           </div>
+        </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {supportCenters.map((center, index) => (
-              <motion.div
-                key={index}
-                className="card p-6"
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-                viewport={{ once: true }}
-              >
-                <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center mb-4">
-                  <center.icon className="w-6 h-6 text-primary-600" />
+        {/* Mobile Contact & FAQ (Visible only on small screens) */}
+        <div className="mt-12 lg:hidden space-y-8">
+          <section className="bg-primary-50/50 border border-primary-100 rounded-xl p-6">
+            <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+              <Mail className="w-5 h-5 text-primary-600" />
+              취업 관련 문의
+            </h3>
+            <div className="space-y-3">
+              <a href="mailto:support@linkbw.com" className="block p-3 bg-white rounded-xl border border-primary-100 text-center font-bold text-gray-900 text-sm shadow-sm">
+                support@linkbw.com
+              </a>
+              <a href="mailto:yjpark@ssmhr.com" className="block p-3 bg-white rounded-xl border border-primary-100 text-center font-bold text-gray-900 text-sm shadow-sm">
+                yjpark@ssmhr.com
+              </a>
+            </div>
+          </section>
+
+          <section className="bg-white rounded-xl p-6 shadow-sm">
+            <h3 className="text-xl font-bold text-gray-900 mb-4">자주 묻는 질문</h3>
+            <div className="space-y-4">
+              {faqs.map((faq, index) => (
+                <div key={`mobile-faq-${index}`} className="border-b border-gray-100 last:border-0 pb-4 last:pb-0">
+                  <h4 className="font-bold text-gray-800 mb-2 text-sm">{faq.question}</h4>
+                  <p className="text-sm text-gray-600">{faq.answer}</p>
                 </div>
-                <h3 className="font-bold text-gray-900 mb-2">{center.name}</h3>
-                <p className="text-sm text-gray-600 mb-3">{center.description}</p>
-                <a href={`tel:${center.contact}`} className="flex items-center gap-2 text-primary-600 hover:text-primary-700">
-                  <Phone className="w-4 h-4" />
-                  <span className="font-medium">{center.contact}</span>
-                </a>
-              </motion.div>
-            ))}
-          </div>
+              ))}
+            </div>
+          </section>
         </div>
-      </section>
-
-      {/* Tips Section */}
-      <section className="py-16 gradient-bg">
-        <div className="container mx-auto px-4 lg:px-8">
-          <div className="text-center mb-12 text-white">
-            <h2 className="text-3xl font-bold mb-2">
-              성공적인 한국 취업을 위한 팁
-            </h2>
-            <p className="text-white/90">전문가들이 추천하는 준비 사항</p>
-          </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[
-              { icon: GraduationCap, title: '한국어 능력', desc: 'TOPIK 3급 이상' },
-              { icon: Users, title: '문화 이해', desc: '직장 문화 학습' },
-              { icon: Globe, title: '네트워킹', desc: '커뮤니티 참여' },
-              { icon: Star, title: '장기 계획', desc: '영주권 준비' }
-            ].map((tip, index) => (
-              <motion.div
-                key={index}
-                className="bg-white/10 backdrop-blur-sm rounded-xl p-6 text-white text-center"
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-                viewport={{ once: true }}
-              >
-                <tip.icon className="w-10 h-10 mb-3 mx-auto" />
-                <h3 className="font-bold mb-2">{tip.title}</h3>
-                <p className="text-sm text-white/80">{tip.desc}</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* FAQ Section */}
-      <section className="py-16 bg-gray-50">
-        <div className="container mx-auto px-4 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">
-              자주 묻는 질문
-            </h2>
-            <p className="text-gray-600">궁금한 점을 빠르게 해결하세요</p>
-          </div>
-
-          <div className="max-w-3xl mx-auto space-y-4">
-            {faqs.map((faq, index) => (
-              <motion.div
-                key={index}
-                className="bg-white rounded-xl overflow-hidden"
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
-                viewport={{ once: true }}
-              >
-                <button
-                  onClick={() => setExpandedFaq(expandedFaq === index ? null : index)}
-                  className="w-full px-6 py-4 text-left flex items-center justify-between hover:bg-gray-50 transition-colors"
-                >
-                  <div className="flex items-center gap-3">
-                    <HelpCircle className="w-5 h-5 text-primary-600" />
-                    <h3 className="font-semibold text-gray-900">{faq.question}</h3>
-                  </div>
-                  <ChevronRight className={`w-5 h-5 text-gray-400 transition-transform ${expandedFaq === index ? 'rotate-90' : ''}`} />
-                </button>
-                
-                {expandedFaq === index && (
-                  <div className="px-6 pb-4">
-                    <p className="text-gray-600 pl-8">{faq.answer}</p>
-                  </div>
-                )}
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Contact Section */}
-      <section className="py-20 gradient-bg-secondary">
-        <div className="container mx-auto px-4 lg:px-8">
-          <div className="max-w-4xl mx-auto text-center">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.5 }}
-              viewport={{ once: true }}
-            >
-              <h2 className="text-4xl font-bold text-white mb-4">
-                한국 취업 관련 문의
-              </h2>
-              <p className="text-xl text-white/90 mb-8">
-                한국 취업에 대해 궁금하신 점이 있으시면
-                <br />아래 연락처로 언제든지 문의해 주세요
-              </p>
-              <div className="flex flex-col items-center gap-4">
-                <a
-                  href="mailto:KOREAJOB@SSMHR.COM"
-                  className="inline-flex items-center gap-3 bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-all px-8 py-4 rounded-xl text-white font-semibold text-lg"
-                >
-                  <Mail className="w-6 h-6" />
-                  <span>KOREAJOB@SSMHR.COM</span>
-                </a>
-                <p className="text-white/80 text-sm">
-                  비자, 취업, 정착 관련 모든 문의를 환영합니다
-                </p>
-              </div>
-            </motion.div>
-          </div>
-        </div>
-      </section>
+      </div>
     </div>
   );
 }

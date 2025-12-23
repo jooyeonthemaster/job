@@ -61,7 +61,7 @@ export default function FilterSection({ onFilterChange }: FilterSectionProps) {
 
   return (
     <div className="space-y-4">
-      <div className="glass-card rounded-xl p-4">
+      <div className="glass-card rounded-md p-4">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <Filter className="w-5 h-5 text-primary" />
@@ -215,7 +215,7 @@ export default function FilterSection({ onFilterChange }: FilterSectionProps) {
 
       {/* Active Filters Display */}
       {hasActiveFilters && (
-        <div className="glass-card rounded-xl p-4">
+        <div className="glass-card rounded-md p-4">
           <p className="text-xs text-gray-400 mb-2">적용된 필터</p>
           <div className="flex flex-wrap gap-2">
             {Object.entries(activeFilters).map(([key, value]: [string, any]) => {

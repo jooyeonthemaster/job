@@ -30,7 +30,7 @@ export default function TalentSidebar({
   onResetFilters
 }: TalentSidebarProps) {
   return (
-    <div className="bg-white rounded-xl shadow-sm p-6 sticky top-28">
+    <div className="bg-white rounded-md shadow-sm p-6 sticky top-28">
       <div className="flex items-center gap-2 mb-4">
         <Filter className="w-5 h-5 text-primary-600" />
         <h3 className="font-semibold text-gray-900">상세 필터</h3>

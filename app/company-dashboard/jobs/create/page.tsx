@@ -324,7 +324,7 @@ export default function JobCreatePage() {
       <div className="min-h-screen bg-gray-50">
         {stage === 'payment' ? (
           <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-            <div className="bg-gradient-to-br from-primary-50 via-white to-secondary-50 rounded-xl p-6 shadow-lg border-2 border-primary-100">
+            <div className="bg-gradient-to-br from-primary-50 via-white to-secondary-50 rounded-md p-6 shadow-lg border-2 border-primary-100">
               <div className="flex items-center gap-3 mb-6">
                 <div className="p-2 bg-primary-600 rounded-lg">
                   <TrendingUp className="w-6 h-6 text-white" />
@@ -343,7 +343,7 @@ export default function JobCreatePage() {
                   return (
                     <label
                       key={tier}
-                      className={`relative flex items-start p-5 rounded-xl border-2 cursor-pointer transition-all ${
+                      className={`relative flex items-start p-5 rounded-md border-2 cursor-pointer transition-all ${
                         isSelected
                           ? 'border-primary-500 bg-primary-50 shadow-md'
                           : 'border-gray-200 bg-white hover:border-primary-200 hover:bg-gray-50'
@@ -416,7 +416,7 @@ export default function JobCreatePage() {
               </div>
 
               <div className="grid lg:grid-cols-2 gap-6">
-                <div className="bg-white rounded-xl p-6 border-2 border-gray-200 shadow-sm">
+                <div className="bg-white rounded-md p-6 border-2 border-gray-200 shadow-sm">
                   <div className="flex items-center gap-2 mb-4">
                     <CreditCard className="w-5 h-5 text-primary-600" />
                     <h3 className="text-lg font-bold text-gray-900">결제 정보</h3>
@@ -465,7 +465,7 @@ export default function JobCreatePage() {
                 </div>
 
                 <div className="space-y-4">
-                  <div className="h-full p-6 bg-white rounded-xl border-2 border-gray-200 shadow-sm">
+                  <div className="h-full p-6 bg-white rounded-md border-2 border-gray-200 shadow-sm">
                     <h4 className="text-base font-bold text-gray-900 mb-3">결제 전 꼭 확인하세요</h4>
                     <ul className="text-sm text-gray-700 space-y-2 list-disc list-inside">
                       <li>결제가 완료되면 즉시 공고 작성이 가능합니다.</li>
@@ -485,7 +485,7 @@ export default function JobCreatePage() {
               <button
                 onClick={handleStartPayment}
                 disabled={paymentProcessing}
-                className="w-full mt-6 py-4 px-6 rounded-xl bg-primary-600 text-white font-semibold hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+                className="w-full mt-6 py-4 px-6 rounded-md bg-primary-600 text-white font-semibold hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
               >
                 {paymentProcessing ? '결제 요청 중...' : `${formatPrice(totalAmount)}원 결제하기`}
               </button>
@@ -588,7 +588,7 @@ export default function JobCreatePage() {
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
               {error && (
-                <div className="mb-6 p-4 bg-red-50 border-2 border-red-200 rounded-xl">
+                <div className="mb-6 p-4 bg-red-50 border-2 border-red-200 rounded-md">
                   <p className="text-sm font-medium text-red-600">{error}</p>
                   {errors.length > 0 && (
                     <ul className="mt-2 space-y-1">
@@ -608,7 +608,7 @@ export default function JobCreatePage() {
                 />
               ) : (
                 <div className="space-y-6">
-                  <div className="bg-gradient-to-r from-secondary-50 to-pink-50 rounded-xl p-6 border-2 border-secondary-100">
+                  <div className="bg-gradient-to-r from-secondary-50 to-pink-50 rounded-md p-6 border-2 border-secondary-100">
                     <div className="flex items-center gap-3 mb-2">
                       <div className="w-8 h-8 bg-secondary-600 rounded-lg flex items-center justify-center">
                         <span className="text-white font-bold">2</span>

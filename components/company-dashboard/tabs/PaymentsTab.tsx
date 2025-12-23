@@ -371,7 +371,7 @@ export function PaymentsTab({ companyId }: PaymentsTabProps) {
       {/* 통계 카드 */}
       {stats && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-white rounded-xl p-6 border-2 border-gray-200 hover:border-primary-600 transition-colors shadow-sm">
+          <div className="bg-white rounded-md p-6 border-2 border-gray-200 hover:border-primary-600 transition-colors shadow-sm">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-gray-500 text-sm mb-1">총 결제 건수</p>
@@ -383,7 +383,7 @@ export function PaymentsTab({ companyId }: PaymentsTabProps) {
             </div>
           </div>
 
-          <div className="bg-white rounded-xl p-6 border-2 border-primary-600 shadow-sm">
+          <div className="bg-white rounded-md p-6 border-2 border-primary-600 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-gray-500 text-sm mb-1">총 결제 금액</p>
@@ -395,7 +395,7 @@ export function PaymentsTab({ companyId }: PaymentsTabProps) {
             </div>
           </div>
 
-          <div className="bg-white rounded-xl p-6 border-2 border-gray-200 hover:border-primary-600 transition-colors shadow-sm">
+          <div className="bg-white rounded-md p-6 border-2 border-gray-200 hover:border-primary-600 transition-colors shadow-sm">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-gray-500 text-sm mb-1">이번 달 결제</p>
@@ -407,7 +407,7 @@ export function PaymentsTab({ companyId }: PaymentsTabProps) {
             </div>
           </div>
 
-          <div className="bg-white rounded-xl p-6 border-2 border-gray-200 hover:border-primary-600 transition-colors shadow-sm">
+          <div className="bg-white rounded-md p-6 border-2 border-gray-200 hover:border-primary-600 transition-colors shadow-sm">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-gray-500 text-sm mb-1">올해 결제</p>
@@ -422,7 +422,7 @@ export function PaymentsTab({ companyId }: PaymentsTabProps) {
       )}
 
       {/* 필터 및 정렬 */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+      <div className="bg-white rounded-md shadow-sm border border-gray-200">
         <div className="p-4 border-b border-gray-200">
           <div className="flex flex-wrap items-center justify-between gap-4">
             {/* 검색 */}
@@ -657,7 +657,7 @@ export function PaymentsTab({ companyId }: PaymentsTabProps) {
       {/* 상세 모달 (선택적 구현) */}
       {selectedPayment && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-md shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6 border-b border-gray-200">
               <div className="flex items-center justify-between">
                 <h2 className="text-2xl font-bold text-gray-900">결제 상세 내역</h2>

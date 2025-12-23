@@ -2,6 +2,7 @@
 // app/talent/page.tsx에서 분리 (기능 변경 없음)
 
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 import {
   Globe,
   MapPin,
@@ -9,8 +10,10 @@ import {
   Star,
   Clock,
   Languages,
-  DollarSign
+  DollarSign,
+  User
 } from 'lucide-react';
+import OptimizedImage from '@/components/OptimizedImage';
 import { supabase } from '@/lib/supabase/config';
 import type { TalentProfile } from '@/lib/supabase/talent-service';
 import { formatSalary, getLanguageColor } from '@/lib/utils/talent';
@@ -29,6 +32,7 @@ export default function TalentCard({
   onLoginRequired
 }: TalentCardProps) {
   const router = useRouter();
+  const [imageError, setImageError] = useState(false);
 
   const handleViewProfile = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -78,12 +82,25 @@ export default function TalentCard({
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow">
+    <div className="bg-white rounded-md shadow-sm hover:shadow-md transition-shadow">
       <div className="p-6">
         <div className="flex items-start gap-4">
           {/* Profile Avatar */}
-          <div className="w-20 h-20 rounded-xl bg-gradient-to-br from-primary-100 to-primary-200 flex items-center justify-center text-2xl font-bold text-primary-700 shrink-0">
-            {profile.name.split(' ').map(n => n[0]).join('')}
+          <div className="w-20 h-20 rounded-xl bg-gradient-to-br from-primary-100 to-primary-200 flex items-center justify-center shrink-0 overflow-hidden">
+            {profile.profileImage && !imageError ? (
+              <OptimizedImage
+                src={profile.profileImage}
+                alt={profile.name}
+                width={80}
+                height={80}
+                className="w-full h-full object-cover"
+                onError={() => setImageError(true)}
+              />
+            ) : (
+              <span className="text-2xl font-bold text-primary-700">
+                {profile.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+              </span>
+            )}
           </div>
 
           <div className="flex-1">

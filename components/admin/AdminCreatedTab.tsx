@@ -31,7 +31,11 @@ interface AdminJob {
   };
 }
 
-export default function AdminCreatedTab() {
+interface AdminCreatedTabProps {
+  isActive?: boolean;
+}
+
+export default function AdminCreatedTab({ isActive = true }: AdminCreatedTabProps) {
   const [companies, setCompanies] = useState<AdminCompany[]>([]);
   const [expandedCompanyId, setExpandedCompanyId] = useState<string | null>(null);
   const [companyJobs, setCompanyJobs] = useState<Record<string, AdminJob[]>>({});
@@ -44,8 +48,10 @@ export default function AdminCreatedTab() {
   });
 
   useEffect(() => {
-    fetchAdminCreatedData();
-  }, []);
+    if (isActive) {
+      fetchAdminCreatedData();
+    }
+  }, [isActive]);
 
   const fetchAdminCreatedData = async () => {
     try {
@@ -171,6 +177,36 @@ export default function AdminCreatedTab() {
     }
   };
 
+  const handleDeleteJob = async (jobId: string, jobTitle: string, companyId: string) => {
+    if (!confirm(`"${jobTitle}" 공고를 삭제하시겠습니까?\n\n⚠️ 이 작업은 되돌릴 수 없습니다.`)) {
+      return;
+    }
+
+    try {
+      // 공고 삭제
+      const { error } = await supabase
+        .from('jobs')
+        .delete()
+        .eq('id', jobId);
+
+      if (error) throw error;
+
+      alert('공고가 삭제되었습니다.');
+
+      // 해당 회사의 공고 목록 새로고침
+      setCompanyJobs(prev => ({
+        ...prev,
+        [companyId]: prev[companyId]?.filter(job => job.id !== jobId) || []
+      }));
+
+      // 전체 데이터 새로고침
+      fetchAdminCreatedData();
+    } catch (error: unknown) {
+      console.error('공고 삭제 실패:', error);
+      alert(`삭제 실패: ${(error as Error).message}`);
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { label: string; color: string }> = {
       active: { label: '활성', color: 'bg-green-100 text-green-800' },
@@ -203,7 +239,7 @@ export default function AdminCreatedTab() {
 
   if (loading) {
     return (
-      <div className="bg-white rounded-xl shadow-sm p-8">
+      <div className="bg-white rounded-md shadow-sm p-8">
         <div className="flex items-center justify-center">
           <div className="w-8 h-8 border-4 border-primary-600 border-t-transparent rounded-full animate-spin"></div>
           <span className="ml-3 text-gray-600">데이터 로딩 중...</span>
@@ -216,7 +252,7 @@ export default function AdminCreatedTab() {
     <div className="space-y-6">
       {/* 통계 카드 */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white rounded-xl shadow-sm p-6">
+        <div className="bg-white rounded-md shadow-sm p-6">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
               <Building2 className="w-6 h-6 text-blue-600" />
@@ -228,7 +264,7 @@ export default function AdminCreatedTab() {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm p-6">
+        <div className="bg-white rounded-md shadow-sm p-6">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
               <Briefcase className="w-6 h-6 text-green-600" />
@@ -240,7 +276,7 @@ export default function AdminCreatedTab() {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm p-6">
+        <div className="bg-white rounded-md shadow-sm p-6">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
               <Briefcase className="w-6 h-6 text-purple-600" />
@@ -254,7 +290,7 @@ export default function AdminCreatedTab() {
       </div>
 
       {/* 회사 목록 */}
-      <div className="bg-white rounded-xl shadow-sm">
+      <div className="bg-white rounded-md shadow-sm">
         <div className="p-6 border-b border-gray-200">
           <div className="flex items-center justify-between">
             <div>
@@ -415,6 +451,12 @@ export default function AdminCreatedTab() {
                                 >
                                   상세보기
                                 </a>
+                                <button
+                                  onClick={() => handleDeleteJob(job.id, job.title, company.id)}
+                                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium"
+                                >
+                                  삭제
+                                </button>
                               </div>
                             </div>
                           ))}
@@ -432,7 +474,7 @@ export default function AdminCreatedTab() {
       {/* 회사 등록 모달 */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-md shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
               <h2 className="text-xl font-bold text-gray-900">새 회사 등록</h2>
               <button

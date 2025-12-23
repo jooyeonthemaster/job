@@ -103,7 +103,7 @@ function CloudinaryUploadComponent({
         exit={{ opacity: 0, scale: 0.95 }}
         className="relative group"
       >
-        <div className={`${aspectRatioClass} w-full max-w-sm mx-auto overflow-hidden rounded-xl border-2 border-gray-200`}>
+        <div className={`${aspectRatioClass} w-full max-w-sm mx-auto overflow-hidden rounded-md border-2 border-gray-200`}>
           <img
             src={preview}
             alt="Preview"
@@ -194,7 +194,7 @@ function CloudinaryUploadComponent({
                     className="w-full relative"
                     disabled={isUploading}
                   >
-                    <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 hover:border-primary-500 hover:bg-primary-50 transition-all cursor-pointer group">
+                    <div className="border-2 border-dashed border-gray-300 rounded-md p-8 hover:border-primary-500 hover:bg-primary-50 transition-all cursor-pointer group">
                       <div className="flex flex-col items-center gap-4">
                         {isUploading ? (
                           <>

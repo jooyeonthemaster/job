@@ -4,7 +4,7 @@ import { BookOpen } from 'lucide-react';
 
 export default function CareerTip() {
   return (
-    <div className="bg-gradient-to-br from-primary-50 to-secondary-50 rounded-xl p-6">
+    <div className="bg-gradient-to-br from-primary-50 to-secondary-50 rounded-md p-6">
       <div className="flex items-center gap-2 mb-4">
         <BookOpen className="w-5 h-5 text-primary-600" />
         <h3 className="font-semibold text-gray-900">오늘의 커리어 팁</h3>

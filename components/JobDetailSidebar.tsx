@@ -44,7 +44,7 @@ export default function JobDetailSidebar({
       {/* Apply Button */}
       <button
         onClick={onApplyClick}
-        className="w-full bg-gradient-to-r from-primary-600 to-cyan-600 text-white py-4 px-6 rounded-xl font-semibold hover:shadow-lg transition-all"
+        className="w-full bg-gradient-to-r from-primary-600 to-cyan-600 text-white py-4 px-6 rounded-md font-semibold hover:shadow-lg transition-all"
       >
         지원하기
       </button>
@@ -52,7 +52,7 @@ export default function JobDetailSidebar({
       {/* Action Buttons */}
       <button
         onClick={onCopyLink}
-        className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl border border-gray-200 bg-white text-gray-700 hover:border-primary-600 transition-all"
+        className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-md border border-gray-200 bg-white text-gray-700 hover:border-primary-600 transition-all"
       >
         <Share2 className="w-4 h-4" />
         공유
@@ -60,7 +60,7 @@ export default function JobDetailSidebar({
 
       {/* Company Info Card */}
       {job.company && (
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+        <div className="bg-white rounded-md shadow-sm overflow-hidden">
           {/* Header */}
           <div className="bg-gradient-to-r from-primary-50 to-cyan-50 px-6 py-4 border-b border-gray-100">
             <h3 className="font-bold text-gray-900 flex items-center gap-2">

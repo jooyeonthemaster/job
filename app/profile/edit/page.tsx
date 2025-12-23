@@ -323,7 +323,7 @@ const ProfileEditInner = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
-          className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-8 mb-8 border border-gray-100"
+          className="bg-white/80 backdrop-blur-sm rounded-lg shadow-xl p-8 mb-8 border border-gray-100"
         >
           <StepIndicator
             steps={[
@@ -346,10 +346,10 @@ const ProfileEditInner = () => {
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0, x: -20 }}
           transition={{ duration: 0.3 }}
-          className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-8 border border-gray-100 relative"
+          className="bg-white/80 backdrop-blur-sm rounded-lg shadow-xl p-8 border border-gray-100 relative"
         >
           {isSaving && (
-            <div className="absolute inset-0 bg-white/50 flex items-center justify-center rounded-2xl z-10">
+            <div className="absolute inset-0 bg-white/50 flex items-center justify-center rounded-lg z-10">
               <div className="text-center">
                 <div className="w-12 h-12 border-4 border-primary-600 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
                 <p className="text-gray-700 font-medium">프로필 저장 중...</p>

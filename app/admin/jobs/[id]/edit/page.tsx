@@ -9,7 +9,7 @@ import { getJob, updateJob } from '@/lib/supabase/job-service';
 import JobMetadataForm from '@/components/job-create/metadata/JobMetadataForm';
 import JobContentEditor from '@/components/job-create/editor/JobContentEditor';
 import JobPreviewModal from '@/components/job-create/JobPreviewModal';
-import { ArrowLeft, Save, Eye, Loader } from 'lucide-react';
+import { ChevronLeft, Save, Eye, Loader, Building2, Send } from 'lucide-react';
 
 const pickSingle = <T,>(relation: T | T[] | null | undefined): T | null => {
   if (!relation) return null;
@@ -31,6 +31,7 @@ export default function AdminJobEditPage() {
   const jobId = params.id as string;
 
   const { formData, updateField, setFormDataBulk } = useJobForm();
+  const [currentStep, setCurrentStep] = useState<'metadata' | 'content'>('metadata');
   const [editorContent, setEditorContent] = useState<string>('');
   const { errors, isValid } = useJobFormValidation(formData, editorContent);
 
@@ -71,7 +72,7 @@ export default function AdminJobEditPage() {
         console.error('Admin check error:', error);
         router.push('/');
       }
-    };                                                                                      
+    };
 
     checkAdminAccess();
   }, [jobId]);
@@ -165,9 +166,10 @@ export default function AdminJobEditPage() {
     }
   };
 
-  const handleSave = async (isDraft: boolean = false) => {
-    if (!isValid && !isDraft) {
-      alert('필수 항목을 입력해주세요.');
+  const handleSave = async () => {
+    if (!isValid) {
+      setError('필수 항목을 입력해주세요.');
+      setCurrentStep('metadata');
       return;
     }
 
@@ -188,7 +190,7 @@ export default function AdminJobEditPage() {
       }
 
       alert('공고가 수정되었습니다.');
-      router.push('/admin');
+      router.push('/admin?tab=jobs');
     } catch (err: unknown) {
       console.error('공고 수정 실패:', err);
       const errorMessage = (err as Error).message || '공고 수정에 실패했습니다.';
@@ -211,101 +213,200 @@ export default function AdminJobEditPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* 헤더 */}
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between py-4">
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => router.push('/admin')}
-                className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
-              >
-                <ArrowLeft className="w-5 h-5" />
-                <span className="font-medium">관리자 페이지</span>
-              </button>
-              <div className="h-6 w-px bg-gray-300"></div>
-              <h1 className="text-xl font-bold text-gray-900">공고 수정</h1>
+    <>
+      <JobPreviewModal
+        isOpen={showPreview}
+        onClose={() => setShowPreview(false)}
+        formData={formData}
+        editorContent={editorContent}
+        companyName={selectedCompany?.name}
+        companyLogo={selectedCompany?.logo}
+      />
+
+      <div className="min-h-screen bg-gray-50">
+        {/* Header - create 페이지와 동일한 구조 */}
+        <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={() => router.push('/admin?tab=jobs')}
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <ChevronLeft className="w-6 h-6 text-gray-600" />
+                </button>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h1 className="text-2xl font-bold text-gray-900">채용공고 수정 (관리자)</h1>
+                    <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded">ADMIN</span>
+                  </div>
+                  {selectedCompany && (
+                    <div className="flex items-center gap-2 mt-1">
+                      <p className="text-sm text-gray-600">회사:</p>
+                      <div className="flex items-center gap-2">
+                        {selectedCompany.logo && (
+                          <img src={selectedCompany.logo} alt={selectedCompany.name} className="w-5 h-5 rounded object-contain" />
+                        )}
+                        <span className="text-sm font-medium text-gray-900">{selectedCompany.name}</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setShowPreview(true)}
+                  className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+                >
+                  <Eye className="w-4 h-4 inline mr-2" />
+                  미리보기
+                </button>
+                <button
+                  onClick={handleSave}
+                  disabled={saving}
+                  className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+                >
+                  {saving ? <>저장 중...</> : <><Save className="w-4 h-4 inline mr-2" />저장하기</>}
+                </button>
+              </div>
             </div>
 
-            <div className="flex items-center gap-3">
+            {/* Step Tabs - create 페이지와 동일 */}
+            <div className="flex items-center gap-4 mt-4 border-b border-gray-200">
               <button
-                onClick={() => setShowPreview(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+                onClick={() => setCurrentStep('metadata')}
+                className={`px-4 py-3 font-medium transition-colors relative ${
+                  currentStep === 'metadata'
+                    ? 'text-primary-600 border-b-2 border-primary-600'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
               >
-                <Eye className="w-5 h-5" />
-                미리보기
+                1. 정형 정보 입력
+                {errors.length > 0 && (
+                  <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+                )}
               </button>
               <button
-                onClick={() => handleSave(false)}
-                disabled={saving}
-                className="flex items-center gap-2 px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+                onClick={() => setCurrentStep('content')}
+                className={`px-4 py-3 font-medium transition-colors relative ${
+                  currentStep === 'content'
+                    ? 'text-primary-600 border-b-2 border-primary-600'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
               >
-                <Save className="w-5 h-5" />
-                {saving ? '저장 중...' : '저장하기'}
+                2. 상세 내용 작성
+                {!editorContent.trim() && (
+                  <span className="absolute -top-1 -right-1 w-2 h-2 bg-yellow-500 rounded-full"></span>
+                )}
               </button>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* 회사 정보 표시 */}
-      <div className="bg-white border-b border-gray-200 py-4">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Content */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {error && (
+            <div className="mb-6 p-4 bg-red-50 border-2 border-red-200 rounded-md">
+              <p className="text-sm font-medium text-red-600">{error}</p>
+              {errors.length > 0 && (
+                <ul className="mt-2 space-y-1">
+                  {errors.map((err, idx) => (
+                    <li key={idx} className="text-sm text-red-600">• {err}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+
+          {/* 선택된 회사 정보 표시 */}
           {selectedCompany && (
-            <div className="flex items-center gap-3">
-              {selectedCompany.logo && (
-                <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden">
-                  <img src={selectedCompany.logo} alt={selectedCompany.name} className="w-full h-full object-contain" />
+            <div className="mb-6 p-4 bg-blue-50 border-2 border-blue-200 rounded-md flex items-center gap-3">
+              {selectedCompany.logo ? (
+                <img
+                  src={selectedCompany.logo}
+                  alt={selectedCompany.name}
+                  className="w-12 h-12 rounded-lg object-cover"
+                />
+              ) : (
+                <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                  <Building2 className="w-6 h-6 text-white" />
                 </div>
               )}
               <div>
-                <p className="text-sm text-gray-500">회사</p>
-                <p className="font-bold text-gray-900">{selectedCompany.name}</p>
+                <p className="font-semibold text-gray-900">{selectedCompany.name}</p>
+                {selectedCompany.name_en && (
+                  <p className="text-sm text-gray-600">{selectedCompany.name_en}</p>
+                )}
               </div>
             </div>
           )}
+
+          {/* Step Content - create 페이지와 동일한 구조 */}
+          {currentStep === 'metadata' && (
+            <JobMetadataForm formData={formData} onUpdate={updateField} />
+          )}
+
+          {currentStep === 'content' && (
+            <div className="space-y-6">
+              <div className="bg-gradient-to-r from-secondary-50 to-pink-50 rounded-md p-6 border-2 border-secondary-100">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-8 h-8 bg-secondary-600 rounded-lg flex items-center justify-center">
+                    <span className="text-white font-bold">2</span>
+                  </div>
+                  <h2 className="text-2xl font-bold text-gray-900">상세 내용 작성</h2>
+                </div>
+                <p className="text-sm text-gray-600 ml-11">
+                  블로그 에디터처럼 자유롭게 작성하세요.
+                </p>
+              </div>
+
+              <JobContentEditor
+                content={editorContent}
+                onChange={setEditorContent}
+                placeholder="채용공고 상세 내용을 작성하세요..."
+              />
+            </div>
+          )}
+
+          {/* Navigation Buttons */}
+          <div className="mt-8 flex items-center justify-between">
+            {currentStep !== 'metadata' && (
+              <button
+                onClick={() => setCurrentStep('metadata')}
+                className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+              >
+                <ChevronLeft className="w-4 h-4 inline mr-2" />
+                이전 단계
+              </button>
+            )}
+            {currentStep === 'metadata' && <div></div>}
+            <button
+              onClick={() => {
+                if (currentStep === 'metadata') {
+                  setCurrentStep('content');
+                } else {
+                  handleSave();
+                }
+              }}
+              disabled={saving}
+              className="px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed shadow-lg ml-auto"
+            >
+              {currentStep === 'content' ? (
+                <>
+                  <Save className="w-4 h-4 inline mr-2" />
+                  저장하기
+                </>
+              ) : (
+                <>
+                  다음 단계
+                  <ChevronLeft className="w-4 h-4 inline ml-2 rotate-180" />
+                </>
+              )}
+            </button>
+          </div>
         </div>
       </div>
-
-      {/* 메인 콘텐츠 */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-red-800">{error}</p>
-          </div>
-        )}
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* 메타데이터 폼 */}
-          <div className="lg:col-span-1">
-            <JobMetadataForm
-              formData={formData}
-              onUpdate={updateField}
-            />
-          </div>
-
-          {/* 에디터 */}
-          <div className="lg:col-span-2">
-            <JobContentEditor
-              content={editorContent}
-              onChange={setEditorContent}
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* 미리보기 모달 */}
-      {showPreview && selectedCompany && (
-        <JobPreviewModal
-          isOpen={showPreview}
-          onClose={() => setShowPreview(false)}
-          formData={formData}
-          editorContent={editorContent}
-          companyName={selectedCompany.name}
-          companyLogo={selectedCompany.logo}
-        />
-      )}
-    </div>
+    </>
   );
 }

@@ -10,8 +10,8 @@ type LoginPromoPanelProps = {
 
 export default function LoginPromoPanel({ isPerson }: LoginPromoPanelProps) {
   return (
-    <div className="hidden lg:flex bg-white rounded-2xl shadow-md p-16 h-full flex-col justify-center items-start">
-      <div className="inline-flex p-5 rounded-2xl mb-8 bg-primary-50">
+    <div className="hidden lg:flex bg-white rounded-lg shadow-md p-16 h-full flex-col justify-center items-start">
+      <div className="inline-flex p-5 rounded-lg mb-8 bg-primary-50">
         {isPerson ? (
           <User className="w-12 h-12 text-primary-600" />
         ) : (
@@ -36,7 +36,7 @@ export default function LoginPromoPanel({ isPerson }: LoginPromoPanelProps) {
 
       <Link
         href="/signup"
-        className="inline-flex items-center justify-center gap-3 px-8 py-4 bg-primary-600 text-white text-lg font-semibold rounded-xl hover:bg-primary-700 transition-colors shadow-lg hover:shadow-xl"
+        className="inline-flex items-center justify-center gap-3 px-8 py-4 bg-primary-600 text-white text-lg font-semibold rounded-md hover:bg-primary-700 transition-colors shadow-lg hover:shadow-xl"
       >
         회원가입 하러가기
         <ArrowRight className="w-6 h-6" />

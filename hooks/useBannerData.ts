@@ -5,7 +5,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { getAllBanners, getTotalStats } from '@/lib/supabase/banner-service';
 import type { AdvertisementBanner } from '@/types/banner.types';
 
-export function useBannerData() {
+export function useBannerData(isActive: boolean = true) {
   const [banners, setBanners] = useState<AdvertisementBanner[]>([]);
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -28,8 +28,10 @@ export function useBannerData() {
   }, []);
 
   useEffect(() => {
-    loadData();
-  }, [loadData]);
+    if (isActive) {
+      loadData();
+    }
+  }, [isActive, loadData]);
 
   return { banners, stats, loading, loadData };
 }

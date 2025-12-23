@@ -42,7 +42,7 @@ export default function JobCard({ job }: JobCardProps) {
 
   return (
     <Link href={`/jobs/${job.id}`} className="block group relative">
-      <div className="bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden h-full flex flex-col relative">
+      <div className="bg-white rounded-md shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden h-full flex flex-col relative">
         <div className="p-6 flex-1">
           {/* Company Info */}
           <div className="flex items-center gap-3 mb-3">

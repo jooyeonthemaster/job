@@ -17,7 +17,7 @@ export default function BenefitsSection({
   onUpdateItem 
 }: BenefitsSectionProps) {
   return (
-    <div className="bg-white rounded-xl p-6 shadow-sm">
+    <div className="bg-white rounded-md p-6 shadow-sm">
       <h2 className="text-xl font-bold text-gray-900 mb-6">복지 및 혜택</h2>
 
       <div className="space-y-6">

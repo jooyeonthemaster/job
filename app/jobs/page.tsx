@@ -10,6 +10,9 @@ import {
   Search,
   Filter,
   ChevronRight,
+  Briefcase,
+  MapPin,
+  Clock,
 } from 'lucide-react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
@@ -273,81 +276,94 @@ export default function JobsPage() {
     <div className="min-h-screen bg-gray-50">
       <Header />
 
-      {/* Hero Section */}
-      <section className="bg-gradient-to-r from-primary-50 to-secondary-50 py-12">
+      {/* Hero Section - 통합 검색 영역 */}
+      <section className="bg-gradient-to-b from-primary-50 to-white py-10">
         <div className="container mx-auto px-4 lg:px-8">
-          {/* Search Bar */}
-          <div className="bg-white rounded-xl shadow-sm p-2 flex items-center max-w-3xl mb-4">
-            <div className="flex-1 flex items-center px-4">
-              <Search className="w-5 h-5 text-gray-400 mr-3" />
-              <input
-                type="text"
-                placeholder="직무, 회사, 키워드 검색..."
-                className="flex-1 outline-none text-gray-700 placeholder:text-gray-400 py-3"
-              />
-            </div>
-            <button className="btn-primary">
-              검색하기
-            </button>
+          {/* 헤드라인 */}
+          <div className="mb-6">
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              채용공고 검색
+            </h1>
+            <p className="text-gray-500">
+              한국 최고의 기업들이 당신을 기다립니다
+            </p>
           </div>
 
-          <p className="text-lg text-gray-600">
-            한국 최고의 기업들이 당신을 기다립니다
-          </p>
-        </div>
-      </section>
-
-      {/* Filter Section */}
-      <section className="bg-white border-b sticky top-16 z-40">
-        <div className="container mx-auto px-4 lg:px-8 py-4">
-          <div className="flex items-center gap-6 overflow-x-auto">
-            {/* Category Filter */}
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-gray-700 whitespace-nowrap">직무</span>
-              <select
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-primary-500"
-              >
-                {categories.map(cat => (
-                  <option key={cat.id} value={cat.id}>{cat.label}</option>
-                ))}
-              </select>
+          {/* 통합 검색 카드 */}
+          <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+            {/* 검색바 */}
+            <div className="flex items-center gap-3 mb-6">
+              <div className="flex-1 flex items-center bg-gray-50 rounded-lg px-4 py-3 border border-gray-200 focus-within:border-primary-400 focus-within:ring-2 focus-within:ring-primary-100 transition-all max-w-2xl">
+                <Search className="w-5 h-5 text-gray-400 mr-3 flex-shrink-0" />
+                <input
+                  type="text"
+                  placeholder="직무, 회사명, 키워드로 검색하세요"
+                  className="flex-1 bg-transparent outline-none text-gray-700 placeholder:text-gray-400"
+                />
+              </div>
+              <button className="bg-primary-600 text-white font-semibold px-8 py-3 rounded-lg hover:bg-primary-700 transition-colors shadow-md hover:shadow-lg flex-shrink-0">
+                검색
+              </button>
             </div>
 
-            {/* Location Filter */}
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-gray-700 whitespace-nowrap">지역</span>
-              <select
-                value={selectedLocation}
-                onChange={(e) => setSelectedLocation(e.target.value)}
-                className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-primary-500"
-              >
-                {locations.map(loc => (
-                  <option key={loc.id} value={loc.id}>{loc.label}</option>
-                ))}
-              </select>
-            </div>
+            {/* 필터 영역 */}
+            <div className="flex flex-wrap items-center gap-3">
+              {/* Category Filter */}
+              <div className="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2 border border-gray-200 hover:border-primary-300 transition-colors">
+                <Briefcase className="w-4 h-4 text-primary-500" />
+                <select
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  className="bg-transparent text-sm text-gray-700 font-medium focus:outline-none cursor-pointer pr-2"
+                >
+                  {categories.map(cat => (
+                    <option key={cat.id} value={cat.id}>{cat.label}</option>
+                  ))}
+                </select>
+              </div>
 
-            {/* Experience Filter */}
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-gray-700 whitespace-nowrap">경력</span>
-              <select
-                value={selectedExperience}
-                onChange={(e) => setSelectedExperience(e.target.value)}
-                className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-primary-500"
-              >
-                {experiences.map(exp => (
-                  <option key={exp.id} value={exp.id}>{exp.label}</option>
-                ))}
-              </select>
-            </div>
+              {/* Location Filter */}
+              <div className="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2 border border-gray-200 hover:border-primary-300 transition-colors">
+                <MapPin className="w-4 h-4 text-primary-500" />
+                <select
+                  value={selectedLocation}
+                  onChange={(e) => setSelectedLocation(e.target.value)}
+                  className="bg-transparent text-sm text-gray-700 font-medium focus:outline-none cursor-pointer pr-2"
+                >
+                  {locations.map(loc => (
+                    <option key={loc.id} value={loc.id}>{loc.label}</option>
+                  ))}
+                </select>
+              </div>
 
-            {/* More Filters Button */}
-            <button className="flex items-center gap-1.5 px-4 py-1.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 whitespace-nowrap">
-              <Filter className="w-4 h-4" />
-              상세조건
-            </button>
+              {/* Experience Filter */}
+              <div className="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2 border border-gray-200 hover:border-primary-300 transition-colors">
+                <Clock className="w-4 h-4 text-primary-500" />
+                <select
+                  value={selectedExperience}
+                  onChange={(e) => setSelectedExperience(e.target.value)}
+                  className="bg-transparent text-sm text-gray-700 font-medium focus:outline-none cursor-pointer pr-2"
+                >
+                  {experiences.map(exp => (
+                    <option key={exp.id} value={exp.id}>{exp.label}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Divider */}
+              <div className="h-6 w-px bg-gray-200 mx-1 hidden sm:block"></div>
+
+              {/* More Filters Button */}
+              <button className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-primary-600 hover:bg-primary-50 rounded-lg transition-colors">
+                <Filter className="w-4 h-4" />
+                상세 필터
+              </button>
+
+              {/* Reset Button */}
+              <button className="text-sm text-gray-500 hover:text-gray-700 transition-colors">
+                초기화
+              </button>
+            </div>
           </div>
         </div>
       </section>
@@ -358,24 +374,24 @@ export default function JobsPage() {
           <div className="flex gap-6">
             {/* 메인 컨텐츠 */}
             <div className="flex-1">
-              {/* Top 20 Jobs - 4열 그리드 */}
+              {/* Top 20 Jobs - 플래티넘 (4열 그리드) */}
               <div className="mb-16">
-            <div className="relative bg-gradient-to-r from-emerald-700 to-emerald-600 rounded-2xl p-6 mb-8 overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-emerald-900/30 via-transparent to-green-900/20"></div>
+            <div className="relative bg-gradient-to-r from-indigo-600 to-indigo-500 rounded-2xl p-6 mb-8 overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-indigo-700/30 via-transparent to-violet-600/20"></div>
               <div className="relative flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <div className="flex items-center justify-center w-12 h-12 bg-white/20 rounded-xl backdrop-blur-md">
-                    <span className="text-2xl">🔥</span>
+                  <div className="flex items-center justify-center w-12 h-12 bg-white/20 rounded-lg backdrop-blur-md">
+                    <span className="text-2xl">👑</span>
                   </div>
                   <div>
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="px-2 py-0.5 bg-white/90 text-emerald-700 text-xs font-bold rounded-full animate-pulse">
-                        프리미엄
+                      <span className="px-2 py-0.5 bg-white/90 text-indigo-700 text-xs font-bold rounded-full">
+                        플래티넘
                       </span>
                       <span className="text-white/90 text-sm">최상단 노출 공고 (최대 20개)</span>
                     </div>
                     <h2 className="text-2xl font-bold text-white">
-                      지금 당장 주목해야 할 채용공고
+                      고객님이 꼭봐야할 공고
                     </h2>
                   </div>
                 </div>
@@ -401,7 +417,7 @@ export default function JobsPage() {
                 Array.from({ length: 20 }).map((_, index) => (
                   <div
                     key={`empty-top-${index}`}
-                    className="h-64 rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 flex flex-col items-center justify-center text-gray-400"
+                    className="h-64 rounded-md border-2 border-dashed border-gray-300 bg-gray-50 flex flex-col items-center justify-center text-gray-400"
                   >
                     <span className="text-sm font-medium">빈 슬롯</span>
                     <span className="text-xs mt-1">#{index + 1}</span>
@@ -411,24 +427,24 @@ export default function JobsPage() {
             </div>
           </div>
 
-          {/* Middle 25 Jobs - 5열 그리드 */}
+          {/* Middle 25 Jobs - 프라임 (5열 그리드) */}
           <div className="mb-16">
-            <div className="relative bg-gradient-to-r from-emerald-800 to-emerald-700 rounded-2xl px-8 py-12 mb-16 overflow-hidden">
-              <div className="absolute top-8 left-0 right-0 bottom-0 bg-gradient-to-bl from-green-900/30 via-transparent to-emerald-900/20"></div>
+            <div className="relative bg-gradient-to-r from-primary-600 to-primary-500 rounded-2xl p-6 mb-8 overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-bl from-primary-700/30 via-transparent to-blue-600/20"></div>
               <div className="relative flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <div className="flex items-center justify-center w-12 h-12 bg-white/20 rounded-xl backdrop-blur-md">
+                  <div className="flex items-center justify-center w-12 h-12 bg-white/20 rounded-lg backdrop-blur-md">
                     <span className="text-2xl">⭐</span>
                   </div>
                   <div>
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="px-2 py-0.5 bg-white/90 text-emerald-800 text-xs font-bold rounded-full">
-                        추천 공고
+                      <span className="px-2 py-0.5 bg-white/90 text-primary-700 text-xs font-bold rounded-full">
+                        프라임
                       </span>
-                      <span className="text-white/90 text-sm">당신을 위한 맞춤 추천 (최대 25개)</span>
+                      <span className="text-white/90 text-sm">인기 채용공고 (최대 25개)</span>
                     </div>
                     <h2 className="text-2xl font-bold text-white">
-                      당신을 위한 맞춤 채용공고
+                      최고의 인기 공고
                     </h2>
                   </div>
                 </div>
@@ -454,7 +470,7 @@ export default function JobsPage() {
                 Array.from({ length: 25 }).map((_, index) => (
                   <div
                     key={`empty-middle-${index}`}
-                    className="h-56 rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 flex flex-col items-center justify-center text-gray-400"
+                    className="h-56 rounded-md border-2 border-dashed border-gray-300 bg-gray-50 flex flex-col items-center justify-center text-gray-400"
                   >
                     <span className="text-xs font-medium">빈 슬롯</span>
                     <span className="text-[10px] mt-1">#{index + 1}</span>
@@ -464,24 +480,24 @@ export default function JobsPage() {
             </div>
           </div>
 
-          {/* Bottom 30 Jobs - 6열 그리드 */}
+          {/* Bottom 30 Jobs - 스페셜 (6열 그리드) */}
           <div>
-            <div className="relative bg-gradient-to-r from-green-900 to-emerald-800 rounded-2xl px-8 py-12 mb-16 overflow-hidden">
-              <div className="absolute top-8 left-0 right-0 bottom-0 bg-gradient-to-tr from-green-950/40 via-transparent to-emerald-950/30"></div>
+            <div className="relative bg-gradient-to-r from-cyan-600 to-cyan-500 rounded-2xl p-6 mb-8 overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-tr from-cyan-700/30 via-transparent to-teal-600/20"></div>
               <div className="relative flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <div className="flex items-center justify-center w-12 h-12 bg-white/20 rounded-xl backdrop-blur-md">
-                    <span className="text-2xl">📋</span>
+                  <div className="flex items-center justify-center w-12 h-12 bg-white/20 rounded-lg backdrop-blur-md">
+                    <span className="text-2xl">✨</span>
                   </div>
                   <div>
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="px-2 py-0.5 bg-emerald-600 text-white text-xs font-bold rounded-full">
-                        실시간 업데이트
+                      <span className="px-2 py-0.5 bg-white/90 text-cyan-700 text-xs font-bold rounded-full">
+                        스페셜
                       </span>
-                      <span className="text-white/80 text-sm">모든 채용 포지션 (최대 30개)</span>
+                      <span className="text-white/90 text-sm">주목받는 채용공고 (최대 30개)</span>
                     </div>
                     <h2 className="text-2xl font-bold text-white">
-                      모든 채용공고를 한눈에
+                      요즘 주목받는 공고
                     </h2>
                   </div>
                 </div>
@@ -507,7 +523,7 @@ export default function JobsPage() {
                 Array.from({ length: 30 }).map((_, index) => (
                   <div
                     key={`empty-bottom-${index}`}
-                    className="h-48 rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 flex flex-col items-center justify-center text-gray-400"
+                    className="h-48 rounded-md border-2 border-dashed border-gray-300 bg-gray-50 flex flex-col items-center justify-center text-gray-400"
                   >
                     <span className="text-[10px] font-medium">빈 슬롯</span>
                     <span className="text-[9px] mt-1">#{index + 1}</span>

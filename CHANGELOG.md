@@ -8,6 +8,608 @@
 
 ## 📋 최근 주요 변경 사항
 
+### 2025-12-24
+
+#### 🐛 [FIX] 어드민 ProfileViewsTab - getSession() 호출 제거로 hang 방지
+
+**변경 파일**:
+- `app/admin/page.tsx` (263줄) - accessToken state 추가, visibilitychange 2분 idle threshold 적용
+- `components/admin/ProfileViewsTab.tsx` (501줄) - accessToken prop 추가, getSession() 호출 제거
+
+**문제 원인**:
+- ProfileViewsTab에서 매번 `supabase.auth.getSession()` 호출
+- 브라우저 idle 후 Supabase 연결이 stale 상태가 되면 getSession()이 hang
+- 10초 후 타임아웃 에러 발생, 다시 시도해도 계속 실패
+
+**해결 방법**:
+1. 부모 컴포넌트(admin/page.tsx)에서 최초 인증 시 accessToken 저장
+2. ProfileViewsTab에 accessToken을 prop으로 전달
+3. ProfileViewsTab에서 getSession() 호출 제거 → prop으로 받은 토큰 직접 사용
+4. visibilitychange 핸들러에 2분 idle threshold 추가 (불필요한 refresh 방지)
+
+**코드 패턴**:
+```tsx
+// 부모 (admin/page.tsx)
+const [accessToken, setAccessToken] = useState<string | null>(null);
+const { data: { session } } = await supabase.auth.getSession();
+setAccessToken(session.access_token);
+
+<ProfileViewsTab accessToken={accessToken} />
+
+// 자식 (ProfileViewsTab.tsx) - getSession() 호출 없이 바로 사용
+const response = await fetch('/api/admin/profile-views', {
+  headers: { 'Authorization': `Bearer ${accessToken}` }
+});
+```
+
+**효과**:
+- ✅ ProfileViewsTab 탭 전환 시 hang 문제 해결
+- ✅ 불필요한 getSession() 호출 제거
+- ✅ 탭 활성화 시 데이터 정상 로드
+
+---
+
+#### 🔧 [REFACTOR] any 타입 제거 - 전체 프로젝트 TypeScript 타입 안전성 개선
+
+**변경 파일**: 150+ 파일
+
+**변경 내용**:
+- 모든 `any` 타입을 명시적 타입으로 교체
+- 이벤트 핸들러: `React.ChangeEvent<HTMLInputElement>` 등
+- API 응답: `Record<string, unknown>`, 구체적 인터페이스
+- 에러 핸들링: `error instanceof Error` 패턴
+- 함수 시그니처: 파라미터/반환 타입 명시
+
+**효과**:
+- ✅ TypeScript strict 모드 호환성 향상
+- ✅ 런타임 에러 사전 방지
+- ✅ IDE 자동완성 개선
+
+---
+
+#### 🐛 [FIX] 어드민 탭 - 10초 타임아웃 추가로 무한 로딩 근본 해결
+
+**변경 파일**:
+- `app/admin/page.tsx` - visibilitychange 핸들러에 5초 타임아웃 추가
+- `components/admin/ProfileViewsTab.tsx` (477줄 → 501줄) - getSession() + fetch() 10초 타임아웃
+- `components/admin/AdminRefundsTab.tsx` - getSession() + fetch() 10초 타임아웃
+
+**문제 원인**:
+- `supabase.auth.getSession()`이 idle 후 hang 가능 (타임아웃 없음)
+- 직접 `fetch()` 호출도 타임아웃 없이 영원히 대기 가능
+- 브라우저 idle 후 Supabase 연결이 stale 상태가 됨
+
+**해결 방법**:
+1. `Promise.race()`로 getSession() 10초 타임아웃 적용
+2. `AbortController`로 fetch() 10초 타임아웃 적용
+3. visibilitychange 핸들러의 refreshSession()에 5초 타임아웃 적용
+4. 콘솔 로그 추가로 디버깅 용이
+
+**코드 패턴**:
+```tsx
+// 세션 타임아웃
+const sessionResult = await Promise.race([
+  supabase.auth.getSession(),
+  new Promise<never>((_, reject) =>
+    setTimeout(() => reject(new Error('세션 조회 타임아웃 (10초)')), 10000)
+  )
+]);
+
+// fetch 타임아웃
+const controller = new AbortController();
+setTimeout(() => controller.abort(), 10000);
+const response = await fetch(url, { signal: controller.signal });
+```
+
+**효과**:
+- ✅ 최대 10초 대기 후 에러 메시지 표시 (무한 로딩 방지)
+- ✅ 사용자에게 "다시 시도" 버튼 제공
+- ✅ 콘솔 로그로 문제 추적 가능
+
+---
+
+#### ✨ [UPDATE] 어드민 탭 - isActive 패턴 추가로 탭 전환 시 데이터 자동 새로고침
+
+**변경 파일**:
+- `app/admin/page.tsx` (202줄 → 204줄)
+- `components/admin/JobsTab.tsx` - isActive prop 추가
+- `components/admin/AdminCreatedTab.tsx` - isActive prop 추가
+- `components/admin/ProfileViewsTab.tsx` - isActive prop 추가
+- `components/admin/AdminRefundsTab.tsx` - isActive prop 추가
+- `components/admin/AdminPaymentsTab.tsx` - isActive prop 추가
+- `components/admin/BannersTab.tsx` - isActive prop 추가
+- `hooks/useBannerData.ts` - isActive 파라미터 지원
+
+**변경 내용**:
+- 각 탭 컴포넌트에 `isActive` prop 추가
+- `useEffect`에서 `isActive`가 true로 변경될 때 데이터 재로드
+- 기존 CSS hidden 방식 유지 (컴포넌트 언마운트 방지)
+
+**동작 방식**:
+```tsx
+// admin/page.tsx
+<JobsTab isActive={activeTab === 'jobs'} />
+
+// 각 탭 컴포넌트
+useEffect(() => {
+  if (isActive) {
+    loadData();
+  }
+}, [isActive]);
+```
+
+**효과**:
+- ✅ 탭 전환 시 최신 데이터 자동 로드
+- ✅ 무한 로딩 문제 없음 (컴포넌트 유지)
+- ✅ 탭 전환마다 잠깐 로딩 스피너 표시 (정상 동작)
+
+---
+
+#### 🐛 [FIX] 어드민 페이지 탭 전환 시 무한 로딩 - Supabase 연결 stale 문제 해결
+
+**변경 파일**:
+- `app/admin/page.tsx` (192줄 → 202줄) - **핵심 수정**
+- `components/Footer.tsx` (117줄)
+- `components/admin/banners/BannerCard.tsx` (182줄 → 184줄)
+
+**변경 내용**:
+- **핵심 수정**: admin/page.tsx 탭 렌더링 방식 변경
+  - 기존: `{activeTab === 'jobs' && <JobsTab />}` (조건부 렌더링 → 언마운트/마운트)
+  - 변경: `<div className={activeTab === 'jobs' ? '' : 'hidden'}>` (CSS로 숨김 → 컴포넌트 유지)
+- Footer.tsx: next/image에 명시적 style 속성 추가
+- BannerCard.tsx: fill 이미지에 `sizes`, `loading="lazy"` 속성 추가
+
+**버그 원인**:
+- 브라우저 idle 상태(약 1분)에서 Supabase 연결이 stale 상태가 됨
+- 탭 전환 시 컴포넌트가 언마운트 → 새로 마운트되면서 useEffect 실행
+- stale 상태의 Supabase 클라이언트로 요청 시 pending 상태에서 멈춤
+- 타임아웃(10초)도 작동하지 않음 (연결 자체가 끊어진 상태)
+
+**증상**:
+- 어드민 페이지에서 약 1분간 idle 후 탭 전환 시 무한 로딩 스피너
+- 콘솔에 네트워크 요청 로그가 찍히지 않음
+- 새로고침하면 일시적으로 해결되나 반복 발생
+
+**해결 원리**:
+- 탭 컴포넌트를 언마운트하지 않고 CSS `hidden`으로 숨김
+- 컴포넌트가 유지되므로 이미 로드된 데이터와 연결 상태 보존
+- 탭 전환 시 재마운트가 발생하지 않아 stale 연결 문제 회피
+
+**영향**:
+- 어드민 페이지 탭 전환 안정성 개선
+- 초기 로딩 시 모든 탭이 마운트되어 약간의 초기 로딩 증가 (트레이드오프)
+
+---
+
+### 2025-12-23
+
+#### 🗑️ [ADD] 관리자 페이지 공고 삭제 기능 추가
+
+**변경 파일**:
+- `components/admin/AdminCreatedTab.tsx` (462줄 → 490줄)
+- `components/admin/JobsTab.tsx` (420줄 → 438줄)
+
+**변경 내용**:
+- AdminCreatedTab: 개별 공고 삭제 버튼 추가 (수정/상세보기 옆)
+- JobsTab: 공고 관리 테이블에 삭제 아이콘 버튼 추가
+- 삭제 시 확인 다이얼로그 표시
+- 삭제 후 양쪽 탭 모두 동기화 (같은 DB 테이블 사용)
+
+**기능**:
+- 관리자 생성 항목 탭 → 회사별 공고 목록 → 삭제 버튼
+- 공고 관리 탭 → 액션 컬럼 → 휴지통 아이콘
+
+---
+
+#### 🐛 [FIX] 그리드 레이아웃 편집기 - 임시저장 공고 할당 불가 버그 수정
+
+**변경 파일**:
+- `components/admin/JobGridLayoutEditor.tsx` (580줄)
+
+**변경 내용**:
+- 쿼리 필터에 'draft' 상태 추가: `['active', 'pending_approval']` → `['active', 'pending_approval', 'draft']`
+- 사이드바 설명 텍스트 업데이트: "결제 완료 + 미할당 공고 표시 (임시저장 포함)"
+
+**버그 원인**:
+- 기존 쿼리가 'active', 'pending_approval' 상태만 조회하여 '임시저장(draft)' 공고가 누락됨
+- "위치 할당하기" 버튼 클릭 시 해당 공고가 목록에 없어서 선택 불가
+
+**영향**:
+- 임시저장 상태의 결제 완료 공고도 그리드 위치 할당 가능
+
+---
+
+#### 🐛 [FIX] PhoneInput 전화번호 입력 버그 수정
+
+**변경 파일**:
+- `components/ui/form/PhoneInput.tsx` (145줄 → 157줄)
+
+**변경 내용**:
+- 전화번호 3분할 입력 시 데이터 손상 버그 수정
+- 각 파트(010-1234-5678)를 독립적인 useState로 관리
+- useRef로 내부/외부 업데이트 구분하여 무한 루프 방지
+
+**버그 원인**:
+- 기존 코드: 매 렌더시 `value`를 slice하여 part1/part2/part3 계산
+- 문제: 한 파트 수정 시 onChange → 새 value → 다시 slice → 다른 파트 손상
+- 예시: "2343453"에서 part1 수정 시 → "03453" → slice → [034][53][] 로 손상
+
+**해결 방법**:
+- 각 파트를 독립 state로 관리 (part1, part2, part3)
+- 외부 value 변경 시에만 동기화 (isInternalUpdate ref로 구분)
+
+**영향**:
+- `/admin/jobs/[id]/edit` 담당자 전화번호 수정 가능해짐
+- 모든 PhoneInput 사용처에서 입력 버그 해결
+
+---
+
+#### 📍 [UPDATE] CTA 박스 위치 변경 - 검색창 옆으로 이동
+
+**변경 파일**:
+- `components/talent/TalentSearchBar.tsx` (74줄)
+
+**변경 내용**:
+- CTA 박스를 헤더 우측에서 검색창 바로 옆으로 이동
+- `items-stretch`로 검색창과 동일한 높이 유지
+- 검색창 `max-w-2xl` 제거하여 CTA와 함께 배치
+
+**이유**:
+- 사용자 요청: 검색창 바로 오른쪽 옆에 배치, 검색창 아래쪽 끝까지 세로로 늘리기
+
+---
+
+#### 🖼️ [FIX] 인재풀 프로필 이미지 표시 + CTA 박스 디자인 개선
+
+**변경 파일**:
+- `components/talent/TalentSearchBar.tsx` (79줄)
+- `components/talent/TalentCard.tsx` (195줄)
+- `components/OptimizedImage.tsx` (132줄)
+
+**변경 내용**:
+1. **TalentSearchBar - CTA 박스 형태로 변경**:
+   - 가로 버튼 → 세로 박스 형태로 변경
+   - 아이콘 + 제목 + 부제목 구조
+   - 그라디언트 배경 + 호버 효과 추가
+
+2. **TalentCard - 프로필 이미지 표시 추가**:
+   - 기존: 이름 이니셜만 표시
+   - 변경: `profileImage`가 있으면 실제 이미지 표시
+   - 이미지 로드 실패 시 이니셜 fallback
+
+3. **OptimizedImage - onError prop 추가**:
+   - 외부에서 에러 처리 가능하도록 callback prop 추가
+
+**이유**:
+- 사용자 요청: CTA 버튼을 박스 형태로 변경
+- 사용자 요청: 마이페이지에서 등록한 프로필 이미지가 인재풀에서 안 보임
+
+**영향**:
+- /talent 페이지에서 프로필 이미지 정상 표시
+- CTA 박스가 더 눈에 띄는 디자인
+
+---
+
+#### 🔗 [FIX] /talent 페이지 회원가입 링크 수정
+
+**변경 파일**:
+- `components/talent/TalentSearchBar.tsx` (72줄)
+- `components/talent/LoginRequiredModal.tsx` (97줄)
+
+**변경 내용**:
+1. **TalentSearchBar**:
+   - `/signup/jobseeker` → `/signup` 으로 변경
+   - 메인 회원가입 페이지로 연결
+
+2. **LoginRequiredModal**:
+   - `/signup/company` → `/signup` 으로 변경
+   - 버튼 텍스트 "기업 회원가입" → "회원가입"으로 변경
+
+**이유**:
+- 사용자 요청: `/signup/jobseeker`, `/signup/company` 직접 링크 금지
+- `/login`, `/signup` 두 경로만 사용해야 함
+
+**영향**:
+- 일관된 회원가입 플로우 유지
+
+---
+
+#### 🎨 [UPDATE] /talent 페이지 UI 개선 (클라이언트 요청)
+
+**변경 파일**:
+- `components/talent/TalentSearchBar.tsx` (기존: 42줄 → 변경 후: 72줄)
+- `components/talent/LoginRequiredModal.tsx` (기존: 64줄 → 변경 후: 97줄)
+
+**변경 내용**:
+1. **TalentSearchBar - "나의 이력서 등록하기" CTA 버튼 추가**:
+   - 검색바 헤더 우측에 깔끔한 CTA 버튼
+   - 다른 페이지와 동일한 톤앤매너 (text-3xl 헤딩, white 배경)
+   - lucide-react 아이콘 (FileText, ChevronRight)
+   - 모바일/데스크탑 반응형 디자인
+
+2. **LoginRequiredModal - 회원가입 옵션 추가**:
+   - 기존: 로그인 버튼만 제공
+   - 변경: "회원가입" 메인 CTA + 로그인 옵션
+   - "이미 회원이신가요?" 구분선으로 UX 개선
+   - lucide-react 아이콘 활용 (Building2, UserPlus, LogIn, X)
+   - 배경 블러 효과 및 모달 애니메이션 개선
+
+**이유**:
+- 클라이언트 요청: "나의 이력서 등록하기" 버튼 추가 → 회원가입으로 유도
+- 클라이언트 요청: 인재 상세 보기 시 회원가입으로 유도
+
+**영향**:
+- /talent 페이지에서 구직자와 기업 모두 자연스럽게 회원가입 유도
+- 기업 회원 전환율 향상 기대
+
+---
+
+#### 🔗 [FIX] /companies 페이지 기업 카드 클릭 시 상세 페이지 연결
+
+**변경 파일**:
+- `app/companies/page.tsx` (줄 수 변동 없음)
+
+**변경 내용**:
+- 기업 카드: `<div>` → `<Link>` 컴포넌트로 변경
+- 클릭 시 `/companies/[id]` 상세 페이지로 이동
+
+**이유**:
+- 버그: 기업 카드 클릭해도 상세 페이지로 이동 안 됨
+
+**영향**:
+- /companies 페이지에서 카드 클릭 시 정상적으로 상세 페이지 표시
+
+---
+
+#### 🎨 [UPDATE] /companies 페이지에 인기 기업 데이터 통합
+
+**변경 파일**:
+- `app/companies/page.tsx` (367줄)
+
+**변경 내용**:
+- `lib/data.ts`의 하드코딩된 인기 기업 데이터(삼성전자, 네이버, 카카오 등 6개) 추가
+- Supabase 데이터와 인기 기업 데이터 병합 (중복 방지)
+- 별점/리뷰 수 표시 추가 (Star 아이콘)
+- 인기 기업에 amber 테두리 강조
+- Hero 섹션 UI 개선 ("인기 기업" 제목, 전체보기 링크)
+- 카드 하단에 산업 분류 표시
+
+**이유**:
+- 사용자 요청: "여기에서 지금 실제 슈퍼베이스에 있는 데이터 말고도, 메인 페이지에 있는 인기 기업들 하드코딩된 데이터 값들이 들어가면 좋을듯"
+
+**영향**:
+- /companies 페이지에서 인기 기업이 우선 노출
+- Supabase 로딩 실패해도 인기 기업은 표시됨
+
+---
+
+#### 🎨 [STYLE] /jobs 3티어 섹션 헤더 모서리 둥글게 변경
+
+**변경 파일**:
+- `app/jobs/page.tsx` (줄 수 변동 없음)
+
+**변경 내용**:
+- 플래티넘/프라임/스페셜 섹션 헤더: `rounded-lg` → `rounded-2xl`
+- 더 부드럽고 둥근 모서리로 디자인 개선
+
+**이유**:
+- 사용자 요청: "야 얘들은 좀 더 둥글게 해줘. 모서리 원래대로 둥근 형태로"
+
+**영향**:
+- /jobs 페이지 3티어 섹션 헤더 스타일만 변경
+
+---
+
+#### 🎨 [UPDATE] /jobs 페이지 UI 개선 (클라이언트 요청)
+
+**변경 파일**:
+- `app/jobs/page.tsx` (줄 수 변동 없음)
+
+**변경 내용**:
+1. **Hero 섹션 배경색 변경**: 연녹색 그라디언트 → 흰색
+2. **검색 필터 버튼 스타일 변경**:
+   - rounded-lg → rounded-md (미묘한 각테두리)
+   - 배경색: 파란색 (primary-600)
+   - 글자색: 흰색
+3. **채용공고 섹션 3티어 시스템으로 변경**:
+   - 플래티넘 (amber): "고객님이 꼭봐야할 공고" (최대 20개)
+   - 프라임 (blue): "최고의 인기 공고" (최대 25개)
+   - 스페셜 (cyan): "요즘 주목받는 공고" (최대 30개)
+4. 기존 emerald 컬러 제거 → 티어별 컬러로 변경
+
+**이유**:
+- 클라이언트 요구: 연녹색 배경 제거, 필터 버튼 스타일 변경, 3티어 광고 구분
+
+**영향**:
+- /jobs 페이지 UI 전체 변경
+- 메인 페이지와 일관된 3티어 시스템 적용
+
+---
+
+#### 🎨 [STYLE] 푸터 로고 크기 확대
+
+**변경 파일**:
+- `components/Footer.tsx` (줄 수 변동 없음)
+
+**변경 내용**:
+- 로고 크기: 40x40 → 48x48 픽셀로 확대
+
+**이유**:
+- 사용자 요청: "로고 좀 키워줘"
+
+**영향**:
+- 푸터 로고가 더 크고 눈에 잘 띄게 표시됨
+
+---
+
+#### 📝 [UPDATE] 푸터 정보 업데이트 (로고, 이메일, 사업자정보)
+
+**변경 파일**:
+- `components/Footer.tsx` (기존: 103줄 → 변경 후: 112줄)
+
+**변경 내용**:
+- 로고: Globe 아이콘 → `/logo.jpg` 이미지로 변경 (헤더와 동일)
+- 고객지원 이메일 추가: support@linkbw.com
+- 기존 이메일 유지: yjpark@ssmhr.com
+- 상호 변경: 선한이웃 → SSMHR(선한이웃)
+- 사업종류 변경: 고용알선, 전자상거래 (생활식품 관리, 도매 및 소매업, SNS마켓 삭제)
+- 대표전화: 070-4060-0805
+- 주소:
+  - (본사) 경기도 수원시 팔달구 고등동 336-1(팔달로33) 웨일애비뉴 713호
+  - (서울사무소) 서울특별시 강남구 강남대로156길12 다복빌딩 4층 G42
+
+**이유**:
+- 사용자 요청: 푸터 정보 업데이트
+
+**영향**:
+- 모든 페이지 하단 푸터에 변경된 정보 표시
+
+---
+
+### 2025-12-22
+
+#### 🎨 [UPDATE] UI 키 컬러 변경 (청록색 → 파란색)
+
+**변경 파일**:
+- `tailwind.config.ts` (primary 색상 팔레트 전체 변경)
+- `app/globals.css` (하드코딩된 모든 청록색 → 파란색)
+
+**변경 내용**:
+- 키 컬러 변경: `#00D4AA` (청록색) → `#3B82F6` (파란색)
+- 진한 색상: `#00B894` → `#2563EB`
+- 연한 색상: `#E6FFFA` → `#EFF6FF` (옅은 하늘색)
+- Primary 색상 팔레트 전체 (50~900) 파란색 계열로 교체
+- Glassmorphism, 버튼, 배지, 입력필드, 네비게이션, 스크롤바, DatePicker 등 모든 스타일 업데이트
+
+**이유**:
+- 사용자 요청: 청록색 → 파란색 키 컬러 변경
+
+**영향**:
+- 전체 UI의 primary 색상이 파란색으로 일괄 변경
+- 142개 파일의 844개 클래스에 영향 (Tailwind 클래스 자동 적용)
+
+---
+
+#### 🎨 [UPDATE] CompanyCard 로고 크기 일관성 개선
+
+**변경 파일**:
+- `components/CompanyCard.tsx` (기존: 119줄 → 변경 후: 119줄)
+
+**변경 내용**:
+- 로고 컨테이너 크기 조정: 64px → 56px (w-14 h-14)
+- 배경 스타일 변경: 그라데이션 → 흰색 + 테두리 (더 깔끔)
+- 이미지 패딩 제거: p-2 → 없음 (로고가 더 크게 표시)
+- 실제 이미지 크기: 44px (w-11 h-11)로 컨테이너 대비 적절한 비율
+
+**이유**:
+- 각 로고 이미지의 원본 크기/비율이 달라 일부가 너무 작게 표시됨
+- 패딩 제거로 로고가 더 크고 선명하게 보임
+
+**영향**:
+- 메인 페이지 기업 카드 로고가 일관되고 크게 표시
+
+---
+
+#### 🖼️ [UPDATE] 기업 로고 로컬 경로 전환
+
+**변경 파일**:
+- `lib/data.ts` (로고 URL 변경)
+- `public/logos/` (신규 폴더, 로고 파일 저장)
+
+**변경 내용**:
+- 외부 로고 URL (Clearbit API) → 로컬 경로(`/logos/`)로 전환
+- 6개 기업 로고 경로 업데이트:
+  - 삼성전자: `/logos/samsung.jpg`
+  - 네이버: `/logos/naver.png`
+  - 카카오: `/logos/kakao.png`
+  - 쿠팡: `/logos/coupang.png`
+  - 토스: `/logos/toss.png`
+  - 배달의민족: `/logos/baemin.png`
+
+**이유**:
+- 외부 로고 API (Clearbit) 로딩 실패 문제 해결
+- 로컬 파일로 안정적인 로고 표시 보장
+
+**영향**:
+- 메인 페이지 기업 카드에 로고 안정적 표시
+- 로고 파일 없을 경우 회사명 첫 글자 fallback 동작
+
+---
+
+#### 🏢 [UPDATE] CompanyCard 로고 표시 + 기업 상세 페이지 더미 데이터 fallback
+
+**변경 파일**:
+- `components/CompanyCard.tsx` (기존: 100줄 → 변경 후: 119줄)
+- `app/companies/[id]/page.tsx` (기존: 573줄 → 변경 후: 632줄)
+
+**변경 내용**:
+- **CompanyCard.tsx**:
+  - Building2 아이콘 대신 실제 기업 로고 이미지 표시
+  - 로고 로드 실패 시 회사명 첫 글자로 fallback (파란색 배경)
+  - useState로 이미지 에러 상태 관리
+- **기업 상세 페이지**:
+  - Supabase에 데이터 없을 경우 lib/data.ts 더미 데이터로 fallback
+  - transformDummyCompany(): 더미 데이터를 Supabase 형식으로 변환
+  - transformDummyJob(): 더미 채용공고 데이터 변환
+  - ID 1-6 (삼성, 네이버, 카카오, 쿠팡, 토스, 배민) 클릭 시 정상 표시
+
+**이유**:
+- 메인 페이지 기업 섹션에서 로고가 표시되지 않는 문제 해결
+- 콘솔 에러 "기업 데이터 로딩 실패" 해결 (더미 ID에 대한 fallback)
+- 더미 기업 클릭 시에도 상세 페이지 정상 동작
+
+**영향**:
+- 메인 페이지 기업 카드에 로고 표시
+- 더미 기업(ID 1-6) 클릭 시 상세 페이지 정상 작동
+
+---
+
+#### 🎨 [UPDATE] 메인 페이지 채용공고 섹션 등급별 3분류 적용
+
+**변경 파일**:
+- `app/page.tsx` (기존: ~450줄 → 변경 후: ~510줄)
+- `lib/supabase/public-job-service.ts` (기존: 331줄 → 변경 후: 400줄)
+
+**변경 내용**:
+- 기존 "최신 채용공고" 단일 섹션 → 3개 등급별 섹션으로 분리:
+  1. **플래티넘**: "고객님이 꼭 봐야할 공고" (premium 등급, 골드 테마)
+  2. **프라임**: "최고의 인기 공고" (top 등급, 블루 테마)
+  3. **스페셜**: "요즘 주목받는 공고" (standard 등급, 시안 테마)
+- 각 섹션별 4개 공고 표시 (1줄 그리드)
+- `getJobsByTier()` 함수 추가: posting_tier별 공고 조회
+- 광고 배너를 가로형 컴팩트 디자인으로 변경
+
+**이유**:
+- 공고 등급(플래티넘/프라임/스페셜)에 따른 차별화된 노출 제공
+- 유료 결제 공고에 대한 가시성 향상
+- 사용자에게 공고 품질에 대한 시각적 힌트 제공
+
+**영향**:
+- 메인 페이지 레이아웃 변경
+- DB의 posting_tier 필드 기반 분류
+
+---
+
+#### 🎨 [STYLE] UI 라운드 테두리 전체 조정 - 각진 디자인으로 변경
+
+**변경 파일**:
+- 90개 TSX 파일 일괄 변경 (app/, components/ 전체)
+
+**변경 내용**:
+- `rounded-2xl` → `rounded-lg` (16px → 8px) - 72개 변경
+- `rounded-xl` → `rounded-md` (12px → 6px) - 398개 변경
+- `rounded-full`은 아바타/아이콘용으로 유지
+
+**이유**:
+- 클라이언트 피드백: "라운드가 너무 심함, 미묘한 각테두리로 변경 요청"
+- 전체적인 UI 톤을 더 프로페셔널하고 각진 느낌으로 통일
+
+**영향**:
+- 모든 카드, 버튼, 입력 필드, 모달 등 UI 컴포넌트 테두리 변경
+- 시각적 변화만 있고 기능적 변화 없음
+
+---
+
 ### 2025-12-18
 
 #### 🔧 [FIX] 환불 시 결제 트랜잭션 ID 누락 문제 수정

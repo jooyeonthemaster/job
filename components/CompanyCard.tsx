@@ -1,21 +1,38 @@
 'use client';
 
+import { useState } from 'react';
 import { Company } from '@/types';
 import { Building2, MapPin, Users, Star, Briefcase, Clock } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 interface CompanyCardProps {
   company: Company;
 }
 
 export default function CompanyCard({ company }: CompanyCardProps) {
+  const [logoError, setLogoError] = useState(false);
+
   return (
     <Link href={`/companies/${company.id}`} className="block group">
-      <div className="bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200 p-6">
+      <div className="bg-white rounded-md shadow-sm hover:shadow-md transition-all duration-200 p-6">
         {/* Company Header */}
         <div className="flex items-start gap-4 mb-4">
-          <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-            <Building2 className="w-8 h-8 text-gray-500" />
+          <div className="w-16 h-10 shrink-0 group-hover:scale-105 transition-transform flex items-center justify-center">
+            {company.logo && !logoError ? (
+              <Image
+                src={company.logo}
+                alt={`${company.name} 로고`}
+                width={64}
+                height={40}
+                className="max-w-full max-h-full object-contain"
+                onError={() => setLogoError(true)}
+              />
+            ) : (
+              <span className="text-2xl font-bold text-primary-600">
+                {company.name.charAt(0)}
+              </span>
+            )}
           </div>
           <div className="flex-1">
             <h3 className="text-lg font-semibold text-gray-900 group-hover:text-primary-600 transition-colors">

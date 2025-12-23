@@ -11,7 +11,7 @@ interface SettingsTabProps {
 export const SettingsTab = ({ onDeleteAccountClick }: SettingsTabProps) => {
   return (
     <div className="space-y-6">
-      <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+      <div className="bg-white rounded-md shadow-sm p-6 border border-gray-200">
         <h2 className="text-xl font-bold text-gray-900 mb-6">계정 설정</h2>
         
         <div className="border-t border-gray-200 pt-6">

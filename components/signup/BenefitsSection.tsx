@@ -9,9 +9,9 @@ export default function BenefitsSection({ activeTab }: BenefitsSectionProps) {
   const isPerson = activeTab === 'jobseeker';
 
   return (
-    <div className="bg-white rounded-2xl shadow-md p-10 h-full flex flex-col justify-between">
+    <div className="bg-white rounded-lg shadow-md p-10 h-full flex flex-col justify-between">
       <div>
-        <div className="inline-flex p-4 rounded-xl mb-6 bg-primary-50">
+        <div className="inline-flex p-4 rounded-md mb-6 bg-primary-50">
           {isPerson ? (
             <User className="w-8 h-8 text-primary-600" />
           ) : (

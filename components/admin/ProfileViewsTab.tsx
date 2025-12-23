@@ -38,7 +38,12 @@ interface Stats {
   totalRevenue: number;
 }
 
-export default function ProfileViewsTab() {
+interface ProfileViewsTabProps {
+  isActive?: boolean;
+  accessToken?: string | null;  // 부모에서 전달받은 세션 토큰
+}
+
+export default function ProfileViewsTab({ isActive = true, accessToken }: ProfileViewsTabProps) {
   const [views, setViews] = useState<ProfileView[]>([]);
   const [filteredViews, setFilteredViews] = useState<ProfileView[]>([]);
   const [stats, setStats] = useState<Stats>({
@@ -54,29 +59,39 @@ export default function ProfileViewsTab() {
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
-    fetchProfileViews();
-  }, []);
+    if (isActive) {
+      fetchProfileViews();
+    }
+  }, [isActive]);
 
   useEffect(() => {
     applyFilters();
   }, [views, statusFilter, searchQuery]);
 
   const fetchProfileViews = async () => {
+    const TIMEOUT_MS = 10000; // 10초 타임아웃
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
+
     try {
       setLoading(true);
       setError(null);
 
-      // 세션 토큰 가져오기
-      const { data: { session } } = await import('@/lib/supabase/config').then(m => m.supabase.auth.getSession());
+      console.log('[ProfileViewsTab] 데이터 로드 시작...');
 
-      if (!session) {
+      // 부모에서 전달받은 accessToken 사용 (getSession 호출 제거 - hang 방지)
+      if (!accessToken) {
         throw new Error('세션이 없습니다. 로그인이 필요합니다.');
       }
 
+      console.log('[ProfileViewsTab] 세션 토큰 확인 완료, API 호출 중...');
+
+      // fetch에 AbortController signal 추가
       const response = await fetch('/api/admin/profile-views', {
         headers: {
-          'Authorization': `Bearer ${session.access_token}`,
+          'Authorization': `Bearer ${accessToken}`,
         },
+        signal: controller.signal,
       });
 
       if (!response.ok) {
@@ -96,13 +111,20 @@ export default function ProfileViewsTab() {
           failed: 0,
           totalRevenue: 0
         });
+        console.log('[ProfileViewsTab] 데이터 로드 완료:', data.views?.length || 0, '건');
       } else {
         throw new Error(data.error || '알 수 없는 오류');
       }
     } catch (err) {
-      console.error('프로필 열람 내역 조회 실패:', err);
-      setError(err instanceof Error ? err.message : '오류가 발생했습니다.');
+      if (err instanceof Error && err.name === 'AbortError') {
+        console.error('[ProfileViewsTab] 요청 타임아웃 (10초 초과)');
+        setError('요청 시간이 초과되었습니다. 다시 시도해주세요.');
+      } else {
+        console.error('프로필 열람 내역 조회 실패:', err);
+        setError(err instanceof Error ? err.message : '오류가 발생했습니다.');
+      }
     } finally {
+      clearTimeout(timeoutId);
       setLoading(false);
     }
   };
@@ -228,7 +250,7 @@ export default function ProfileViewsTab() {
     <div className="space-y-6">
       {/* 통계 카드 */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
-        <div className="bg-white rounded-xl shadow-sm p-6">
+        <div className="bg-white rounded-md shadow-sm p-6">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
               <Eye className="w-6 h-6 text-blue-600" />
@@ -240,7 +262,7 @@ export default function ProfileViewsTab() {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm p-6">
+        <div className="bg-white rounded-md shadow-sm p-6">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
               <DollarSign className="w-6 h-6 text-green-600" />
@@ -252,7 +274,7 @@ export default function ProfileViewsTab() {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm p-6">
+        <div className="bg-white rounded-md shadow-sm p-6">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
               <Calendar className="w-6 h-6 text-yellow-600" />
@@ -264,7 +286,7 @@ export default function ProfileViewsTab() {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm p-6">
+        <div className="bg-white rounded-md shadow-sm p-6">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
               <RefreshCw className="w-6 h-6 text-red-600" />
@@ -276,7 +298,7 @@ export default function ProfileViewsTab() {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm p-6">
+        <div className="bg-white rounded-md shadow-sm p-6">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
               <DollarSign className="w-6 h-6 text-purple-600" />
@@ -292,7 +314,7 @@ export default function ProfileViewsTab() {
       </div>
 
       {/* 필터 및 검색 */}
-      <div className="bg-white rounded-xl shadow-sm p-6">
+      <div className="bg-white rounded-md shadow-sm p-6">
         <div className="flex flex-col md:flex-row gap-4">
           <div className="flex-1">
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -346,7 +368,7 @@ export default function ProfileViewsTab() {
       </div>
 
       {/* 테이블 */}
-      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+      <div className="bg-white rounded-md shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200">

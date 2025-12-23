@@ -260,7 +260,7 @@ export default function Header() {
 
                 {/* Search Bar - Desktop */}
                 <div className="hidden lg:flex">
-                  <div className="bg-white rounded-xl shadow-md border border-gray-200 px-4 py-2 flex items-center gap-2 w-[400px]">
+                  <div className="bg-white rounded-md shadow-md border border-gray-200 px-4 py-2 flex items-center gap-2 w-[400px]">
                     <Search className="w-4 h-4 text-gray-400" />
                     <input
                       type="text"

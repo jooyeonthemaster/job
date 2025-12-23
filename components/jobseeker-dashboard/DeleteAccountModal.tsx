@@ -21,7 +21,7 @@ export default function DeleteAccountModal({
     <Dialog.Root open={isOpen} onOpenChange={onClose}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 bg-black/50 z-50" />
-        <Dialog.Content className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-2xl shadow-2xl w-[90vw] max-w-md z-50 p-6">
+        <Dialog.Content className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg shadow-2xl w-[90vw] max-w-md z-50 p-6">
           <Dialog.Title className="text-xl font-bold text-gray-900 mb-4">
             정말 탈퇴하시겠습니까?
           </Dialog.Title>

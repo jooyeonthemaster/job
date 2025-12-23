@@ -22,9 +22,9 @@ export default function PrivacyPage() {
         </button>
 
         {/* 헤더 */}
-        <div className="bg-white rounded-2xl shadow-lg p-8 mb-6">
+        <div className="bg-white rounded-lg shadow-lg p-8 mb-6">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+            <div className="w-12 h-12 bg-green-100 rounded-md flex items-center justify-center">
               <Shield className="w-6 h-6 text-green-600" />
             </div>
             <div>
@@ -35,7 +35,7 @@ export default function PrivacyPage() {
         </div>
 
         {/* 개인정보 처리방침 내용 */}
-        <div className="bg-white rounded-2xl shadow-lg p-8">
+        <div className="bg-white rounded-lg shadow-lg p-8">
           <div className="prose prose-slate max-w-none">
             <div
               className="whitespace-pre-wrap text-gray-700 leading-relaxed"
@@ -44,7 +44,7 @@ export default function PrivacyPage() {
           </div>
 
           {/* 추가 안내 */}
-          <div className="mt-8 p-6 bg-blue-50 border border-blue-200 rounded-xl">
+          <div className="mt-8 p-6 bg-blue-50 border border-blue-200 rounded-md">
             <h3 className="text-lg font-semibold text-blue-900 mb-3">개인정보 관련 권리</h3>
             <ul className="space-y-2 text-sm text-blue-800">
               <li>✓ 개인정보 열람 요구권</li>

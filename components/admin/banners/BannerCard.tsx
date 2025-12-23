@@ -55,8 +55,10 @@ export default function BannerCard({
               src={banner.image_url}
               alt={banner.name}
               fill
+              sizes="200px"
               className="object-cover"
               unoptimized
+              loading="lazy"
             />
           </div>
           {banner.is_active ? (

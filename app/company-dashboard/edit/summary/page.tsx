@@ -110,7 +110,7 @@ export default function SummaryEditPage() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-8 border border-gray-100"
+          className="bg-white/80 backdrop-blur-sm rounded-lg shadow-xl p-8 border border-gray-100"
         >
           <div className="space-y-6">
             {/* 한 줄 소개 */}
@@ -126,7 +126,7 @@ export default function SummaryEditPage() {
                   placeholder="우리 기업을 한 줄로 소개해주세요 (최대 200자)"
                   rows={3}
                   maxLength={200}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-colors resize-none"
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 outline-none transition-colors resize-none"
                 />
               </div>
               <p className="text-xs text-gray-500 mt-1 text-right">
@@ -134,7 +134,7 @@ export default function SummaryEditPage() {
               </p>
             </div>
 
-            <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl">
+            <div className="p-4 bg-blue-50 border border-blue-200 rounded-md">
               <p className="text-sm text-blue-800">
                 💡 <strong>한 줄 소개</strong>는 기업 목록에서 구직자들에게 첫 인상을 전달하는 중요한 항목입니다.
                 간결하고 매력적인 소개를 작성해보세요.

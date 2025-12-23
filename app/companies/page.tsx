@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Header from '@/components/Header';
 import OptimizedImage from '@/components/OptimizedImage';
 import { getAllCompanies } from '@/lib/supabase/company-service';
+import { companies as popularCompanies } from '@/lib/data';
 import {
   Search,
   Building2,
@@ -38,21 +39,54 @@ export default function CompaniesPage() {
   const [selectedLocation, setSelectedLocation] = useState('all');
   const [sortBy, setSortBy] = useState('openPositions');
 
-  // Firebase에서 기업 데이터 가져오기
+  // 하드코딩된 인기 기업 데이터를 Supabase 형식으로 변환
+  const convertPopularCompanies = () => {
+    return popularCompanies.map(company => ({
+      id: `popular-${company.id}`,
+      name: company.name,
+      name_en: company.nameEn,
+      logo: company.logo,
+      industry: company.industry,
+      location: company.location,
+      employee_count: company.employeeCount,
+      description: company.description,
+      rating: company.rating,
+      reviewCount: company.reviewCount,
+      openPositions: company.openPositions,
+      tech_stack: (company.techStack || []).map(tech => ({ tech_name: tech })),
+      basic_benefits: (company.benefits || []).map(benefit => ({ title: benefit })),
+      established: company.established,
+      isPopular: true // 인기 기업 플래그
+    }));
+  };
+
+  // Supabase에서 기업 데이터 가져오기 + 하드코딩된 인기 기업 합치기
   useEffect(() => {
     const fetchCompanies = async () => {
       try {
         setLoading(true);
-        const data = await getAllCompanies();
-        setCompanies(data);
+        const supabaseData = await getAllCompanies();
+        const popularData = convertPopularCompanies();
+
+        // 인기 기업을 앞에 배치하고, Supabase 데이터를 뒤에 추가
+        // 중복 방지: 인기 기업 이름과 동일한 Supabase 데이터는 제외
+        const popularNames = new Set(popularData.map(c => c.name.toLowerCase()));
+        const filteredSupabaseData = supabaseData.filter(
+          (c: { name?: string }) => !popularNames.has((c.name || '').toLowerCase())
+        );
+
+        setCompanies([...popularData, ...filteredSupabaseData]);
       } catch (error) {
         console.error('기업 데이터 로딩 실패:', error);
+        // 실패해도 인기 기업은 표시
+        setCompanies(convertPopularCompanies());
       } finally {
         setLoading(false);
       }
     };
 
     fetchCompanies();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const locations = companies.length > 0 
@@ -99,10 +133,19 @@ export default function CompaniesPage() {
       <Header />
       
       {/* Hero Section */}
-      <section className="bg-gradient-to-br from-primary-50 to-secondary-50 border-b">
-        <div className="container mx-auto px-4 lg:px-8 py-12">
+      <section className="bg-white border-b">
+        <div className="container mx-auto px-4 lg:px-8 py-10">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">인기 기업</h1>
+              <p className="text-gray-500">글로벌 인재를 찾는 우수 기업들</p>
+            </div>
+            <Link href="/companies" className="text-primary-600 hover:text-primary-700 text-sm font-medium flex items-center gap-1">
+              전체보기 <ChevronRight className="w-4 h-4" />
+            </Link>
+          </div>
           {/* Search Bar */}
-          <div className="bg-white rounded-xl shadow-sm p-2 flex items-center max-w-3xl">
+          <div className="bg-gray-50 rounded-xl p-2 flex items-center max-w-2xl border border-gray-200">
             <div className="flex-1 flex items-center px-4">
               <Search className="w-5 h-5 text-gray-400 mr-3" />
               <input
@@ -110,10 +153,10 @@ export default function CompaniesPage() {
                 placeholder="기업명으로 검색..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="flex-1 outline-none text-gray-700 placeholder:text-gray-400 py-3"
+                className="flex-1 bg-transparent outline-none text-gray-700 placeholder:text-gray-400 py-3"
               />
             </div>
-            <button className="btn-primary">
+            <button className="bg-primary-600 text-white font-semibold px-6 py-2.5 rounded-lg hover:bg-primary-700 transition-colors">
               검색하기
             </button>
           </div>
@@ -208,7 +251,11 @@ export default function CompaniesPage() {
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {sortedCompanies.length > 0 ? (
                   sortedCompanies.map((company) => (
-                <div key={company.id} className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow">
+                <Link
+                  key={company.id}
+                  href={`/companies/${company.id.toString().replace('popular-', '')}`}
+                  className={`block bg-white rounded-xl shadow-sm hover:shadow-lg transition-all cursor-pointer ${company.isPopular ? 'ring-1 ring-amber-200' : ''}`}
+                >
                   <div className="p-6">
                     {/* Company Header */}
                     <div className="flex items-start gap-4 mb-4">
@@ -225,11 +272,13 @@ export default function CompaniesPage() {
                           <Building2 className="w-8 h-8 text-gray-500" />
                         )}
                       </div>
-                      <div className="flex-1">
-                        <h3 className="text-lg font-semibold text-gray-900">
-                          {company.name}
-                        </h3>
-                        <p className="text-sm text-gray-500">{company.nameEn}</p>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <h3 className="text-lg font-semibold text-gray-900 truncate">
+                            {company.name}
+                          </h3>
+                        </div>
+                        <p className="text-sm text-gray-500">{company.name_en || company.nameEn}</p>
                       </div>
                     </div>
 
@@ -303,22 +352,16 @@ export default function CompaniesPage() {
                       <div className="flex items-center gap-1">
                         <Briefcase className="w-4 h-4 text-primary-600" />
                         <span className="text-sm font-medium text-primary-600">
-                          채용중 {company.openPositions}건
+                          채용중 {company.openPositions || 0}건
                         </span>
                       </div>
-                      <Link 
-                        href={`/companies/${company.id}`}
-                        className="flex items-center gap-1 text-sm font-medium text-gray-700 hover:text-primary-600 transition-colors"
-                      >
-                        기업 상세보기
-                        <ChevronRight className="w-4 h-4" />
-                      </Link>
+                      <span className="text-sm text-gray-500">{company.industry}</span>
                     </div>
                   </div>
-                </div>
+                </Link>
               ))
             ) : (
-                  <div className="col-span-full bg-white rounded-xl shadow-sm p-12 text-center">
+                  <div className="col-span-full bg-white rounded-md shadow-sm p-12 text-center">
                     <Building2 className="w-12 h-12 text-gray-300 mx-auto mb-4" />
                     <h3 className="text-lg font-medium text-gray-900 mb-2">
                       검색 결과가 없습니다
@@ -333,7 +376,7 @@ export default function CompaniesPage() {
               {/* Load More Button */}
               {sortedCompanies.length > 0 && (
                 <div className="mt-12 text-center">
-                  <button className="px-6 py-3 bg-white border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition-colors inline-flex items-center gap-2">
+                  <button className="px-6 py-3 bg-white border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors inline-flex items-center gap-2">
                     더 많은 기업 보기
                     <ChevronRight className="w-4 h-4" />
                   </button>
@@ -344,7 +387,7 @@ export default function CompaniesPage() {
 
           {/* CTA Section */}
           {!loading && (
-            <div className="mt-16 bg-gradient-to-r from-primary-500 to-primary-600 rounded-2xl p-8 text-center">
+            <div className="mt-16 bg-gradient-to-r from-primary-500 to-primary-600 rounded-lg p-8 text-center">
               <h3 className="text-2xl font-bold text-white mb-3">
                 우리 회사도 등록하고 싶으신가요?
               </h3>
@@ -353,7 +396,7 @@ export default function CompaniesPage() {
               </p>
               <Link
                 href="/signup"
-                className="inline-flex items-center gap-2 px-6 py-3 bg-white text-primary-600 font-medium rounded-xl hover:bg-gray-50 transition-colors"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-white text-primary-600 font-medium rounded-md hover:bg-gray-50 transition-colors"
               >
                 기업 등록하기
                 <ChevronRight className="w-4 h-4" />

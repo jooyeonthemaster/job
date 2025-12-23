@@ -180,7 +180,7 @@ export default function TalentDetailPage() {
         <Header />
         <div className="container mx-auto px-4 lg:px-8 py-12">
           <div className="max-w-2xl mx-auto">
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-12 text-center">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
               <div className="w-20 h-20 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-6">
                 <User className="w-10 h-10 text-yellow-600" />
               </div>
@@ -298,7 +298,7 @@ export default function TalentDetailPage() {
 
       <div className="container mx-auto px-4 lg:px-8 py-8 max-w-6xl">
         {/* Profile Header */}
-        <div className="bg-white rounded-xl shadow-sm p-8 mb-6">
+        <div className="bg-white rounded-md shadow-sm p-8 mb-6">
           <div className="flex flex-col md:flex-row gap-6">
             {/* Profile Image */}
             <div className="shrink-0">
@@ -387,7 +387,7 @@ export default function TalentDetailPage() {
           <div className="lg:col-span-2 space-y-6">
             {/* About Me */}
             {talent.aboutMe && (
-              <div className="bg-white rounded-xl shadow-sm p-6">
+              <div className="bg-white rounded-md shadow-sm p-6">
                 <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
                   <User className="w-5 h-5 text-primary-600" />
                   자기소개
@@ -400,7 +400,7 @@ export default function TalentDetailPage() {
 
             {/* Work Experience */}
             {talent.workExperience && talent.workExperience.length > 0 && (
-              <div className="bg-white rounded-xl shadow-sm p-6">
+              <div className="bg-white rounded-md shadow-sm p-6">
                 <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
                   <Briefcase className="w-5 h-5 text-primary-600" />
                   경력
@@ -437,7 +437,7 @@ export default function TalentDetailPage() {
 
             {/* Education */}
             {talent.education && talent.education.length > 0 && (
-              <div className="bg-white rounded-xl shadow-sm p-6">
+              <div className="bg-white rounded-md shadow-sm p-6">
                 <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
                   <GraduationCap className="w-5 h-5 text-primary-600" />
                   학력
@@ -480,7 +480,7 @@ export default function TalentDetailPage() {
 
             {/* Resume Preview */}
             {talent.resumeFileUrl && (
-              <div className="bg-white rounded-xl shadow-sm p-6">
+              <div className="bg-white rounded-md shadow-sm p-6">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
                     <FileText className="w-5 h-5 text-primary-600" />
@@ -517,7 +517,7 @@ export default function TalentDetailPage() {
           <div className="space-y-6">
             {/* Contact & Personal Info - 결제 완료 시 모든 정보 표시 */}
             {(talent.email || talent.phone || talent.birthYear || talent.gender) && (
-              <div className="bg-white rounded-xl shadow-sm p-6 border-2 border-primary-100">
+              <div className="bg-white rounded-md shadow-sm p-6 border-2 border-primary-100">
                 <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
                   <Phone className="w-5 h-5 text-primary-600" />
                   연락처 및 개인정보
@@ -568,7 +568,7 @@ export default function TalentDetailPage() {
 
             {/* 비자 정보 + 선호 조건 통합 */}
             {(talent.koreanLevel || talent.visaSponsorship !== undefined || talent.desiredJobCategory || talent.workType) && (
-              <div className="bg-white rounded-xl shadow-sm p-6">
+              <div className="bg-white rounded-md shadow-sm p-6">
                 <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
                   <Shield className="w-5 h-5 text-primary-600" />
                   비자 및 근무 조건
@@ -614,7 +614,7 @@ export default function TalentDetailPage() {
 
             {/* Skills */}
             {talent.skills && talent.skills.length > 0 && (
-              <div className="bg-white rounded-xl shadow-sm p-6">
+              <div className="bg-white rounded-md shadow-sm p-6">
                 <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
                   <Code className="w-5 h-5 text-primary-600" />
                   기술 스택
@@ -634,7 +634,7 @@ export default function TalentDetailPage() {
 
             {/* Languages */}
             {talent.languages && talent.languages.length > 0 && (
-              <div className="bg-white rounded-xl shadow-sm p-6">
+              <div className="bg-white rounded-md shadow-sm p-6">
                 <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
                   <Languages className="w-5 h-5 text-primary-600" />
                   언어 능력
@@ -654,7 +654,7 @@ export default function TalentDetailPage() {
 
             {/* Desired Positions */}
             {talent.desiredPositions && talent.desiredPositions.length > 0 && (
-              <div className="bg-white rounded-xl shadow-sm p-6">
+              <div className="bg-white rounded-md shadow-sm p-6">
                 <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
                   <Target className="w-5 h-5 text-primary-600" />
                   희망 직무
@@ -674,7 +674,7 @@ export default function TalentDetailPage() {
 
             {/* Preferred Locations */}
             {talent.preferredLocations && talent.preferredLocations.length > 0 && (
-              <div className="bg-white rounded-xl shadow-sm p-6">
+              <div className="bg-white rounded-md shadow-sm p-6">
                 <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
                   <MapPin className="w-5 h-5 text-primary-600" />
                   희망 근무지

@@ -158,7 +158,7 @@ export const ApplicantsTab = () => {
       </div>
 
       {/* 검색 */}
-      <div className="bg-white rounded-xl shadow-sm p-6">
+      <div className="bg-white rounded-md shadow-sm p-6">
         <div className="max-w-2xl">
           <label className="block text-sm font-medium text-gray-700 mb-2">
             <Search className="w-4 h-4 inline mr-1" />
@@ -175,7 +175,7 @@ export const ApplicantsTab = () => {
       </div>
 
       {/* 지원자 테이블 */}
-      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+      <div className="bg-white rounded-md shadow-sm overflow-hidden">
         {filteredApplications.length === 0 ? (
           <div className="text-center py-12">
             <Users className="w-16 h-16 text-gray-400 mx-auto mb-4" />
@@ -236,7 +236,7 @@ export const ApplicantsTab = () => {
       {/* 상세 모달 */}
       {selectedApplicant && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-lg shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between p-6 border-b">
               <div>
                 <h2 className="text-2xl font-bold text-gray-900">지원자 상세 정보</h2>

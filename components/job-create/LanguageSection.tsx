@@ -10,7 +10,7 @@ interface LanguageSectionProps {
 
 export default function LanguageSection({ formData, onUpdate }: LanguageSectionProps) {
   return (
-    <div className="bg-white rounded-xl p-6 shadow-sm">
+    <div className="bg-white rounded-md p-6 shadow-sm">
       <h2 className="text-xl font-bold text-gray-900 mb-6">비자 및 언어 요구사항</h2>
 
       <div className="space-y-4">

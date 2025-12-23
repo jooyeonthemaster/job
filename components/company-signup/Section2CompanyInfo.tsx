@@ -60,7 +60,7 @@ export default function Section2CompanyInfo({ formData, onChange, errors }: Prop
           <select
             value={formData.companyType}
             onChange={(e) => onChange('companyType', e.target.value)}
-            className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-colors appearance-none bg-white ${
+            className={`w-full pl-10 pr-4 py-3 border rounded-md focus:ring-2 focus:ring-primary-500 outline-none transition-colors appearance-none bg-white ${
               errors.companyType ? 'border-red-500' : 'border-gray-300'
             }`}
           >
@@ -87,7 +87,7 @@ export default function Section2CompanyInfo({ formData, onChange, errors }: Prop
           <select
             value={formData.companyScale}
             onChange={(e) => onChange('companyScale', e.target.value)}
-            className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-colors appearance-none bg-white ${
+            className={`w-full pl-10 pr-4 py-3 border rounded-md focus:ring-2 focus:ring-primary-500 outline-none transition-colors appearance-none bg-white ${
               errors.companyScale ? 'border-red-500' : 'border-gray-300'
             }`}
           >
@@ -114,7 +114,7 @@ export default function Section2CompanyInfo({ formData, onChange, errors }: Prop
           <select
             value={formData.businessCondition}
             onChange={(e) => onChange('businessCondition', e.target.value)}
-            className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-colors appearance-none bg-white ${
+            className={`w-full pl-10 pr-4 py-3 border rounded-md focus:ring-2 focus:ring-primary-500 outline-none transition-colors appearance-none bg-white ${
               errors.businessCondition ? 'border-red-500' : 'border-gray-300'
             }`}
           >
@@ -141,7 +141,7 @@ export default function Section2CompanyInfo({ formData, onChange, errors }: Prop
           <select
             value={formData.industry}
             onChange={(e) => handleIndustryChange(e.target.value)}
-            className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-colors appearance-none bg-white ${
+            className={`w-full pl-10 pr-4 py-3 border rounded-md focus:ring-2 focus:ring-primary-500 outline-none transition-colors appearance-none bg-white ${
               errors.industry ? 'border-red-500' : 'border-gray-300'
             }`}
           >
@@ -169,7 +169,7 @@ export default function Section2CompanyInfo({ formData, onChange, errors }: Prop
             <select
               value={formData.industryDetail}
               onChange={(e) => onChange('industryDetail', e.target.value)}
-              className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-colors appearance-none bg-white ${
+              className={`w-full pl-10 pr-4 py-3 border rounded-md focus:ring-2 focus:ring-primary-500 outline-none transition-colors appearance-none bg-white ${
                 errors.industryDetail ? 'border-red-500' : 'border-gray-300'
               }`}
             >
@@ -199,7 +199,7 @@ export default function Section2CompanyInfo({ formData, onChange, errors }: Prop
             value={formData.companyPhone || ''}
             onChange={(e) => onChange('companyPhone', e.target.value)}
             placeholder="02-1234-5678 또는 010-1234-5678"
-            className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-colors ${
+            className={`w-full pl-10 pr-4 py-3 border rounded-md focus:ring-2 focus:ring-primary-500 outline-none transition-colors ${
               errors.companyPhone ? 'border-red-500' : 'border-gray-300'
             }`}
           />
@@ -222,7 +222,7 @@ export default function Section2CompanyInfo({ formData, onChange, errors }: Prop
             value={formData.website || ''}
             onChange={(e) => onChange('website', e.target.value)}
             placeholder="https://www.example.com"
-            className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-colors ${
+            className={`w-full pl-10 pr-4 py-3 border rounded-md focus:ring-2 focus:ring-primary-500 outline-none transition-colors ${
               errors.website ? 'border-red-500' : 'border-gray-300'
             }`}
           />
@@ -246,7 +246,7 @@ export default function Section2CompanyInfo({ formData, onChange, errors }: Prop
             placeholder="우리 기업을 한 줄로 소개해주세요 (최대 200자)"
             rows={3}
             maxLength={200}
-            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-colors resize-none"
+            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 outline-none transition-colors resize-none"
           />
         </div>
         <p className="mt-1 text-xs text-gray-500 text-right">

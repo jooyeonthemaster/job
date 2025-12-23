@@ -6,7 +6,7 @@ import Header from '@/components/Header';
 import JobCard from '@/components/JobCard';
 import CompanyCard from '@/components/CompanyCard';
 import { jobs as dummyJobs, companies } from '@/lib/data';
-import { getActiveJobs, PublicJob } from '@/lib/supabase/public-job-service';
+import { getJobsByTier, PublicJob } from '@/lib/supabase/public-job-service';
 import { Job } from '@/types';
 import { useAuth } from '@/contexts/AuthContext_Supabase';
 import {
@@ -24,7 +24,9 @@ export default function Home() {
   const router = useRouter();
   const { isAuthenticated, userProfile } = useAuth();
   const [selectedCategory, setSelectedCategory] = useState('ai-match');
-  const [topJobs, setTopJobs] = useState<Job[]>([]);
+  const [platinumJobs, setPlatinumJobs] = useState<Job[]>([]);
+  const [primeJobs, setPrimeJobs] = useState<Job[]>([]);
+  const [specialJobs, setSpecialJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -96,25 +98,28 @@ export default function Home() {
             await new Promise(resolve => setTimeout(resolve, 1000));
           }
 
-          const { topJobs: fetchedTopJobs } = await getActiveJobs();
+          const { platinumJobs: fetchedPlatinum, primeJobs: fetchedPrime, specialJobs: fetchedSpecial } = await getJobsByTier();
 
           if (mounted) {
-            console.log('✅ 공고 로드 성공:', fetchedTopJobs.length);
-            const converted = fetchedTopJobs.map(convertToJob);
-            setTopJobs(converted);
+            console.log('✅ 공고 로드 성공 - 플래티넘:', fetchedPlatinum.length, '프라임:', fetchedPrime.length, '스페셜:', fetchedSpecial.length);
+            setPlatinumJobs(fetchedPlatinum.map(convertToJob));
+            setPrimeJobs(fetchedPrime.map(convertToJob));
+            setSpecialJobs(fetchedSpecial.map(convertToJob));
             setLoading(false);
             return; // 성공 시 종료
           }
         } catch (err: unknown) {
-          const error = err as Error;
-          console.warn(`⚠️ 공고 로드 실패 (${retryCount + 1}/${maxRetries}):`, error.message);
+          const errorObj = err as Error;
+          console.warn(`⚠️ 공고 로드 실패 (${retryCount + 1}/${maxRetries}):`, errorObj.message);
           retryCount++;
 
           if (retryCount >= maxRetries) {
             console.error('❌ 최대 재시도 횟수 초과');
             if (mounted) {
               setError('공고를 불러올 수 없습니다. 페이지를 새로고침 해주세요.');
-              setTopJobs([]);
+              setPlatinumJobs([]);
+              setPrimeJobs([]);
+              setSpecialJobs([]);
               setLoading(false);
             }
           }
@@ -132,8 +137,6 @@ export default function Home() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // ✅ 의존성 없음 - 마운트 1번만 실행
 
-  // 표시할 공고 (실제 DB + 더미 데이터 중 최대 2개)
-  const featuredJobs = topJobs.slice(0, 2);
   const topCompanies = companies.slice(0, 6);
 
   // 메인 페이지는 public이므로 AuthContext 로딩 상태를 무시
@@ -168,14 +171,14 @@ export default function Home() {
       <section className="pt-8 pb-16 bg-gray-50 relative z-0">
         <div className="container mx-auto px-4 lg:px-8">
           {/* Bridge World Banner */}
-          <div className="mb-10 bg-gradient-to-r from-primary-50 to-cyan-50 rounded-2xl p-6 border border-primary-100 shadow-sm">
+          <div className="mb-10 bg-gradient-to-r from-primary-50 to-cyan-50 rounded-lg p-6 border border-primary-100 shadow-sm">
             <div className="flex items-start gap-4">
-              <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-primary-500 to-cyan-500 rounded-xl flex items-center justify-center shadow-md">
+              <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-primary-500 to-cyan-500 rounded-md flex items-center justify-center shadow-md">
                 <Briefcase className="w-6 h-6 text-white" />
               </div>
               <div className="flex-1">
                 <h3 className="text-xl font-bold text-gray-900 mb-2">
-                  브릿지 월드가 당신이 찾고 있는 한국에서의 좋은 직장을 연결해 드립니다.
+                  브릿지 월드가 당신이 찾고 있는 한국의 좋은 직장과 직업을 연결해 드립니다. (한국에서의 삶을 지원합니다.)
                 </h3>
                 <p className="text-base text-gray-700 flex items-center gap-2">
                   <span className="font-medium text-primary-600">방법</span>
@@ -188,22 +191,6 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="flex items-center justify-between mb-12 relative z-0">
-            <div>
-              <h2 className="text-3xl font-bold text-gray-900 mb-2">
-                최신 채용공고
-              </h2>
-              <p className="text-gray-600">지금 바로 지원 가능한 포지션</p>
-            </div>
-            <Link
-              href="/jobs"
-              className="hidden lg:flex items-center gap-2 text-primary-600 hover:text-primary-700 font-medium"
-            >
-              전체보기
-              <ArrowRight className="w-4 h-4" />
-            </Link>
-          </div>
-
           {loading ? (
             <div className="text-center py-12">
               <div className="w-12 h-12 border-4 border-primary-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
@@ -212,7 +199,7 @@ export default function Home() {
                 <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
                   <p className="text-red-600 font-medium">에러 발생</p>
                   <p className="text-sm text-red-500 mt-1">{error}</p>
-                  <button 
+                  <button
                     onClick={() => window.location.reload()}
                     className="mt-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
                   >
@@ -226,7 +213,7 @@ export default function Home() {
               <div className="p-6 bg-red-50 border border-red-200 rounded-lg max-w-md mx-auto">
                 <p className="text-red-600 font-medium mb-2">데이터를 불러올 수 없습니다</p>
                 <p className="text-sm text-red-500 mb-4">{error}</p>
-                <button 
+                <button
                   onClick={() => window.location.reload()}
                   className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
                 >
@@ -235,87 +222,166 @@ export default function Home() {
               </div>
             </div>
           ) : (
-            <div className="grid lg:grid-cols-3 gap-6">
-              {/* Featured Jobs - 앞 2개만 표시 */}
-              {featuredJobs.slice(0, 2).map((job, index) => (
+            <div className="space-y-16">
+              {/* 섹션 1: 플래티넘 - 고객님이 꼭 봐야할 공고 */}
+              <section>
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="w-2 h-8 bg-gradient-to-b from-amber-400 to-amber-600 rounded-full" />
+                    <div>
+                      <h2 className="text-2xl font-bold text-gray-900">
+                        고객님이 꼭 봐야할 공고
+                        <span className="ml-2 text-sm font-medium text-amber-600 bg-amber-50 px-2 py-1 rounded">플래티넘</span>
+                      </h2>
+                      <p className="text-gray-500 text-sm mt-1">최고 수준의 프리미엄 채용 기회</p>
+                    </div>
+                  </div>
+                  <Link
+                    href="/jobs?tier=premium"
+                    className="hidden lg:flex items-center gap-2 text-amber-600 hover:text-amber-700 font-medium text-sm"
+                  >
+                    더보기
+                    <ArrowRight className="w-4 h-4" />
+                  </Link>
+                </div>
+                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {platinumJobs.length > 0 ? (
+                    platinumJobs.slice(0, 4).map((job, index) => (
+                      <motion.div
+                        key={job.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.4, delay: index * 0.1 }}
+                      >
+                        <JobCard job={job} />
+                      </motion.div>
+                    ))
+                  ) : (
+                    <div className="col-span-4 text-center py-8 text-gray-500">
+                      플래티넘 공고가 없습니다
+                    </div>
+                  )}
+                </div>
+              </section>
+
+              {/* 섹션 2: 프라임 - 최고의 인기 공고 */}
+              <section>
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="w-2 h-8 bg-gradient-to-b from-primary-400 to-primary-600 rounded-full" />
+                    <div>
+                      <h2 className="text-2xl font-bold text-gray-900">
+                        최고의 인기 공고
+                        <span className="ml-2 text-sm font-medium text-primary-600 bg-primary-50 px-2 py-1 rounded">프라임</span>
+                      </h2>
+                      <p className="text-gray-500 text-sm mt-1">많은 구직자들이 관심 있는 포지션</p>
+                    </div>
+                  </div>
+                  <Link
+                    href="/jobs?tier=top"
+                    className="hidden lg:flex items-center gap-2 text-primary-600 hover:text-primary-700 font-medium text-sm"
+                  >
+                    더보기
+                    <ArrowRight className="w-4 h-4" />
+                  </Link>
+                </div>
+                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {primeJobs.length > 0 ? (
+                    primeJobs.slice(0, 4).map((job, index) => (
+                      <motion.div
+                        key={job.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.4, delay: index * 0.1 }}
+                      >
+                        <JobCard job={job} />
+                      </motion.div>
+                    ))
+                  ) : (
+                    <div className="col-span-4 text-center py-8 text-gray-500">
+                      프라임 공고가 없습니다
+                    </div>
+                  )}
+                </div>
+              </section>
+
+              {/* 섹션 3: 스페셜 - 요즘 주목받는 공고 */}
+              <section>
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="w-2 h-8 bg-gradient-to-b from-cyan-400 to-cyan-600 rounded-full" />
+                    <div>
+                      <h2 className="text-2xl font-bold text-gray-900">
+                        요즘 주목받는 공고
+                        <span className="ml-2 text-sm font-medium text-cyan-600 bg-cyan-50 px-2 py-1 rounded">스페셜</span>
+                      </h2>
+                      <p className="text-gray-500 text-sm mt-1">새롭게 떠오르는 채용 기회</p>
+                    </div>
+                  </div>
+                  <Link
+                    href="/jobs?tier=standard"
+                    className="hidden lg:flex items-center gap-2 text-cyan-600 hover:text-cyan-700 font-medium text-sm"
+                  >
+                    더보기
+                    <ArrowRight className="w-4 h-4" />
+                  </Link>
+                </div>
+                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {specialJobs.length > 0 ? (
+                    specialJobs.slice(0, 4).map((job, index) => (
+                      <motion.div
+                        key={job.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.4, delay: index * 0.1 }}
+                      >
+                        <JobCard job={job} />
+                      </motion.div>
+                    ))
+                  ) : (
+                    <div className="col-span-4 text-center py-8 text-gray-500">
+                      스페셜 공고가 없습니다
+                    </div>
+                  )}
+                </div>
+              </section>
+
+              {/* 광고 배너 */}
+              <section>
                 <motion.div
-                  key={job.id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, delay: index * 0.1 }}
+                  transition={{ duration: 0.4, delay: 0.3 }}
+                  className="max-w-2xl mx-auto"
                 >
-                  <JobCard job={job} />
+                  <button onClick={handleAdClick} className="block group w-full text-left">
+                    <div className="bg-white rounded-md shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden relative border-2 border-gray-100">
+                      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary-400 via-primary-600 to-cyan-500" />
+                      <div className="absolute inset-0 opacity-[0.03]">
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-primary-500 rounded-full blur-3xl" />
+                        <div className="absolute bottom-0 left-0 w-64 h-64 bg-cyan-500 rounded-full blur-3xl" />
+                      </div>
+                      <div className="p-6 flex items-center gap-6 relative z-10">
+                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary-50 to-cyan-50 flex items-center justify-center ring-2 ring-primary-100 shrink-0">
+                          <Sparkles className="w-6 h-6 text-primary-600" />
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="text-lg font-bold text-gray-900">
+                            글로벌 인재에게 <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-cyan-600">우리 기업을 알리세요</span>
+                          </h3>
+                          <p className="text-gray-600 text-sm mt-1">
+                            프리미엄 채용공고로 최상단 노출과 더 많은 지원자를 만나보세요
+                          </p>
+                        </div>
+                        <div className="bg-gradient-to-r from-primary-600 to-cyan-600 rounded-lg px-4 py-2 flex items-center gap-2 group-hover:shadow-md transition-all shrink-0">
+                          <span className="font-semibold text-white text-sm">채용공고 등록</span>
+                          <ChevronRight className="w-4 h-4 text-white group-hover:translate-x-1 transition-transform" />
+                        </div>
+                      </div>
+                    </div>
+                  </button>
                 </motion.div>
-              ))}
-
-            {/* Premium Advertisement Banner */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: 0.2 }}
-            >
-              <button onClick={handleAdClick} className="block group h-full w-full text-left">
-                <div className="bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden h-full flex flex-col relative border-2 border-gray-100">
-                  {/* 상단 그라데이션 액센트 */}
-                  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary-400 via-primary-600 to-cyan-500" />
-
-                  {/* 배경 패턴 */}
-                  <div className="absolute inset-0 opacity-[0.03]">
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-primary-500 rounded-full blur-3xl" />
-                    <div className="absolute bottom-0 left-0 w-64 h-64 bg-cyan-500 rounded-full blur-3xl" />
-                  </div>
-
-                  <div className="p-8 flex-1 flex flex-col justify-center relative z-10">
-                    {/* 아이콘 */}
-                    <div className="mb-6 flex items-center justify-center">
-                      <div className="w-14 h-14 rounded-full bg-gradient-to-br from-primary-50 to-cyan-50 flex items-center justify-center ring-2 ring-primary-100">
-                        <Sparkles className="w-7 h-7 text-primary-600" />
-                      </div>
-                    </div>
-
-                    {/* 메인 문구 */}
-                    <h3 className="text-xl font-bold text-gray-900 text-center mb-2">
-                      글로벌 인재에게
-                      <br />
-                      <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-cyan-600">
-                        우리 기업을 알리세요
-                      </span>
-                    </h3>
-
-                    <p className="text-gray-600 text-center mb-6 text-sm leading-relaxed">
-                      프리미엄 채용공고로 최상단 노출과<br />
-                      더 많은 지원자를 만나보세요
-                    </p>
-
-                    {/* 혜택 목록 */}
-                    <div className="space-y-2.5 mb-6">
-                      <div className="flex items-center gap-2 text-gray-700 text-sm">
-                        <div className="w-1.5 h-1.5 rounded-full bg-primary-500" />
-                        <span>최상단 노출 보장</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-gray-700 text-sm">
-                        <div className="w-1.5 h-1.5 rounded-full bg-primary-600" />
-                        <span>3배 높은 조회수</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-gray-700 text-sm">
-                        <div className="w-1.5 h-1.5 rounded-full bg-cyan-500" />
-                        <span>맞춤형 인재 추천</span>
-                      </div>
-                    </div>
-
-                    {/* CTA 버튼 */}
-                    <div className="mt-auto pt-4">
-                      <div className="bg-gradient-to-r from-primary-600 to-cyan-600 rounded-lg px-4 py-3 flex items-center justify-between group-hover:shadow-md transition-all">
-                        <span className="font-semibold text-white">
-                          채용공고 등록하기
-                        </span>
-                        <ChevronRight className="w-5 h-5 text-white group-hover:translate-x-1 transition-transform" />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </button>
-            </motion.div>
+              </section>
             </div>
           )}
 

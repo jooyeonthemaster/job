@@ -243,7 +243,7 @@ function EditBusinessInfoContent() {
         </div>
 
         {/* Form */}
-        <div className="bg-white rounded-2xl shadow-sm p-8">
+        <div className="bg-white rounded-lg shadow-sm p-8">
           <div className="space-y-6">
             <div className="flex items-center gap-3 mb-6 pb-4 border-b">
               <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
@@ -268,7 +268,7 @@ function EditBusinessInfoContent() {
                   value={formData.registrationNumber}
                   onChange={(e) => handleRegistrationNumberChange(e.target.value)}
                   placeholder="1234567890"
-                  className={`w-full pl-10 pr-10 py-3 border rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-colors ${
+                  className={`w-full pl-10 pr-10 py-3 border rounded-md focus:ring-2 focus:ring-primary-500 outline-none transition-colors ${
                     errors.registrationNumber ? 'border-red-500' : 'border-gray-300'
                   }`}
                   maxLength={10}
@@ -307,7 +307,7 @@ function EditBusinessInfoContent() {
                 />
                 <label
                   htmlFor="registrationDocument"
-                  className={`flex items-center gap-3 p-4 border-2 border-dashed rounded-xl hover:border-primary-400 hover:bg-primary-50 transition-colors cursor-pointer ${
+                  className={`flex items-center gap-3 p-4 border-2 border-dashed rounded-md hover:border-primary-400 hover:bg-primary-50 transition-colors cursor-pointer ${
                     errors.registrationDocument ? 'border-red-500' : 'border-gray-300'
                   }`}
                 >
@@ -355,7 +355,7 @@ function EditBusinessInfoContent() {
                   value={formData.name}
                   onChange={(e) => handleChange('name', e.target.value)}
                   placeholder="주식회사 글로벌탤런트"
-                  className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-colors ${
+                  className={`w-full pl-10 pr-4 py-3 border rounded-md focus:ring-2 focus:ring-primary-500 outline-none transition-colors ${
                     errors.name ? 'border-red-500' : 'border-gray-300'
                   }`}
                 />
@@ -377,7 +377,7 @@ function EditBusinessInfoContent() {
                   value={formData.nameEn}
                   onChange={(e) => handleChange('nameEn', e.target.value)}
                   placeholder="Bridge World Inc."
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-colors"
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 outline-none transition-colors"
                 />
               </div>
             </div>
@@ -401,7 +401,7 @@ function EditBusinessInfoContent() {
                   dropdownMode="select"
                   yearDropdownItemNumber={150}
                   scrollableYearDropdown
-                  className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-colors ${
+                  className={`w-full pl-10 pr-4 py-3 border rounded-md focus:ring-2 focus:ring-primary-500 outline-none transition-colors ${
                     errors.establishmentYear ? 'border-red-500' : 'border-gray-300'
                   }`}
                 />
@@ -424,7 +424,7 @@ function EditBusinessInfoContent() {
                   value={formData.ceoName}
                   onChange={(e) => handleChange('ceoName', e.target.value)}
                   placeholder="홍길동"
-                  className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-colors ${
+                  className={`w-full pl-10 pr-4 py-3 border rounded-md focus:ring-2 focus:ring-primary-500 outline-none transition-colors ${
                     errors.ceoName ? 'border-red-500' : 'border-gray-300'
                   }`}
                 />
@@ -439,14 +439,14 @@ function EditBusinessInfoContent() {
           <div className="flex gap-3 mt-8 pt-6 border-t">
             <Link
               href="/company-dashboard/edit"
-              className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors text-center font-medium"
+              className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors text-center font-medium"
             >
               취소
             </Link>
             <button
               onClick={handleSave}
               disabled={saving}
-              className="flex-1 px-6 py-3 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition-colors disabled:opacity-50 font-medium flex items-center justify-center gap-2"
+              className="flex-1 px-6 py-3 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition-colors disabled:opacity-50 font-medium flex items-center justify-center gap-2"
             >
               <Save className="w-5 h-5" />
               {saving ? '저장 중...' : '저장하기'}

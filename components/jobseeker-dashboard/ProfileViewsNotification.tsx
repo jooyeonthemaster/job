@@ -101,7 +101,7 @@ export default function ProfileViewsNotification({ userId }: ProfileViewsNotific
 
   if (loading) {
     return (
-      <div className="bg-white rounded-xl shadow-sm p-6">
+      <div className="bg-white rounded-md shadow-sm p-6">
         <div className="flex items-center gap-3 mb-4">
           <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
             <Eye className="w-5 h-5 text-blue-600" />
@@ -121,7 +121,7 @@ export default function ProfileViewsNotification({ userId }: ProfileViewsNotific
 
   if (error) {
     return (
-      <div className="bg-white rounded-xl shadow-sm p-6">
+      <div className="bg-white rounded-md shadow-sm p-6">
         <div className="flex items-center gap-3 mb-4">
           <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
             <Eye className="w-5 h-5 text-red-600" />
@@ -137,7 +137,7 @@ export default function ProfileViewsNotification({ userId }: ProfileViewsNotific
 
   if (views.length === 0) {
     return (
-      <div className="bg-white rounded-xl shadow-sm p-6">
+      <div className="bg-white rounded-md shadow-sm p-6">
         <div className="flex items-center gap-3 mb-4">
           <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
             <Eye className="w-5 h-5 text-gray-400" />
@@ -157,7 +157,7 @@ export default function ProfileViewsNotification({ userId }: ProfileViewsNotific
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-sm p-6">
+    <div className="bg-white rounded-md shadow-sm p-6">
       {/* 헤더 */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">

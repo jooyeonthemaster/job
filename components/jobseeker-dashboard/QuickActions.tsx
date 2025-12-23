@@ -5,7 +5,7 @@ import { Search, Edit3, ChevronRight } from 'lucide-react';
 
 export default function QuickActions() {
   return (
-    <div className="bg-white rounded-xl shadow-sm p-6">
+    <div className="bg-white rounded-md shadow-sm p-6">
       <h3 className="text-lg font-semibold text-gray-900 mb-4">빠른 작업</h3>
       <div className="space-y-2">
         <Link

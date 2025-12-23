@@ -40,7 +40,7 @@ export default function BasicInfoSection({ formData, errors, onChange }: BasicIn
           <select
             value={formData.nationality}
             onChange={(e) => handleNationalityChange(e.target.value)}
-            className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-colors ${
+            className={`w-full px-4 py-3 border rounded-md focus:ring-2 focus:ring-primary-500 outline-none transition-colors ${
               errors.nationality ? 'border-red-500' : 'border-gray-300'
             }`}
           >
@@ -67,7 +67,7 @@ export default function BasicInfoSection({ formData, errors, onChange }: BasicIn
             value={formData.fullName}
             onChange={(e) => onChange('fullName', e.target.value)}
             placeholder="홍길동"
-            className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-colors ${
+            className={`w-full px-4 py-3 border rounded-md focus:ring-2 focus:ring-primary-500 outline-none transition-colors ${
               errors.fullName ? 'border-red-500' : 'border-gray-300'
             }`}
           />
@@ -103,7 +103,7 @@ export default function BasicInfoSection({ formData, errors, onChange }: BasicIn
               value={formData.foreignerNumber}
               onChange={(e) => onChange('foreignerNumber', e.target.value)}
               placeholder="123456-1234567"
-              className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-colors ${
+              className={`w-full px-4 py-3 border rounded-md focus:ring-2 focus:ring-primary-500 outline-none transition-colors ${
                 errors.foreignerNumber ? 'border-red-500' : 'border-gray-300'
               }`}
             />
@@ -125,7 +125,7 @@ export default function BasicInfoSection({ formData, errors, onChange }: BasicIn
             onChange={(e) => onChange('desiredJobCategory', e.target.value)}
             placeholder="예: 개발, 디자인, 마케팅, 영업, 기획 등"
             maxLength={50}
-            className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-colors ${
+            className={`w-full px-4 py-3 border rounded-md focus:ring-2 focus:ring-primary-500 outline-none transition-colors ${
               errors.desiredJobCategory ? 'border-red-500' : 'border-gray-300'
             }`}
           />

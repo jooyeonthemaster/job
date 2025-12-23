@@ -76,7 +76,7 @@ export function ViewedProfilesTab() {
 
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-xl p-6">
+      <div className="bg-red-50 border border-red-200 rounded-md p-6">
         <p className="text-red-900 font-medium mb-2">오류 발생</p>
         <p className="text-red-700 text-sm">{error}</p>
         <button
@@ -91,7 +91,7 @@ export function ViewedProfilesTab() {
 
   if (profiles.length === 0) {
     return (
-      <div className="bg-white rounded-xl p-12 shadow-sm text-center">
+      <div className="bg-white rounded-md p-12 shadow-sm text-center">
         <Eye className="w-16 h-16 text-gray-400 mx-auto mb-4" />
         <h3 className="text-lg font-bold text-gray-900 mb-2">
           아직 열람한 프로필이 없습니다
@@ -134,7 +134,7 @@ export function ViewedProfilesTab() {
         {profiles.map((profile) => (
           <div
             key={profile.id}
-            className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 hover:border-primary-300 hover:shadow-md transition-all"
+            className="bg-white rounded-md p-6 shadow-sm border border-gray-200 hover:border-primary-300 hover:shadow-md transition-all"
           >
             <div className="flex items-start gap-6">
               {/* 프로필 이미지 */}
@@ -239,7 +239,7 @@ export function ViewedProfilesTab() {
       </div>
 
       {/* 안내 메시지 */}
-      <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+      <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
         <div className="flex items-start gap-3">
           <div className="w-5 h-5 rounded-full bg-blue-500 text-white flex items-center justify-center text-xs mt-0.5">
             i

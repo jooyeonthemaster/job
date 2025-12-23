@@ -368,7 +368,7 @@ function AdminJobCreateContent() {
         {/* Content */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {error && (
-            <div className="mb-6 p-4 bg-red-50 border-2 border-red-200 rounded-xl">
+            <div className="mb-6 p-4 bg-red-50 border-2 border-red-200 rounded-md">
               <p className="text-sm font-medium text-red-600">{error}</p>
               {errors.length > 0 && (
                 <ul className="mt-2 space-y-1">
@@ -382,7 +382,7 @@ function AdminJobCreateContent() {
 
           {/* 선택된 회사 정보 표시 (Step 1, 2에서만) */}
           {selectedCompany && currentStep !== 'company' && (
-            <div className="mb-6 p-4 bg-blue-50 border-2 border-blue-200 rounded-xl flex items-center justify-between">
+            <div className="mb-6 p-4 bg-blue-50 border-2 border-blue-200 rounded-md flex items-center justify-between">
               <div className="flex items-center gap-3">
                 {selectedCompany.logo ? (
                   <img
@@ -425,7 +425,7 @@ function AdminJobCreateContent() {
 
           {currentStep === 'content' && (
             <div className="space-y-6">
-              <div className="bg-gradient-to-r from-secondary-50 to-pink-50 rounded-xl p-6 border-2 border-secondary-100">
+              <div className="bg-gradient-to-r from-secondary-50 to-pink-50 rounded-md p-6 border-2 border-secondary-100">
                 <div className="flex items-center gap-3 mb-2">
                   <div className="w-8 h-8 bg-secondary-600 rounded-lg flex items-center justify-center">
                     <span className="text-white font-bold">2</span>

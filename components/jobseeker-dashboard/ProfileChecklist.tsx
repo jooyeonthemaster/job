@@ -83,7 +83,7 @@ export default function ProfileChecklist({ checklist, checklistPercentage, profi
 
   return (
     <>
-    <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-primary-500">
+    <div className="bg-white rounded-md shadow-sm p-6 border-l-4 border-primary-500">
       <div className="flex items-start justify-between mb-4">
         <div>
           <h2 className="text-lg font-semibold text-gray-900 mb-1">
@@ -202,7 +202,7 @@ export default function ProfileChecklist({ checklist, checklistPercentage, profi
           onClick={() => setShowEligibilityModal(false)}
         >
           <div
-            className="bg-white rounded-2xl max-w-lg w-full p-6 max-h-[90vh] overflow-y-auto"
+            className="bg-white rounded-lg max-w-lg w-full p-6 max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-start justify-between mb-4">

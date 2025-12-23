@@ -30,7 +30,7 @@ export const ProfileTab = ({ company }: ProfileTabProps) => {
       </div>
 
       {/* 로고 & 기본 정보 카드 */}
-      <div className="bg-white rounded-xl p-8 shadow-sm">
+      <div className="bg-white rounded-md p-8 shadow-sm">
         <div className="flex items-start gap-6">
           {/* 로고 */}
           {company.logo ? (
@@ -71,7 +71,7 @@ export const ProfileTab = ({ company }: ProfileTabProps) => {
       </div>
 
       {/* 사업자 정보 */}
-      <div className="bg-white rounded-xl p-6 shadow-sm">
+      <div className="bg-white rounded-md p-6 shadow-sm">
         <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
           <FileText className="w-5 h-5 text-primary-600" />
           사업자 정보
@@ -109,7 +109,7 @@ export const ProfileTab = ({ company }: ProfileTabProps) => {
       </div>
 
       {/* 기업 기본 정보 (K-Work 기반) */}
-      <div className="bg-white rounded-xl p-6 shadow-sm">
+      <div className="bg-white rounded-md p-6 shadow-sm">
         <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
           <Building2 className="w-5 h-5 text-primary-600" />
           기업 기본 정보
@@ -168,7 +168,7 @@ export const ProfileTab = ({ company }: ProfileTabProps) => {
       </div>
 
       {/* 담당자 정보 */}
-      <div className="bg-white rounded-xl p-6 shadow-sm">
+      <div className="bg-white rounded-md p-6 shadow-sm">
         <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
           <Users className="w-5 h-5 text-primary-600" />
           담당자 정보
@@ -194,7 +194,7 @@ export const ProfileTab = ({ company }: ProfileTabProps) => {
       </div>
 
       {/* 복지 정보 */}
-      <div className="bg-white rounded-xl p-6 shadow-sm">
+      <div className="bg-white rounded-md p-6 shadow-sm">
         <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
           <Building2 className="w-5 h-5 text-primary-600" />
           복지 정보

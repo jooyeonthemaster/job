@@ -258,7 +258,7 @@ export default function CompanySelectOrCreate({
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm p-6">
+    <div className="bg-white rounded-md shadow-sm p-6">
       <div className="flex items-center gap-3 mb-6">
         <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
           <Building2 className="w-5 h-5 text-primary-600" />
@@ -282,7 +282,7 @@ export default function CompanySelectOrCreate({
               value={newCompany.name}
               onChange={(e) => setNewCompany({ ...newCompany, name: e.target.value })}
               placeholder="주식회사 ABC"
-              className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-colors ${
+              className={`w-full pl-10 pr-4 py-3 border rounded-md focus:ring-2 focus:ring-primary-500 outline-none transition-colors ${
                 errors.name ? 'border-red-500' : 'border-gray-300'
               }`}
             />
@@ -304,7 +304,7 @@ export default function CompanySelectOrCreate({
               value={newCompany.name_en}
               onChange={(e) => setNewCompany({ ...newCompany, name_en: e.target.value })}
               placeholder="ABC Corporation"
-              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-colors"
+              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 outline-none transition-colors"
             />
           </div>
         </div>
@@ -319,7 +319,7 @@ export default function CompanySelectOrCreate({
             <select
               value={newCompany.company_type}
               onChange={(e) => setNewCompany({ ...newCompany, company_type: e.target.value })}
-              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-colors appearance-none bg-white"
+              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 outline-none transition-colors appearance-none bg-white"
             >
               {COMPANY_TYPES.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -343,7 +343,7 @@ export default function CompanySelectOrCreate({
                 value={newCompany.address}
                 readOnly
                 placeholder="주소 검색 버튼을 클릭하세요"
-                className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-colors bg-gray-50 cursor-not-allowed ${
+                className={`w-full pl-10 pr-4 py-3 border rounded-md focus:ring-2 focus:ring-primary-500 outline-none transition-colors bg-gray-50 cursor-not-allowed ${
                   errors.address ? 'border-red-500' : 'border-gray-300'
                 }`}
               />
@@ -351,7 +351,7 @@ export default function CompanySelectOrCreate({
             <button
               type="button"
               onClick={handleSearchAddress}
-              className="px-6 py-3 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition-colors font-medium whitespace-nowrap flex items-center gap-2"
+              className="px-6 py-3 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition-colors font-medium whitespace-nowrap flex items-center gap-2"
             >
               <Search className="w-5 h-5" />
               주소 검색
@@ -374,14 +374,14 @@ export default function CompanySelectOrCreate({
               value={newCompany.addressDetail}
               onChange={(e) => setNewCompany({ ...newCompany, addressDetail: e.target.value })}
               placeholder="동, 호수 등 상세 주소를 입력하세요"
-              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-colors"
+              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 outline-none transition-colors"
             />
           </div>
         </div>
 
         {/* 전체 주소 미리보기 */}
         {newCompany.address && (
-          <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl">
+          <div className="p-4 bg-blue-50 border border-blue-200 rounded-md">
             <p className="text-sm font-medium text-blue-900 mb-1">입력된 전체 주소</p>
             <p className="text-sm text-blue-800">
               {newCompany.address}
@@ -405,7 +405,7 @@ export default function CompanySelectOrCreate({
             />
             <label
               htmlFor="companyLogo"
-              className="flex items-center gap-3 p-4 border-2 border-dashed border-gray-300 rounded-xl hover:border-primary-400 hover:bg-primary-50 transition-colors cursor-pointer"
+              className="flex items-center gap-3 p-4 border-2 border-dashed border-gray-300 rounded-md hover:border-primary-400 hover:bg-primary-50 transition-colors cursor-pointer"
             >
               {logoPreview ? (
                 <div className="flex items-center gap-3 w-full">
@@ -450,7 +450,7 @@ export default function CompanySelectOrCreate({
             onChange={(e) => setNewCompany({ ...newCompany, summary: e.target.value })}
             placeholder="예: 글로벌 1위 전자상거래 플랫폼"
             maxLength={100}
-            className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-colors ${
+            className={`w-full px-4 py-3 border rounded-md focus:ring-2 focus:ring-primary-500 outline-none transition-colors ${
               errors.summary ? 'border-red-500' : 'border-gray-300'
             }`}
           />
@@ -470,7 +470,7 @@ export default function CompanySelectOrCreate({
             onChange={(e) => setNewCompany({ ...newCompany, description: e.target.value })}
             placeholder="기업의 비전, 미션, 주요 사업 내용 등을 입력하세요"
             rows={5}
-            className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-colors resize-none ${
+            className={`w-full px-4 py-3 border rounded-md focus:ring-2 focus:ring-primary-500 outline-none transition-colors resize-none ${
               errors.description ? 'border-red-500' : 'border-gray-300'
             }`}
           />
@@ -488,7 +488,7 @@ export default function CompanySelectOrCreate({
             <select
               value={newCompany.employee_count}
               onChange={(e) => setNewCompany({ ...newCompany, employee_count: e.target.value })}
-              className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-colors appearance-none bg-white ${
+              className={`w-full px-4 py-3 border rounded-md focus:ring-2 focus:ring-primary-500 outline-none transition-colors appearance-none bg-white ${
                 errors.employee_count ? 'border-red-500' : 'border-gray-300'
               }`}
             >
@@ -516,7 +516,7 @@ export default function CompanySelectOrCreate({
               placeholder="2020"
               min="1900"
               max={new Date().getFullYear()}
-              className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-colors ${
+              className={`w-full px-4 py-3 border rounded-md focus:ring-2 focus:ring-primary-500 outline-none transition-colors ${
                 errors.established ? 'border-red-500' : 'border-gray-300'
               }`}
             />
@@ -536,7 +536,7 @@ export default function CompanySelectOrCreate({
             value={newCompany.industry}
             onChange={(e) => setNewCompany({ ...newCompany, industry: e.target.value })}
             placeholder="예: IT/소프트웨어, 전자상거래, 핀테크"
-            className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-colors ${
+            className={`w-full px-4 py-3 border rounded-md focus:ring-2 focus:ring-primary-500 outline-none transition-colors ${
               errors.industry ? 'border-red-500' : 'border-gray-300'
             }`}
           />
@@ -560,7 +560,7 @@ export default function CompanySelectOrCreate({
               value={newCompany.ceo_name}
               onChange={(e) => setNewCompany({ ...newCompany, ceo_name: e.target.value })}
               placeholder="홍길동"
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-colors"
+              className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 outline-none transition-colors"
             />
           </div>
 
@@ -573,7 +573,7 @@ export default function CompanySelectOrCreate({
               value={newCompany.website}
               onChange={(e) => setNewCompany({ ...newCompany, website: e.target.value })}
               placeholder="https://example.com"
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-colors"
+              className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 outline-none transition-colors"
             />
           </div>
         </div>
@@ -582,13 +582,13 @@ export default function CompanySelectOrCreate({
         <button
           onClick={handleCreateCompany}
           disabled={loading}
-          className="w-full bg-primary-600 text-white py-3 px-6 rounded-xl font-semibold hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+          className="w-full bg-primary-600 text-white py-3 px-6 rounded-md font-semibold hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
         >
           {loading ? '생성 중...' : '회사 생성하기'}
         </button>
 
         {/* 안내 메시지 */}
-        <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-xl">
+        <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-md">
           <p className="text-sm text-yellow-800">
             💡 <strong>최소 정보만</strong> 입력하세요. 사업자등록번호, 대표자명, 개업일자, 웹사이트 등은
             나중에 기업이 직접 프로필을 수정할 때 추가할 수 있습니다.

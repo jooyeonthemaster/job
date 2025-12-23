@@ -25,7 +25,7 @@ export default function RequirementsSection({
     onUpdate('requiredSkills', formData.requiredSkills.map((skill, i) => i === index ? value : skill));
   };
   return (
-    <div className="bg-white rounded-xl p-6 shadow-sm">
+    <div className="bg-white rounded-md p-6 shadow-sm">
       <div className="flex items-center gap-3 mb-6">
         <div className="p-2 bg-primary-600 rounded-lg">
           <FileText className="w-6 h-6 text-white" />

@@ -9,13 +9,13 @@
   --foreground: #1F2937;
   --card: #FFFFFF;
   --card-foreground: #1F2937;
-  --primary: #00D4AA;
+  --primary: #3B82F6;
   --primary-foreground: #FFFFFF;
   --secondary: #A855F7;
   --secondary-foreground: #FFFFFF;
   --muted: #F3F4F6;
   --muted-foreground: #6B7280;
-  --accent: #00D4AA;
+  --accent: #3B82F6;
   --accent-foreground: #FFFFFF;
   --border: #E5E7EB;
   --radius: 1rem;
@@ -63,24 +63,24 @@ body {
   .glass-card {
     background: linear-gradient(
       180deg,
-      rgba(0, 212, 170, 0.08) 0%,
+      rgba(59, 130, 246, 0.08) 0%,
       rgba(255, 255, 255, 0.6) 100%
     );
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
-    border: 1px solid rgba(0, 212, 170, 0.25);
-    box-shadow: 0 8px 24px rgba(0, 212, 170, 0.08);
+    border: 1px solid rgba(59, 130, 246, 0.25);
+    box-shadow: 0 8px 24px rgba(59, 130, 246, 0.08);
   }
 
   .glass {
     background: linear-gradient(
       180deg,
-      rgba(0, 212, 170, 0.12) 0%,
+      rgba(59, 130, 246, 0.12) 0%,
       rgba(255, 255, 255, 0.65) 100%
     );
     backdrop-filter: blur(6px);
     -webkit-backdrop-filter: blur(6px);
-    border: 1px solid rgba(0, 212, 170, 0.25);
+    border: 1px solid rgba(59, 130, 246, 0.25);
   }
   .card {
     background: white;
@@ -102,18 +102,18 @@ body {
   }
   
   .btn-primary {
-    background: linear-gradient(135deg, #00D4AA 0%, #00B894 100%);
+    background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
     color: white;
     font-weight: 600;
     padding: 0.75rem 1.5rem;
     border-radius: 0.75rem;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 12px rgba(0, 212, 170, 0.3);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
   }
-  
+
   .btn-primary:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0, 212, 170, 0.4);
+    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
   }
   
   .btn-secondary {
@@ -148,7 +148,7 @@ body {
   }
   
   .text-gradient {
-    background: linear-gradient(135deg, #00D4AA 0%, #00B894 100%);
+    background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
@@ -162,7 +162,7 @@ body {
   }
   
   .gradient-bg {
-    background: linear-gradient(135deg, #00D4AA 0%, #00B894 100%);
+    background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
   }
   
   .gradient-bg-secondary {
@@ -170,7 +170,7 @@ body {
   }
   
   .hero-gradient {
-    background: linear-gradient(180deg, #E6FFFA 0%, #FFFFFF 100%);
+    background: linear-gradient(180deg, #EFF6FF 0%, #FFFFFF 100%);
   }
   
   .badge {
@@ -183,8 +183,8 @@ body {
   }
   
   .badge-primary {
-    background: #E6FFFA;
-    color: #00D4AA;
+    background: #EFF6FF;
+    color: #3B82F6;
   }
   
   .badge-secondary {
@@ -204,8 +204,8 @@ body {
   
   .input-field:focus {
     outline: none;
-    border-color: #00D4AA;
-    box-shadow: 0 0 0 3px rgba(0, 212, 170, 0.1);
+    border-color: #3B82F6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
   }
   
   .nav-link {
@@ -216,13 +216,13 @@ body {
   }
   
   .nav-link:hover {
-    color: #00D4AA;
+    color: #3B82F6;
   }
-  
+
   .nav-link.active {
-    color: #00D4AA;
+    color: #3B82F6;
   }
-  
+
   .nav-link.active::after {
     content: '';
     position: absolute;
@@ -230,7 +230,7 @@ body {
     left: 0;
     right: 0;
     height: 2px;
-    background: #00D4AA;
+    background: #3B82F6;
   }
 }
 
@@ -282,12 +282,12 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #00D4AA;
+  background: #3B82F6;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #00B894;
+  background: #2563EB;
 }
 
 /* Modal Animations */
@@ -332,7 +332,7 @@ body {
 }
 
 .react-datepicker__header {
-  background: linear-gradient(135deg, #00D4AA 0%, #00B894 100%) !important;
+  background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%) !important;
   border-bottom: none !important;
   border-radius: 1rem 1rem 0 0 !important;
   padding-top: 1rem !important;
@@ -371,25 +371,25 @@ body {
 }
 
 .react-datepicker__day:hover {
-  background: #E6FFFA !important;
-  color: #00D4AA !important;
+  background: #EFF6FF !important;
+  color: #3B82F6 !important;
 }
 
 .react-datepicker__day--selected {
-  background: #00D4AA !important;
+  background: #3B82F6 !important;
   color: white !important;
   font-weight: 600 !important;
 }
 
 .react-datepicker__day--keyboard-selected {
-  background: #E6FFFA !important;
-  color: #00D4AA !important;
+  background: #EFF6FF !important;
+  color: #3B82F6 !important;
 }
 
 .react-datepicker__day--today {
   font-weight: 600 !important;
-  color: #00D4AA !important;
-  border: 2px solid #00D4AA !important;
+  color: #3B82F6 !important;
+  border: 2px solid #3B82F6 !important;
 }
 
 .react-datepicker__day--disabled {
@@ -415,13 +415,13 @@ body {
 
 .react-datepicker__year-option:hover,
 .react-datepicker__month-option:hover {
-  background: #E6FFFA !important;
-  color: #00D4AA !important;
+  background: #EFF6FF !important;
+  color: #3B82F6 !important;
 }
 
 .react-datepicker__year-option--selected,
 .react-datepicker__month-option--selected {
-  background: #00D4AA !important;
+  background: #3B82F6 !important;
   color: white !important;
 }
 

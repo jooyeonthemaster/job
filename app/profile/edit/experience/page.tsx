@@ -108,7 +108,7 @@ export default function ExperienceEditPage() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-8 border border-gray-100"
+          className="bg-white/80 backdrop-blur-sm rounded-lg shadow-xl p-8 border border-gray-100"
         >
           <Step2_Experience
             data={profileData}

@@ -14,7 +14,7 @@ interface BasicInfoSectionProps {
 
 export default function BasicInfoSection({ formData, onUpdate }: BasicInfoSectionProps) {
   return (
-    <div className="bg-white rounded-xl p-6 shadow-sm">
+    <div className="bg-white rounded-md p-6 shadow-sm">
       <h2 className="text-xl font-bold text-gray-900 mb-6">기본 정보</h2>
 
       <div className="space-y-4">

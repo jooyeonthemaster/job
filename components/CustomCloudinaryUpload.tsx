@@ -245,7 +245,7 @@ export default function CustomCloudinaryUpload({
               type === 'profile' ? 'aspect-square max-w-xs mx-auto' :
               type === 'logo' ? 'aspect-square max-w-sm mx-auto' :
               'aspect-[3/1] max-w-2xl mx-auto'
-            } overflow-hidden rounded-xl border-2 border-primary-200`}>
+            } overflow-hidden rounded-md border-2 border-primary-200`}>
               <img
                 src={preview}
                 alt="Preview"
@@ -296,7 +296,7 @@ export default function CustomCloudinaryUpload({
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
               onClick={handleClick}
-              className={`relative border-2 border-dashed rounded-xl p-8 transition-all cursor-pointer ${
+              className={`relative border-2 border-dashed rounded-md p-8 transition-all cursor-pointer ${
                 isDragging
                   ? 'border-primary-500 bg-primary-50'
                   : isUploading

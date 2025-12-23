@@ -19,7 +19,7 @@ export default function PostingTierSection({ formData, onUpdate }: PostingTierSe
     : selectedPrice.price + vatAmount;
 
   return (
-    <div className="bg-gradient-to-br from-primary-50 via-white to-secondary-50 rounded-xl p-6 shadow-lg border-2 border-primary-100">
+    <div className="bg-gradient-to-br from-primary-50 via-white to-secondary-50 rounded-md p-6 shadow-lg border-2 border-primary-100">
       <div className="flex items-center gap-3 mb-6">
         <div className="p-2 bg-primary-600 rounded-lg">
           <TrendingUp className="w-6 h-6 text-white" />
@@ -32,7 +32,7 @@ export default function PostingTierSection({ formData, onUpdate }: PostingTierSe
 
       <div className="space-y-4 mb-6">
         {/* 중상단 (일반) */}
-        <label className={`relative flex items-start p-5 rounded-xl border-2 cursor-pointer transition-all ${
+        <label className={`relative flex items-start p-5 rounded-md border-2 cursor-pointer transition-all ${
           formData.postingTier === 'standard'
             ? 'border-primary-500 bg-primary-50 shadow-md'
             : 'border-gray-200 bg-white hover:border-primary-200 hover:bg-gray-50'
@@ -77,7 +77,7 @@ export default function PostingTierSection({ formData, onUpdate }: PostingTierSe
         </label>
 
         {/* 최상단 */}
-        <label className={`relative flex items-start p-5 rounded-xl border-2 cursor-pointer transition-all ${
+        <label className={`relative flex items-start p-5 rounded-md border-2 cursor-pointer transition-all ${
           formData.postingTier === 'top'
             ? 'border-primary-500 bg-primary-50 shadow-md'
             : 'border-gray-200 bg-white hover:border-primary-200 hover:bg-gray-50'
@@ -126,7 +126,7 @@ export default function PostingTierSection({ formData, onUpdate }: PostingTierSe
         </label>
 
         {/* 첫 페이지 최상단 (프리미엄) */}
-        <label className={`relative flex items-start p-5 rounded-xl border-2 cursor-pointer transition-all ${
+        <label className={`relative flex items-start p-5 rounded-md border-2 cursor-pointer transition-all ${
           formData.postingTier === 'premium'
             ? 'border-secondary-500 bg-gradient-to-br from-secondary-50 to-pink-50 shadow-md'
             : 'border-gray-200 bg-white hover:border-secondary-200 hover:bg-gray-50'
@@ -176,7 +176,7 @@ export default function PostingTierSection({ formData, onUpdate }: PostingTierSe
 
         {/* 테스트 상품 - 숨김 처리 */}
         {false && (
-          <label className={`relative flex items-start p-5 rounded-xl border-2 cursor-pointer transition-all ${
+          <label className={`relative flex items-start p-5 rounded-md border-2 cursor-pointer transition-all ${
             formData.postingTier === 'test'
               ? 'border-dashed border-green-500 bg-green-50 shadow-md'
               : 'border-gray-200 bg-white hover:border-green-200 hover:bg-gray-50'
@@ -226,7 +226,7 @@ export default function PostingTierSection({ formData, onUpdate }: PostingTierSe
       </div>
 
       {/* 비용 요약 */}
-      <div className="bg-white rounded-xl p-6 border-2 border-gray-200">
+      <div className="bg-white rounded-md p-6 border-2 border-gray-200">
         <div className="flex items-center gap-2 mb-4">
           <CreditCard className="w-5 h-5 text-primary-600" />
           <h3 className="text-lg font-bold text-gray-900">결제 정보</h3>

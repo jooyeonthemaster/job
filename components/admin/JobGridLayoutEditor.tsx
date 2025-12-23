@@ -58,7 +58,7 @@ export default function JobGridLayoutEditor({
   const loadData = async () => {
     setLoading(true);
     try {
-      // 결제 완료된 공고만 DB에서 직접 필터링 (active + pending_approval 포함, 테스트 결제 포함)
+      // 결제 완료된 공고만 DB에서 직접 필터링 (active + pending_approval + draft 포함, 테스트 결제 포함)
       const { data: allJobs, error } = await supabase
         .from('jobs')
         .select(`
@@ -70,7 +70,7 @@ export default function JobGridLayoutEditor({
             industry
           )
         `)
-        .in('status', ['active', 'pending_approval'])
+        .in('status', ['active', 'pending_approval', 'draft'])
         .not('payment_status', 'is', null)
         .order('created_at', { ascending: false });
 
@@ -382,7 +382,7 @@ export default function JobGridLayoutEditor({
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-[95vw] max-h-[95vh] flex flex-col">
+      <div className="bg-white rounded-lg shadow-2xl w-full max-w-[95vw] max-h-[95vh] flex flex-col">
         {/* Header */}
         <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between sticky top-0 bg-white z-10">
           <div>
@@ -460,7 +460,7 @@ export default function JobGridLayoutEditor({
             <div className="flex-1 overflow-y-auto p-6">
               {/* Top 섹션 - 4열 그리드 */}
               <div className="mb-12">
-                <div className="bg-gradient-to-r from-emerald-700 to-emerald-600 rounded-xl p-4 mb-4">
+                <div className="bg-gradient-to-r from-emerald-700 to-emerald-600 rounded-md p-4 mb-4">
                   <h3 className="text-white font-bold text-lg flex items-center gap-2">
                     <span>🔥</span>
                     Top 섹션 (프리미엄/탑 공고)
@@ -474,7 +474,7 @@ export default function JobGridLayoutEditor({
 
               {/* Middle 섹션 - 5열 그리드 */}
               <div className="mb-12">
-                <div className="bg-gradient-to-r from-emerald-800 to-emerald-700 rounded-xl p-4 mb-4">
+                <div className="bg-gradient-to-r from-emerald-800 to-emerald-700 rounded-md p-4 mb-4">
                   <h3 className="text-white font-bold text-lg flex items-center gap-2">
                     <span>⭐</span>
                     Middle 섹션 (추천 공고)
@@ -488,7 +488,7 @@ export default function JobGridLayoutEditor({
 
               {/* Bottom 섹션 - 6열 그리드 */}
               <div>
-                <div className="bg-gradient-to-r from-green-900 to-emerald-800 rounded-xl p-4 mb-4">
+                <div className="bg-gradient-to-r from-green-900 to-emerald-800 rounded-md p-4 mb-4">
                   <h3 className="text-white font-bold text-lg flex items-center gap-2">
                     <span>📋</span>
                     Bottom 섹션 (일반 공고)
@@ -508,7 +508,7 @@ export default function JobGridLayoutEditor({
                   할당 대기 공고 ({unassignedJobs.length}개)
                 </h3>
                 <p className="text-xs text-gray-500 mb-3">
-                  활성 + 결제 완료 + 미할당 공고만 표시
+                  결제 완료 + 미할당 공고 표시 (임시저장 포함)
                 </p>
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />

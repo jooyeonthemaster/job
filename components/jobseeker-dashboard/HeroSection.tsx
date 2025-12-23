@@ -15,7 +15,7 @@ export default function HeroSection({ profileData }: Props) {
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
           <div className="flex items-center gap-4">
             {profileData?.profileImageUrl ? (
-              <div className="w-20 h-20 rounded-xl overflow-hidden">
+              <div className="w-20 h-20 rounded-md overflow-hidden">
                 <OptimizedImage
                   src={profileData.profileImageUrl}
                   alt={profileData.fullName}
@@ -26,7 +26,7 @@ export default function HeroSection({ profileData }: Props) {
                 />
               </div>
             ) : (
-              <div className="w-20 h-20 rounded-xl bg-gradient-to-br from-primary-100 to-primary-200 flex items-center justify-center text-2xl font-bold text-primary-700">
+              <div className="w-20 h-20 rounded-md bg-gradient-to-br from-primary-100 to-primary-200 flex items-center justify-center text-2xl font-bold text-primary-700">
                 {profileData?.fullName?.charAt(0) || 'U'}
               </div>
             )}

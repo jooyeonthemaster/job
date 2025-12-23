@@ -384,14 +384,14 @@ const Step4Preferences = ({ data, onSubmit, onBack }: Props) => {
         <button
           type="button"
           onClick={onBack}
-          className="px-6 py-3 bg-gray-100 text-gray-700 font-medium rounded-xl hover:bg-gray-200 transition-colors"
+          className="px-6 py-3 bg-gray-100 text-gray-700 font-medium rounded-md hover:bg-gray-200 transition-colors"
         >
           돌아가기
         </button>
         <button
           type="button"
           onClick={handleSubmit}
-          className="px-6 py-3 bg-primary-600 text-white font-medium rounded-xl hover:bg-primary-700 transition-colors"
+          className="px-6 py-3 bg-primary-600 text-white font-medium rounded-md hover:bg-primary-700 transition-colors"
         >
           저장
         </button>

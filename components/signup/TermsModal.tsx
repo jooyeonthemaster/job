@@ -14,7 +14,7 @@ export default function TermsModal({ open, modalType, onOpenChange }: TermsModal
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 bg-black/50 z-50" />
-        <Dialog.Content className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-2xl shadow-2xl w-[90vw] max-w-3xl max-h-[85vh] z-50 flex flex-col">
+        <Dialog.Content className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg shadow-2xl w-[90vw] max-w-3xl max-h-[85vh] z-50 flex flex-col">
           {/* 모달 헤더 */}
           <div className="flex items-center justify-between p-6 border-b border-gray-200 flex-shrink-0">
             <Dialog.Title className="text-xl font-bold text-gray-900">

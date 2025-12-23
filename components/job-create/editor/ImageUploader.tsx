@@ -122,7 +122,7 @@ export default function ImageUploader({
   };
 
   return (
-    <div className="bg-white rounded-xl p-6 border-2 border-dashed border-gray-300 hover:border-primary-500 transition-colors">
+    <div className="bg-white rounded-md p-6 border-2 border-dashed border-gray-300 hover:border-primary-500 transition-colors">
       <input
         ref={fileInputRef}
         type="file"

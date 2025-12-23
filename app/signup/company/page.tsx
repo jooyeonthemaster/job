@@ -306,7 +306,7 @@ export default function CompanySignupPage() {
           {/* 헤더 */}
           <div className="text-center mb-8">
             <Link href="/" className="inline-flex items-center gap-3 mb-6">
-              <div className="w-14 h-14 bg-gradient-to-br from-primary-500 to-primary-600 rounded-2xl flex items-center justify-center shadow-lg">
+              <div className="w-14 h-14 bg-gradient-to-br from-primary-500 to-primary-600 rounded-lg flex items-center justify-center shadow-lg">
                 <Globe className="w-8 h-8 text-white" />
               </div>
               <span className="text-3xl font-bold text-gray-900">Bridge World</span>
@@ -323,7 +323,7 @@ export default function CompanySignupPage() {
 
           {/* 전체 에러 메시지 */}
           {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl">
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-md">
               <div className="flex items-start gap-3">
                 <AlertCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
                 <div className="flex-1">
@@ -350,7 +350,7 @@ export default function CompanySignupPage() {
           {/* 폼 */}
           <form onSubmit={handleSubmit} className="space-y-8">
             {/* Section 1: 사업자 정보 */}
-            <div className="bg-white rounded-2xl shadow-lg p-8">
+            <div className="bg-white rounded-lg shadow-lg p-8">
               <Section1BusinessInfo
                 formData={{
                   registrationNumber: formData.registrationNumber,
@@ -366,7 +366,7 @@ export default function CompanySignupPage() {
             </div>
 
             {/* Section 2: 기업 기본 정보 (K-Work 기반) */}
-            <div className="bg-white rounded-2xl shadow-lg p-8">
+            <div className="bg-white rounded-lg shadow-lg p-8">
               <Section2CompanyInfo
                 formData={{
                   companyType: formData.companyType || '',
@@ -384,7 +384,7 @@ export default function CompanySignupPage() {
             </div>
 
             {/* Section 5: 담당자 정보 (계정 정보 통합) - 필수 항목 */}
-            <div className="bg-white rounded-2xl shadow-lg p-8">
+            <div className="bg-white rounded-lg shadow-lg p-8">
               <Section5Manager
                 formData={{
                   managerDepartment: formData.managerDepartment,
@@ -403,7 +403,7 @@ export default function CompanySignupPage() {
             </div>
 
             {/* Section 6: 주소 정보 - 필수 항목 */}
-            <div className="bg-white rounded-2xl shadow-lg p-8">
+            <div className="bg-white rounded-lg shadow-lg p-8">
               <Section6Address
                 formData={{
                   address: formData.address,
@@ -415,7 +415,7 @@ export default function CompanySignupPage() {
             </div>
 
             {/* Section 3: 로고 & 회사 전경 이미지 - 선택 항목 */}
-            <div className="bg-white rounded-2xl shadow-lg p-8">
+            <div className="bg-white rounded-lg shadow-lg p-8">
               <Section3Images
                 formData={{
                   logo: formData.logo,
@@ -427,7 +427,7 @@ export default function CompanySignupPage() {
             </div>
 
             {/* Section 4: 복지 정보 - 선택 항목 */}
-            <div className="bg-white rounded-2xl shadow-lg p-8">
+            <div className="bg-white rounded-lg shadow-lg p-8">
               <Section4Benefits
                 formData={{
                   basicBenefits: formData.basicBenefits,
@@ -438,7 +438,7 @@ export default function CompanySignupPage() {
             </div>
 
             {/* Section 7: 약관 동의 */}
-            <div className="bg-white rounded-2xl shadow-lg p-8">
+            <div className="bg-white rounded-lg shadow-lg p-8">
               <TermsAgreement
                 agreements={{
                   agreeAll: formData.agreeAll,
@@ -453,11 +453,11 @@ export default function CompanySignupPage() {
             </div>
 
             {/* 제출 버튼 */}
-            <div className="bg-white rounded-2xl shadow-lg p-8">
+            <div className="bg-white rounded-lg shadow-lg p-8">
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full py-4 px-6 bg-primary-600 text-white font-bold rounded-xl hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-lg"
+                className="w-full py-4 px-6 bg-primary-600 text-white font-bold rounded-md hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-lg"
               >
                 {isLoading ? (
                   <>

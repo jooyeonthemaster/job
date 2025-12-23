@@ -128,7 +128,7 @@ export default function ApplicationsPage() {
 
         {/* Applications List */}
         {applications.length === 0 ? (
-          <div className="bg-white rounded-xl shadow-sm p-12 text-center">
+          <div className="bg-white rounded-md shadow-sm p-12 text-center">
             <Briefcase className="w-16 h-16 text-gray-300 mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-gray-900 mb-2">
               지원한 공고가 없습니다
@@ -138,7 +138,7 @@ export default function ApplicationsPage() {
             </p>
             <button
               onClick={() => router.push('/jobs')}
-              className="px-6 py-3 bg-primary-600 text-white rounded-xl font-medium hover:bg-primary-700 transition-colors"
+              className="px-6 py-3 bg-primary-600 text-white rounded-md font-medium hover:bg-primary-700 transition-colors"
             >
               채용공고 둘러보기
             </button>
@@ -151,7 +151,7 @@ export default function ApplicationsPage() {
                 <div
                   key={app.id}
                   onClick={() => router.push(`/jobs/${app.job_id}`)}
-                  className={`bg-white rounded-xl shadow-sm p-6 border-2 ${colors.border} hover:shadow-lg transition-all cursor-pointer`}
+                  className={`bg-white rounded-md shadow-sm p-6 border-2 ${colors.border} hover:shadow-lg transition-all cursor-pointer`}
                 >
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-start gap-4">

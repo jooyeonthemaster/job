@@ -15,7 +15,7 @@ export default function PreferencesCard({ profileData }: Props) {
     profileData?.remoteWork;
 
   return (
-    <div className="bg-white rounded-xl shadow-sm p-6">
+    <div className="bg-white rounded-md shadow-sm p-6">
       <h3 className="text-lg font-semibold text-gray-900 mb-4">선호 조건</h3>
       <div className="space-y-4">
         {/* 희망 직군 */}

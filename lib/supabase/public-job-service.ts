@@ -330,3 +330,70 @@ export async function getPremiumJobs(limit: number = 3): Promise<PublicJob[]> {
   }
 }
 
+// ==========================================
+// 등급별 공고 조회 (메인 페이지 섹션용)
+// ==========================================
+
+export async function getJobsByTier(): Promise<{
+  platinumJobs: PublicJob[];  // premium 등급 (플래티넘)
+  primeJobs: PublicJob[];     // top 등급 (프라임)
+  specialJobs: PublicJob[];   // standard 등급 (스페셜)
+}> {
+  try {
+    const { data: jobs, error } = await supabase
+      .from('jobs')
+      .select(`
+        id,
+        title,
+        title_en,
+        department,
+        location,
+        employment_type,
+        experience_level,
+        salary_min,
+        salary_max,
+        salary_negotiable,
+        visa_sponsorship,
+        korean_level,
+        deadline,
+        views,
+        applicants,
+        posting_tier,
+        display_position,
+        display_priority,
+        posted_at,
+        companies (
+          id,
+          name,
+          name_en,
+          logo,
+          company_image,
+          industry,
+          location
+        )
+      `)
+      .eq('status', 'active')
+      .order('posted_at', { ascending: false })
+      .limit(30);
+
+    if (error) throw error;
+
+    const allJobs = (jobs || [])
+      .filter((job: any) => job.companies !== null)
+      .map((job: any) => ({
+        ...job,
+        company: job.companies
+      })) as PublicJob[];
+
+    // 등급별로 그룹화 (각 4개씩)
+    const platinumJobs = allJobs.filter(j => j.posting_tier === 'premium').slice(0, 4);
+    const primeJobs = allJobs.filter(j => j.posting_tier === 'top').slice(0, 4);
+    const specialJobs = allJobs.filter(j => j.posting_tier === 'standard').slice(0, 4);
+
+    return { platinumJobs, primeJobs, specialJobs };
+  } catch (error) {
+    console.error('Failed to get jobs by tier:', error);
+    return { platinumJobs: [], primeJobs: [], specialJobs: [] };
+  }
+}
+

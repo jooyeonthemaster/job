@@ -163,14 +163,14 @@ function EditCompanyProfileContent() {
               <Link
                 key={section.id}
                 href={section.link}
-                className={`group bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 p-6 border-2 ${
+                className={`group bg-white rounded-lg shadow-sm hover:shadow-xl transition-all duration-300 p-6 border-2 ${
                   isCompleted
                     ? 'border-green-200 bg-green-50/30'
                     : 'border-gray-100 hover:border-primary-300'
                 }`}
               >
                 <div className="flex items-start gap-4">
-                  <div className={`w-14 h-14 rounded-xl flex items-center justify-center transition-colors ${
+                  <div className={`w-14 h-14 rounded-md flex items-center justify-center transition-colors ${
                     isCompleted
                       ? 'bg-green-100 group-hover:bg-green-600'
                       : 'bg-primary-100 group-hover:bg-primary-600'
@@ -210,7 +210,7 @@ function EditCompanyProfileContent() {
         </div>
 
         {/* Info Card */}
-        <div className="mt-8 bg-gradient-to-r from-blue-50 to-primary-50 rounded-2xl p-6 border border-blue-200">
+        <div className="mt-8 bg-gradient-to-r from-blue-50 to-primary-50 rounded-lg p-6 border border-blue-200">
           <div className="flex items-start gap-4">
             <AlertCircle className="w-6 h-6 text-primary-600 mt-0.5 flex-shrink-0" />
             <div>

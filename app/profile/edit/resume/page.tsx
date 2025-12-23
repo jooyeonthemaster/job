@@ -148,7 +148,7 @@ export default function ResumeEditPage() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-xl shadow-sm p-6"
+          className="bg-white rounded-md shadow-sm p-6"
         >
           {/* 현재 이력서 */}
           {currentResumeUrl && !resumeFile && (
@@ -275,7 +275,7 @@ export default function ResumeEditPage() {
             onClick={() => setShowPreview(false)}
           >
             <div
-              className="bg-white rounded-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden"
+              className="bg-white rounded-lg max-w-5xl w-full max-h-[90vh] overflow-hidden"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center justify-between p-4 border-b">

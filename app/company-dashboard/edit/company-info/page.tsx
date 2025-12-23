@@ -173,7 +173,7 @@ function EditCompanyInfoContent() {
         </div>
 
         {/* Form */}
-        <div className="bg-white rounded-2xl shadow-sm p-8">
+        <div className="bg-white rounded-lg shadow-sm p-8">
           <div className="space-y-6">
             <div className="flex items-center gap-3 mb-6 pb-4 border-b">
               <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
@@ -195,7 +195,7 @@ function EditCompanyInfoContent() {
                 <select
                   value={formData.companyType}
                   onChange={(e) => handleChange('companyType', e.target.value)}
-                  className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-colors appearance-none bg-white ${
+                  className={`w-full pl-10 pr-4 py-3 border rounded-md focus:ring-2 focus:ring-primary-500 outline-none transition-colors appearance-none bg-white ${
                     errors.companyType ? 'border-red-500' : 'border-gray-300'
                   }`}
                 >
@@ -222,7 +222,7 @@ function EditCompanyInfoContent() {
                 <select
                   value={formData.companyScale}
                   onChange={(e) => handleChange('companyScale', e.target.value)}
-                  className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-colors appearance-none bg-white ${
+                  className={`w-full pl-10 pr-4 py-3 border rounded-md focus:ring-2 focus:ring-primary-500 outline-none transition-colors appearance-none bg-white ${
                     errors.companyScale ? 'border-red-500' : 'border-gray-300'
                   }`}
                 >
@@ -249,7 +249,7 @@ function EditCompanyInfoContent() {
                 <select
                   value={formData.businessCondition}
                   onChange={(e) => handleChange('businessCondition', e.target.value)}
-                  className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-colors appearance-none bg-white ${
+                  className={`w-full pl-10 pr-4 py-3 border rounded-md focus:ring-2 focus:ring-primary-500 outline-none transition-colors appearance-none bg-white ${
                     errors.businessCondition ? 'border-red-500' : 'border-gray-300'
                   }`}
                 >
@@ -276,7 +276,7 @@ function EditCompanyInfoContent() {
                 <select
                   value={formData.industry}
                   onChange={(e) => handleIndustryChange(e.target.value)}
-                  className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-colors appearance-none bg-white ${
+                  className={`w-full pl-10 pr-4 py-3 border rounded-md focus:ring-2 focus:ring-primary-500 outline-none transition-colors appearance-none bg-white ${
                     errors.industry ? 'border-red-500' : 'border-gray-300'
                   }`}
                 >
@@ -304,7 +304,7 @@ function EditCompanyInfoContent() {
                   <select
                     value={formData.industryDetail}
                     onChange={(e) => handleChange('industryDetail', e.target.value)}
-                    className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-colors appearance-none bg-white ${
+                    className={`w-full pl-10 pr-4 py-3 border rounded-md focus:ring-2 focus:ring-primary-500 outline-none transition-colors appearance-none bg-white ${
                       errors.industryDetail ? 'border-red-500' : 'border-gray-300'
                     }`}
                   >
@@ -334,7 +334,7 @@ function EditCompanyInfoContent() {
                   value={formData.companyPhone}
                   onChange={(e) => handleChange('companyPhone', e.target.value)}
                   placeholder="02-1234-5678 또는 010-1234-5678"
-                  className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-colors ${
+                  className={`w-full pl-10 pr-4 py-3 border rounded-md focus:ring-2 focus:ring-primary-500 outline-none transition-colors ${
                     errors.companyPhone ? 'border-red-500' : 'border-gray-300'
                   }`}
                 />
@@ -357,7 +357,7 @@ function EditCompanyInfoContent() {
                   value={formData.website}
                   onChange={(e) => handleChange('website', e.target.value)}
                   placeholder="https://www.example.com"
-                  className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-colors ${
+                  className={`w-full pl-10 pr-4 py-3 border rounded-md focus:ring-2 focus:ring-primary-500 outline-none transition-colors ${
                     errors.website ? 'border-red-500' : 'border-gray-300'
                   }`}
                 />
@@ -381,7 +381,7 @@ function EditCompanyInfoContent() {
                   placeholder="우리 기업을 한 줄로 소개해주세요 (최대 200자)"
                   rows={3}
                   maxLength={200}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-colors resize-none"
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 outline-none transition-colors resize-none"
                 />
               </div>
               <p className="mt-1 text-xs text-gray-500 text-right">
@@ -394,14 +394,14 @@ function EditCompanyInfoContent() {
           <div className="flex gap-3 mt-8 pt-6 border-t">
             <Link
               href="/company-dashboard/edit"
-              className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors text-center font-medium"
+              className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors text-center font-medium"
             >
               취소
             </Link>
             <button
               onClick={handleSave}
               disabled={saving}
-              className="flex-1 px-6 py-3 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition-colors disabled:opacity-50 font-medium flex items-center justify-center gap-2"
+              className="flex-1 px-6 py-3 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition-colors disabled:opacity-50 font-medium flex items-center justify-center gap-2"
             >
               <Save className="w-5 h-5" />
               {saving ? '저장 중...' : '저장하기'}

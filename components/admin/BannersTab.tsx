@@ -11,9 +11,13 @@ import BannerPositionList from '@/components/admin/banners/BannerPositionList';
 import BannerModal from '@/components/admin/banners/BannerModal';
 import type { BannerPosition } from '@/types/banner.types';
 
-export default function BannersTab() {
+interface BannersTabProps {
+  isActive?: boolean;
+}
+
+export default function BannersTab({ isActive = true }: BannersTabProps) {
   // Custom Hooks
-  const { banners, stats, loading, loadData } = useBannerData();
+  const { banners, stats, loading, loadData } = useBannerData(isActive);
   const {
     showModal,
     editingBanner,

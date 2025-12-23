@@ -81,7 +81,7 @@ export default function JobContentEditor({
   }
 
   return (
-    <div className="bg-white rounded-xl border-2 border-gray-200 shadow-sm overflow-hidden">
+    <div className="bg-white rounded-md border-2 border-gray-200 shadow-sm overflow-hidden">
       <EditorToolbar editor={editor} />
       <div className="border-t border-gray-200">
         <EditorContent editor={editor} />

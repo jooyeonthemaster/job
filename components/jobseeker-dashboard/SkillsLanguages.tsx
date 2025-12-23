@@ -7,7 +7,7 @@ type Props = {
 
 export default function SkillsLanguages({ skills, languages }: Props) {
   return (
-    <div className="bg-white rounded-xl shadow-sm p-6">
+    <div className="bg-white rounded-md shadow-sm p-6">
       <h3 className="text-lg font-semibold text-gray-900 mb-4">보유 기술</h3>
       <div className="flex flex-wrap gap-2 mb-4">
         {skills && skills.length > 0 ? (

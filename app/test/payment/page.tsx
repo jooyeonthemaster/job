@@ -139,7 +139,7 @@ export default function PaymentTestPage() {
 
       <div className="container mx-auto px-4 py-12 max-w-4xl">
         {/* 헤더 */}
-        <div className="bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl p-8 mb-8 text-white">
+        <div className="bg-gradient-to-r from-purple-600 to-pink-600 rounded-md p-8 mb-8 text-white">
           <div className="flex items-center gap-3 mb-4">
             <TestTube className="w-8 h-8" />
             <h1 className="text-3xl font-bold">결제 시스템 테스트</h1>
@@ -148,7 +148,7 @@ export default function PaymentTestPage() {
         </div>
 
         {/* 환경변수 상태 */}
-        <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
+        <div className="bg-white rounded-md shadow-sm p-6 mb-6">
           <h2 className="text-xl font-bold text-gray-900 mb-4">환경변수 상태</h2>
           <div className="space-y-2">
             <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
@@ -184,7 +184,7 @@ export default function PaymentTestPage() {
 
         {/* 테스트 결과 */}
         {testResult && (
-          <div className={`rounded-xl p-4 mb-6 ${
+          <div className={`rounded-md p-4 mb-6 ${
             testResult.includes('에러') || testResult.includes('실패')
               ? 'bg-red-50 border-2 border-red-200'
               : 'bg-green-50 border-2 border-green-200'
@@ -201,7 +201,7 @@ export default function PaymentTestPage() {
 
         {/* SDK 에러 메시지 */}
         {sdkError && (
-          <div className="bg-red-50 border-2 border-red-200 rounded-xl p-4 mb-6">
+          <div className="bg-red-50 border-2 border-red-200 rounded-md p-4 mb-6">
             <div className="flex items-start gap-3">
               <AlertCircle className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
               <div>
@@ -215,7 +215,7 @@ export default function PaymentTestPage() {
 
         <div className="grid md:grid-cols-2 gap-8">
           {/* 테스트 결제 정보 */}
-          <div className="bg-white rounded-xl shadow-sm p-6">
+          <div className="bg-white rounded-md shadow-sm p-6">
             <h2 className="text-xl font-bold text-gray-900 mb-4">테스트 주문 정보</h2>
             <div className="space-y-4">
               <div>
@@ -249,7 +249,7 @@ export default function PaymentTestPage() {
           </div>
 
           {/* 구매자 정보 */}
-          <div className="bg-white rounded-xl shadow-sm p-6">
+          <div className="bg-white rounded-md shadow-sm p-6">
             <h2 className="text-xl font-bold text-gray-900 mb-4">테스트 구매자 정보</h2>
             <div className="space-y-4">
               <div>
@@ -290,7 +290,7 @@ export default function PaymentTestPage() {
           <button
             onClick={handleTestPayment}
             disabled={processing}
-            className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-4 px-6 rounded-xl font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed text-lg"
+            className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-4 px-6 rounded-md font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed text-lg"
           >
             {processing ? (
               <span className="flex items-center justify-center gap-2">

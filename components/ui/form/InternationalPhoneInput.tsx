@@ -231,7 +231,7 @@ export default function InternationalPhoneInput({
             value={part1}
             onChange={handleKoreaPart1Change}
             disabled={disabled}
-            className={`px-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed
+            className={`px-4 py-3 border rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed
               ${error ? 'border-red-500' : 'border-gray-300'}`}
           >
             <option value="">선택</option>
@@ -253,7 +253,7 @@ export default function InternationalPhoneInput({
             disabled={disabled}
             placeholder="1234"
             maxLength={4}
-            className={`flex-1 px-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed
+            className={`flex-1 px-4 py-3 border rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed
               ${error ? 'border-red-500' : 'border-gray-300'}`}
           />
 
@@ -267,7 +267,7 @@ export default function InternationalPhoneInput({
             disabled={disabled}
             placeholder="5678"
             maxLength={4}
-            className={`flex-1 px-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed
+            className={`flex-1 px-4 py-3 border rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed
               ${error ? 'border-red-500' : 'border-gray-300'}`}
           />
         </div>
@@ -282,7 +282,7 @@ export default function InternationalPhoneInput({
             placeholder={selectedCountry?.placeholder || '전화번호 입력'}
             disabled={disabled}
             className={`
-              w-full px-4 py-3 border rounded-xl
+              w-full px-4 py-3 border rounded-md
               focus:ring-2 focus:ring-primary-500 focus:border-transparent
               outline-none transition-colors
               ${error ? 'border-red-500' : 'border-gray-300'}

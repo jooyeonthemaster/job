@@ -9,7 +9,7 @@ interface SalarySectionProps {
 
 export default function SalarySection({ formData, onUpdate }: SalarySectionProps) {
   return (
-    <div className="bg-white rounded-xl p-6 shadow-sm">
+    <div className="bg-white rounded-md p-6 shadow-sm">
       <h2 className="text-xl font-bold text-gray-900 mb-6">급여 정보</h2>
 
       <div className="space-y-4">

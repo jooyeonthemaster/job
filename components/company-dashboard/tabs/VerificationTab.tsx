@@ -161,12 +161,12 @@ export function VerificationTab({ companyId }: VerificationTabProps) {
 
       {/* 인증 상태별 배너 */}
       {verificationStatus === 'approved' && (
-        <div className="relative overflow-hidden bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 border-2 border-green-200 rounded-2xl shadow-lg">
+        <div className="relative overflow-hidden bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 border-2 border-green-200 rounded-lg shadow-lg">
           <div className="absolute top-0 right-0 w-64 h-64 bg-green-200 rounded-full blur-3xl opacity-30 -translate-y-1/2 translate-x-1/2"></div>
           <div className="relative p-8">
             <div className="flex items-start gap-6">
               <div className="flex-shrink-0">
-                <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center shadow-lg">
+                <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center shadow-lg">
                   <CheckCircle className="w-8 h-8 text-white" />
                 </div>
               </div>
@@ -176,7 +176,7 @@ export function VerificationTab({ companyId }: VerificationTabProps) {
                   기업 인증이 승인되었습니다. 모든 서비스를 이용하실 수 있습니다.
                 </p>
                 {documentUrl && documentName && (
-                  <div className="bg-white/70 backdrop-blur-sm rounded-xl p-4 border border-white">
+                  <div className="bg-white/70 backdrop-blur-sm rounded-md p-4 border border-white">
                     <p className="text-sm text-gray-600 mb-2">제출된 서류</p>
                     <a
                       href={documentUrl}
@@ -197,12 +197,12 @@ export function VerificationTab({ companyId }: VerificationTabProps) {
       )}
 
       {verificationStatus === 'pending' && (
-        <div className="relative overflow-hidden bg-gradient-to-br from-yellow-50 via-amber-50 to-orange-50 border-2 border-yellow-200 rounded-2xl shadow-lg">
+        <div className="relative overflow-hidden bg-gradient-to-br from-yellow-50 via-amber-50 to-orange-50 border-2 border-yellow-200 rounded-lg shadow-lg">
           <div className="absolute top-0 right-0 w-64 h-64 bg-yellow-200 rounded-full blur-3xl opacity-30 -translate-y-1/2 translate-x-1/2"></div>
           <div className="relative p-8">
             <div className="flex items-start gap-6">
               <div className="flex-shrink-0">
-                <div className="w-16 h-16 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-2xl flex items-center justify-center shadow-lg">
+                <div className="w-16 h-16 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-lg flex items-center justify-center shadow-lg">
                   <Clock className="w-8 h-8 text-white" />
                 </div>
               </div>
@@ -217,7 +217,7 @@ export function VerificationTab({ companyId }: VerificationTabProps) {
                   제출하신 서류를 관리자가 검토 중입니다. 영업일 기준 1-2일 내에 결과를 안내드립니다.
                 </p>
                 {documentUrl && documentName && (
-                  <div className="bg-white/70 backdrop-blur-sm rounded-xl p-4 border border-white">
+                  <div className="bg-white/70 backdrop-blur-sm rounded-md p-4 border border-white">
                     <p className="text-sm text-gray-600 mb-2">제출된 서류</p>
                     <a
                       href={documentUrl}
@@ -246,12 +246,12 @@ export function VerificationTab({ companyId }: VerificationTabProps) {
       )}
 
       {verificationStatus === 'rejected' && (
-        <div className="relative overflow-hidden bg-gradient-to-br from-red-50 via-pink-50 to-rose-50 border-2 border-red-200 rounded-2xl shadow-lg">
+        <div className="relative overflow-hidden bg-gradient-to-br from-red-50 via-pink-50 to-rose-50 border-2 border-red-200 rounded-lg shadow-lg">
           <div className="absolute top-0 right-0 w-64 h-64 bg-red-200 rounded-full blur-3xl opacity-30 -translate-y-1/2 translate-x-1/2"></div>
           <div className="relative p-8">
             <div className="flex items-start gap-6">
               <div className="flex-shrink-0">
-                <div className="w-16 h-16 bg-gradient-to-br from-red-500 to-red-600 rounded-2xl flex items-center justify-center shadow-lg">
+                <div className="w-16 h-16 bg-gradient-to-br from-red-500 to-red-600 rounded-lg flex items-center justify-center shadow-lg">
                   <XCircle className="w-8 h-8 text-white" />
                 </div>
               </div>
@@ -261,7 +261,7 @@ export function VerificationTab({ companyId }: VerificationTabProps) {
                   제출하신 서류가 반려되었습니다.
                 </p>
                 {rejectionReason && (
-                  <div className="bg-white/70 backdrop-blur-sm rounded-xl p-4 mb-4 border border-white">
+                  <div className="bg-white/70 backdrop-blur-sm rounded-md p-4 mb-4 border border-white">
                     <p className="text-sm font-semibold text-red-900 mb-2">반려 사유:</p>
                     <p className="text-sm text-red-700">{rejectionReason}</p>
                   </div>
@@ -269,7 +269,7 @@ export function VerificationTab({ companyId }: VerificationTabProps) {
                 <p className="text-gray-600 mb-4">서류를 확인하시고 다시 제출해주세요.</p>
                 <button
                   onClick={handleReupload}
-                  className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-xl hover:from-red-700 hover:to-red-800 transition-all shadow-lg hover:shadow-xl font-semibold"
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-md hover:from-red-700 hover:to-red-800 transition-all shadow-lg hover:shadow-xl font-semibold"
                 >
                   <Upload className="w-5 h-5" />
                   파일 다시 제출하기
@@ -281,12 +281,12 @@ export function VerificationTab({ companyId }: VerificationTabProps) {
       )}
 
       {/* 인증 안내 */}
-      <div className="bg-white rounded-xl p-8 shadow-sm">
+      <div className="bg-white rounded-md p-8 shadow-sm">
         <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
           <AlertCircle className="w-6 h-6 text-primary-600" />
           기업 인증이 필요한 이유
         </h2>
-        <div className="bg-blue-50 rounded-xl p-6 space-y-3">
+        <div className="bg-blue-50 rounded-md p-6 space-y-3">
           <div className="flex items-start gap-3">
             <div className="flex-shrink-0 w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-bold">1</div>
             <p className="text-gray-700 flex-1">
@@ -316,14 +316,14 @@ export function VerificationTab({ companyId }: VerificationTabProps) {
 
       {/* 서류 제출 영역 */}
       {(verificationStatus === 'not_submitted' || verificationStatus === 'rejected' || !documentFile) && (
-        <div className="bg-white rounded-xl p-8 shadow-sm">
+        <div className="bg-white rounded-md p-8 shadow-sm">
           <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
             <ShieldCheck className="w-6 h-6 text-primary-600" />
             기업 인증 서류 제출하기
           </h2>
 
           {/* 파일 업로드 영역 */}
-          <div className="border-2 border-dashed border-gray-300 rounded-2xl p-12 text-center mb-6 hover:border-primary-400 hover:bg-primary-50/30 transition-all">
+          <div className="border-2 border-dashed border-gray-300 rounded-lg p-12 text-center mb-6 hover:border-primary-400 hover:bg-primary-50/30 transition-all">
             {!documentFile ? (
               <>
                 <Upload className="w-16 h-16 text-gray-400 mx-auto mb-4" />
@@ -341,7 +341,7 @@ export function VerificationTab({ companyId }: VerificationTabProps) {
                 />
                 <label
                   htmlFor="document-file"
-                  className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-xl hover:from-primary-700 hover:to-primary-800 cursor-pointer transition-all shadow-lg hover:shadow-xl font-semibold text-lg"
+                  className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-md hover:from-primary-700 hover:to-primary-800 cursor-pointer transition-all shadow-lg hover:shadow-xl font-semibold text-lg"
                 >
                   <Upload className="w-5 h-5" />
                   파일 선택
@@ -372,14 +372,14 @@ export function VerificationTab({ companyId }: VerificationTabProps) {
                     <img
                       src={documentPreview}
                       alt="Document preview"
-                      className="max-w-lg max-h-96 rounded-xl border-2 border-gray-200 shadow-md"
+                      className="max-w-lg max-h-96 rounded-md border-2 border-gray-200 shadow-md"
                     />
                   </div>
                 )}
                 <div className="flex justify-center gap-4">
                   <button
                     onClick={handleSubmitVerification}
-                    className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-xl hover:from-primary-700 hover:to-primary-800 transition-all shadow-lg hover:shadow-xl font-semibold text-lg"
+                    className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-md hover:from-primary-700 hover:to-primary-800 transition-all shadow-lg hover:shadow-xl font-semibold text-lg"
                   >
                     <ShieldCheck className="w-5 h-5" />
                     인증 신청하기
@@ -387,7 +387,7 @@ export function VerificationTab({ companyId }: VerificationTabProps) {
                   </button>
                   <button
                     onClick={handleReupload}
-                    className="inline-flex items-center gap-2 px-6 py-4 bg-white text-gray-700 rounded-xl hover:bg-gray-50 transition-all border-2 border-gray-200 font-medium text-lg"
+                    className="inline-flex items-center gap-2 px-6 py-4 bg-white text-gray-700 rounded-md hover:bg-gray-50 transition-all border-2 border-gray-200 font-medium text-lg"
                   >
                     파일 다시 선택
                   </button>
@@ -397,7 +397,7 @@ export function VerificationTab({ companyId }: VerificationTabProps) {
           </div>
 
           {/* 제출 서류 안내 */}
-          <div className="bg-gray-50 rounded-xl p-6">
+          <div className="bg-gray-50 rounded-md p-6">
             <h3 className="font-semibold text-gray-900 mb-4">제출 서류</h3>
             <div className="space-y-3 text-sm mb-6">
               <div className="flex items-start gap-2">

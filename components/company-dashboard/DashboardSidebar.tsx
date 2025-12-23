@@ -25,8 +25,8 @@ export const DashboardSidebar = ({ menuItems, activeTab, onTabChange }: Dashboar
                     onClick={() => onTabChange(item.id as TabId)}
                     className={`w-full group ${
                       activeTab === item.id
-                        ? 'bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-xl shadow-lg'
-                        : 'bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-xl hover:from-primary-700 hover:to-primary-800 transition-all shadow-lg hover:shadow-xl'
+                        ? 'bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-md shadow-lg'
+                        : 'bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-md hover:from-primary-700 hover:to-primary-800 transition-all shadow-lg hover:shadow-xl'
                     }`}
                   >
                     <div className="flex items-center justify-between px-4 py-3">

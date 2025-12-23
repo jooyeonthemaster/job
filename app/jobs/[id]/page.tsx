@@ -299,9 +299,9 @@ export default function JobDetailPage() {
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
             {/* Job Header */}
-            <div className="bg-white rounded-xl shadow-sm p-8">
+            <div className="bg-white rounded-md shadow-sm p-8">
               <div className="flex items-start gap-4 mb-6">
-                <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center shrink-0 overflow-hidden">
+                <div className="w-16 h-16 rounded-md bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center shrink-0 overflow-hidden">
                   {job.company?.logo ? (
                     <Image
                       src={job.company.logo}
@@ -379,7 +379,7 @@ export default function JobDetailPage() {
             </div>
 
             {/* Job Description */}
-            <div className="bg-white rounded-xl shadow-sm p-8">
+            <div className="bg-white rounded-md shadow-sm p-8">
               <h2 className="text-xl font-bold text-gray-900 mb-4">공고 상세</h2>
               <div
                 className="prose prose-sm max-w-none"
@@ -389,7 +389,7 @@ export default function JobDetailPage() {
 
             {/* Requirements */}
             {job.requirements && job.requirements.length > 0 && (
-              <div className="bg-white rounded-xl shadow-sm p-8">
+              <div className="bg-white rounded-md shadow-sm p-8">
                 <h2 className="text-xl font-bold text-gray-900 mb-4">필수 요건</h2>
                 <ul className="space-y-2">
                   {job.requirements.map((req: string, index: number) => (
@@ -404,7 +404,7 @@ export default function JobDetailPage() {
 
             {/* Preferred Qualifications */}
             {job.preferred_qualifications && job.preferred_qualifications.length > 0 && (
-              <div className="bg-white rounded-xl shadow-sm p-8">
+              <div className="bg-white rounded-md shadow-sm p-8">
                 <h2 className="text-xl font-bold text-gray-900 mb-4">우대 사항</h2>
                 <ul className="space-y-2">
                   {job.preferred_qualifications.map((qual: string, index: number) => (
@@ -418,7 +418,7 @@ export default function JobDetailPage() {
             )}
 
             {/* Korean Level */}
-            <div className="bg-white rounded-xl shadow-sm p-8">
+            <div className="bg-white rounded-md shadow-sm p-8">
               <h2 className="text-xl font-bold text-gray-900 mb-4">한국어 수준 요구사항</h2>
               <p className="text-gray-700">
                 {getKoreanLevelLabel(job.korean_level)}
@@ -427,7 +427,7 @@ export default function JobDetailPage() {
 
             {/* ✨ JD (Job Description) */}
             {job.job_description && (
-              <div className="bg-white rounded-xl shadow-sm p-8">
+              <div className="bg-white rounded-md shadow-sm p-8">
                 <div className="flex items-center gap-2 mb-4">
                   <FileText className="w-5 h-5 text-primary-600" />
                   <h2 className="text-xl font-bold text-gray-900">JD (Job Description)</h2>
@@ -442,7 +442,7 @@ export default function JobDetailPage() {
 
             {/* ✨ 필요 경력 사항 */}
             {job.required_experience && (
-              <div className="bg-white rounded-xl shadow-sm p-8">
+              <div className="bg-white rounded-md shadow-sm p-8">
                 <div className="flex items-center gap-2 mb-4">
                   <Briefcase className="w-5 h-5 text-primary-600" />
                   <h2 className="text-xl font-bold text-gray-900">필요 경력 사항</h2>
@@ -457,7 +457,7 @@ export default function JobDetailPage() {
 
             {/* ✨ 필요 스킬 */}
             {job.required_skills && job.required_skills.length > 0 && (
-              <div className="bg-white rounded-xl shadow-sm p-8">
+              <div className="bg-white rounded-md shadow-sm p-8">
                 <div className="flex items-center gap-2 mb-4">
                   <Code className="w-5 h-5 text-primary-600" />
                   <h2 className="text-xl font-bold text-gray-900">필요 스킬</h2>
@@ -489,7 +489,7 @@ export default function JobDetailPage() {
       {/* Toast Notification */}
       {errorMessage && (
         <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 animate-bounce">
-          <div className={`${errorMessage.includes('✅') ? 'bg-green-600' : 'bg-red-600'} text-white px-6 py-4 rounded-xl shadow-2xl flex items-center gap-3 min-w-[320px]`}>
+          <div className={`${errorMessage.includes('✅') ? 'bg-green-600' : 'bg-red-600'} text-white px-6 py-4 rounded-md shadow-2xl flex items-center gap-3 min-w-[320px]`}>
             <div className={`w-8 h-8 ${errorMessage.includes('✅') ? 'bg-green-500' : 'bg-red-500'} rounded-full flex items-center justify-center shrink-0`}>
               {errorMessage.includes('✅') ? (
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

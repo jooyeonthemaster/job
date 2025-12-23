@@ -25,7 +25,7 @@ export default function ResumePreviewModal({
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden"
+        className="bg-white rounded-lg max-w-5xl w-full max-h-[90vh] overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between p-4 border-b">

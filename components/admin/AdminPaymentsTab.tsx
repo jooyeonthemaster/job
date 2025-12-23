@@ -32,7 +32,11 @@ import {
   Building2,
 } from 'lucide-react';
 
-export default function AdminPaymentsTab() {
+interface AdminPaymentsTabProps {
+  isActive?: boolean;
+}
+
+export default function AdminPaymentsTab({ isActive = true }: AdminPaymentsTabProps) {
   const [payments, setPayments] = useState<AdminPaymentHistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<PaymentStats | null>(null);
@@ -58,10 +62,24 @@ export default function AdminPaymentsTab() {
 
   // 데이터 로드
   useEffect(() => {
-    loadPayments();
-    loadStats();
-    loadCompanies();
-  }, []);
+    if (isActive) {
+      loadAllData();
+    }
+  }, [isActive]);
+
+  const loadAllData = async () => {
+    setLoading(true);
+    try {
+      // 순차적 로딩으로 변경 (Race Condition 방지)
+      await loadPayments();
+      // 결제 내역 로드 후 통계 및 기업 목록 로드
+      await Promise.all([loadStats(), loadCompanies()]);
+    } catch (error) {
+      console.error('Error loading initial data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // 기업 목록 조회
   const loadCompanies = async () => {
@@ -80,7 +98,7 @@ export default function AdminPaymentsTab() {
 
   // 결제 내역 조회 (전체)
   const loadPayments = async () => {
-    setLoading(true);
+    // setLoading(true); // 상위에서 제어
     try {
       // 1. 채용 공고 결제 내역
       const { data: jobPayments, error: jobError } = await supabase
@@ -174,9 +192,10 @@ export default function AdminPaymentsTab() {
       setPayments(allPayments);
     } catch (error) {
       console.error('Error loading payments:', error);
-    } finally {
-      setLoading(false);
     }
+    // finally {
+    //   setLoading(false);
+    // }
   };
 
   // 통계 로드
@@ -339,7 +358,7 @@ export default function AdminPaymentsTab() {
       {/* 통계 카드 */}
       {stats && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-white rounded-xl p-6 border-2 border-gray-200 hover:border-primary-600 transition-colors shadow-sm">
+          <div className="bg-white rounded-md p-6 border-2 border-gray-200 hover:border-primary-600 transition-colors shadow-sm">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-gray-500 text-sm mb-1">총 결제 건수</p>
@@ -351,7 +370,7 @@ export default function AdminPaymentsTab() {
             </div>
           </div>
 
-          <div className="bg-white rounded-xl p-6 border-2 border-primary-600 shadow-sm">
+          <div className="bg-white rounded-md p-6 border-2 border-primary-600 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-gray-500 text-sm mb-1">총 결제 금액</p>
@@ -363,7 +382,7 @@ export default function AdminPaymentsTab() {
             </div>
           </div>
 
-          <div className="bg-white rounded-xl p-6 border-2 border-gray-200 hover:border-primary-600 transition-colors shadow-sm">
+          <div className="bg-white rounded-md p-6 border-2 border-gray-200 hover:border-primary-600 transition-colors shadow-sm">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-gray-500 text-sm mb-1">이번 달 결제</p>
@@ -375,7 +394,7 @@ export default function AdminPaymentsTab() {
             </div>
           </div>
 
-          <div className="bg-white rounded-xl p-6 border-2 border-gray-200 hover:border-primary-600 transition-colors shadow-sm">
+          <div className="bg-white rounded-md p-6 border-2 border-gray-200 hover:border-primary-600 transition-colors shadow-sm">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-gray-500 text-sm mb-1">올해 결제</p>
@@ -390,7 +409,7 @@ export default function AdminPaymentsTab() {
       )}
 
       {/* 필터 및 정렬 */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+      <div className="bg-white rounded-md shadow-sm border border-gray-200">
         <div className="p-4 border-b border-gray-200">
           <div className="flex flex-wrap items-center justify-between gap-4">
             {/* 검색 */}
@@ -567,9 +586,8 @@ export default function AdminPaymentsTab() {
                       <div className="flex items-center gap-2 mb-1">
                         <h3 className="font-semibold text-gray-900 truncate">{payment.title}</h3>
                         {payment.posting_tier && (
-                          <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-                            POSTING_TIER_COLORS[payment.posting_tier]
-                          }`}>
+                          <span className={`px-2 py-0.5 rounded text-xs font-medium ${POSTING_TIER_COLORS[payment.posting_tier]
+                            }`}>
                             {POSTING_TIER_LABELS[payment.posting_tier]}
                           </span>
                         )}
@@ -600,9 +618,8 @@ export default function AdminPaymentsTab() {
                     <p className="text-xl font-bold text-gray-900 mb-2">
                       {formatCurrency(payment.payment_total)}
                     </p>
-                    <span className={`inline-flex px-3 py-1 rounded-full text-sm font-medium border ${
-                      PAYMENT_STATUS_COLORS[payment.payment_status]
-                    }`}>
+                    <span className={`inline-flex px-3 py-1 rounded-full text-sm font-medium border ${PAYMENT_STATUS_COLORS[payment.payment_status]
+                      }`}>
                       {PAYMENT_STATUS_LABELS[payment.payment_status]}
                     </span>
                   </div>
@@ -616,7 +633,7 @@ export default function AdminPaymentsTab() {
       {/* 상세 모달 */}
       {selectedPayment && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-md shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6 border-b border-gray-200">
               <div className="flex items-center justify-between">
                 <h2 className="text-2xl font-bold text-gray-900">결제 상세 내역</h2>
@@ -645,9 +662,8 @@ export default function AdminPaymentsTab() {
                   <p className="text-sm text-gray-500 mb-1">결제 유형</p>
                   <p className="text-lg font-semibold">{PAYMENT_TYPE_LABELS[selectedPayment.type]}</p>
                 </div>
-                <span className={`px-4 py-2 rounded-full font-medium border ${
-                  PAYMENT_STATUS_COLORS[selectedPayment.payment_status]
-                }`}>
+                <span className={`px-4 py-2 rounded-full font-medium border ${PAYMENT_STATUS_COLORS[selectedPayment.payment_status]
+                  }`}>
                   {PAYMENT_STATUS_LABELS[selectedPayment.payment_status]}
                 </span>
               </div>
@@ -696,9 +712,8 @@ export default function AdminPaymentsTab() {
               {selectedPayment.posting_tier && (
                 <div>
                   <p className="text-sm text-gray-500 mb-1">등록 등급</p>
-                  <span className={`inline-flex px-3 py-1.5 rounded-lg text-sm font-medium ${
-                    POSTING_TIER_COLORS[selectedPayment.posting_tier]
-                  }`}>
+                  <span className={`inline-flex px-3 py-1.5 rounded-lg text-sm font-medium ${POSTING_TIER_COLORS[selectedPayment.posting_tier]
+                    }`}>
                     {POSTING_TIER_LABELS[selectedPayment.posting_tier]}
                   </span>
                 </div>

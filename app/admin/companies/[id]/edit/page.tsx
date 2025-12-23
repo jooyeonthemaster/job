@@ -186,7 +186,7 @@ export default function AdminCompanyEditPage() {
         </div>
 
         {/* 폼 */}
-        <div className="bg-white rounded-xl shadow-sm p-6 space-y-6">
+        <div className="bg-white rounded-md shadow-sm p-6 space-y-6">
           <h2 className="text-lg font-bold text-gray-900">기본 정보</h2>
 
           {/* 기업명 & 영문명 */}
@@ -199,7 +199,7 @@ export default function AdminCompanyEditPage() {
                 type="text"
                 value={company.name}
                 onChange={(e) => setCompany({ ...company, name: e.target.value })}
-                className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary-500 outline-none ${
+                className={`w-full px-4 py-3 border rounded-md focus:ring-2 focus:ring-primary-500 outline-none ${
                   errors.name ? 'border-red-500' : 'border-gray-300'
                 }`}
               />
@@ -214,7 +214,7 @@ export default function AdminCompanyEditPage() {
                 type="text"
                 value={company.name_en}
                 onChange={(e) => setCompany({ ...company, name_en: e.target.value })}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none"
+                className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 outline-none"
               />
             </div>
           </div>
@@ -227,7 +227,7 @@ export default function AdminCompanyEditPage() {
             <select
               value={company.company_type}
               onChange={(e) => setCompany({ ...company, company_type: e.target.value })}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none"
+              className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 outline-none"
             >
               {COMPANY_TYPES.map((type) => (
                 <option key={type.value} value={type.value}>
@@ -246,7 +246,7 @@ export default function AdminCompanyEditPage() {
               type="text"
               value={company.address}
               onChange={(e) => setCompany({ ...company, address: e.target.value })}
-              className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary-500 outline-none ${
+              className={`w-full px-4 py-3 border rounded-md focus:ring-2 focus:ring-primary-500 outline-none ${
                 errors.address ? 'border-red-500' : 'border-gray-300'
               }`}
             />
@@ -271,7 +271,7 @@ export default function AdminCompanyEditPage() {
                   onChange={handleLogoChange}
                   className="hidden"
                 />
-                <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-primary-500 transition-colors">
+                <div className="border-2 border-dashed border-gray-300 rounded-md p-6 text-center hover:border-primary-500 transition-colors">
                   <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
                   <p className="text-sm text-gray-600">새 로고 업로드 (선택)</p>
                 </div>
@@ -292,7 +292,7 @@ export default function AdminCompanyEditPage() {
               value={company.summary}
               onChange={(e) => setCompany({ ...company, summary: e.target.value })}
               maxLength={100}
-              className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary-500 outline-none ${
+              className={`w-full px-4 py-3 border rounded-md focus:ring-2 focus:ring-primary-500 outline-none ${
                 errors.summary ? 'border-red-500' : 'border-gray-300'
               }`}
             />
@@ -308,7 +308,7 @@ export default function AdminCompanyEditPage() {
               value={company.description}
               onChange={(e) => setCompany({ ...company, description: e.target.value })}
               rows={5}
-              className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary-500 outline-none resize-none ${
+              className={`w-full px-4 py-3 border rounded-md focus:ring-2 focus:ring-primary-500 outline-none resize-none ${
                 errors.description ? 'border-red-500' : 'border-gray-300'
               }`}
             />
@@ -324,7 +324,7 @@ export default function AdminCompanyEditPage() {
               <select
                 value={company.employee_count}
                 onChange={(e) => setCompany({ ...company, employee_count: e.target.value })}
-                className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary-500 outline-none ${
+                className={`w-full px-4 py-3 border rounded-md focus:ring-2 focus:ring-primary-500 outline-none ${
                   errors.employee_count ? 'border-red-500' : 'border-gray-300'
                 }`}
               >
@@ -349,7 +349,7 @@ export default function AdminCompanyEditPage() {
                 onChange={(e) => setCompany({ ...company, established: e.target.value })}
                 min="1900"
                 max={new Date().getFullYear()}
-                className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary-500 outline-none ${
+                className={`w-full px-4 py-3 border rounded-md focus:ring-2 focus:ring-primary-500 outline-none ${
                   errors.established ? 'border-red-500' : 'border-gray-300'
                 }`}
               />
@@ -366,7 +366,7 @@ export default function AdminCompanyEditPage() {
               type="text"
               value={company.industry}
               onChange={(e) => setCompany({ ...company, industry: e.target.value })}
-              className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary-500 outline-none ${
+              className={`w-full px-4 py-3 border rounded-md focus:ring-2 focus:ring-primary-500 outline-none ${
                 errors.industry ? 'border-red-500' : 'border-gray-300'
               }`}
             />
@@ -384,7 +384,7 @@ export default function AdminCompanyEditPage() {
                 type="text"
                 value={company.ceo_name}
                 onChange={(e) => setCompany({ ...company, ceo_name: e.target.value })}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none"
+                className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 outline-none"
               />
             </div>
 
@@ -394,7 +394,7 @@ export default function AdminCompanyEditPage() {
                 type="url"
                 value={company.website}
                 onChange={(e) => setCompany({ ...company, website: e.target.value })}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none"
+                className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 outline-none"
               />
             </div>
           </div>
@@ -403,14 +403,14 @@ export default function AdminCompanyEditPage() {
           <div className="flex gap-4 pt-4">
             <button
               onClick={() => router.push('/admin')}
-              className="flex-1 bg-gray-200 text-gray-700 py-3 px-6 rounded-xl font-semibold hover:bg-gray-300 transition-colors"
+              className="flex-1 bg-gray-200 text-gray-700 py-3 px-6 rounded-md font-semibold hover:bg-gray-300 transition-colors"
             >
               취소
             </button>
             <button
               onClick={handleSave}
               disabled={saving}
-              className="flex-1 bg-primary-600 text-white py-3 px-6 rounded-xl font-semibold hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 bg-primary-600 text-white py-3 px-6 rounded-md font-semibold hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {saving ? '저장 중...' : '저장하기'}
             </button>

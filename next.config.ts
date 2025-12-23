@@ -9,7 +9,9 @@ const nextConfig: NextConfig = {
       { protocol: 'https', hostname: 'images.unsplash.com' },
       { protocol: 'https', hostname: 'res.cloudinary.com' },
       { protocol: 'https', hostname: 'upload.wikimedia.org' },
-      { protocol: 'https', hostname: 'static.toss.im' }
+      { protocol: 'https', hostname: 'static.toss.im' },
+      // 기업 로고 (Clearbit Logo API)
+      { protocol: 'https', hostname: 'logo.clearbit.com' }
     ]
   },
   eslint: {

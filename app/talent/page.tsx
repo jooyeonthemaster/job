@@ -92,7 +92,7 @@ export default function TalentPage() {
             {/* Talent Cards */}
             <div className="lg:col-span-3 space-y-6">
               {loading ? (
-                <div className="bg-white rounded-xl shadow-sm p-12 text-center">
+                <div className="bg-white rounded-md shadow-sm p-12 text-center">
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
                   <p className="text-gray-500">실제 데이터를 불러오는 중...</p>
                 </div>
@@ -107,7 +107,7 @@ export default function TalentPage() {
                   />
                 ))
               ) : (
-                <div className="bg-white rounded-xl shadow-sm p-12 text-center">
+                <div className="bg-white rounded-md shadow-sm p-12 text-center">
                   <p className="text-gray-500 mb-2">검색 조건에 맞는 인재가 없습니다.</p>
                   <p className="text-sm text-gray-400">다른 조건으로 검색해보세요.</p>
                 </div>

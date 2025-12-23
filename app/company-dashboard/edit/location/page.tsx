@@ -143,7 +143,7 @@ export default function LocationEditPage() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-8 border border-gray-100"
+          className="bg-white/80 backdrop-blur-sm rounded-lg shadow-xl p-8 border border-gray-100"
         >
           <div className="space-y-6">
             {/* 기본 주소 */}
@@ -159,7 +159,7 @@ export default function LocationEditPage() {
                     value={formData.address}
                     readOnly
                     placeholder="주소 검색 버튼을 클릭하세요"
-                    className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-colors bg-gray-50 cursor-not-allowed ${
+                    className={`w-full pl-10 pr-4 py-3 border rounded-md focus:ring-2 focus:ring-primary-500 outline-none transition-colors bg-gray-50 cursor-not-allowed ${
                       errors.address ? 'border-red-500' : 'border-gray-300'
                     }`}
                   />
@@ -167,7 +167,7 @@ export default function LocationEditPage() {
                 <button
                   type="button"
                   onClick={handleSearchAddress}
-                  className="px-6 py-3 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition-colors font-medium whitespace-nowrap flex items-center gap-2"
+                  className="px-6 py-3 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition-colors font-medium whitespace-nowrap flex items-center gap-2"
                 >
                   <Search className="w-5 h-5" />
                   주소 검색
@@ -190,14 +190,14 @@ export default function LocationEditPage() {
                   value={formData.addressDetail}
                   onChange={(e) => setFormData({ ...formData, addressDetail: e.target.value })}
                   placeholder="동, 호수 등 상세 주소를 입력하세요"
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-colors"
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 outline-none transition-colors"
                 />
               </div>
             </div>
 
             {/* 전체 주소 미리보기 */}
             {formData.address && (
-              <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl">
+              <div className="p-4 bg-blue-50 border border-blue-200 rounded-md">
                 <p className="text-sm font-medium text-blue-900 mb-1">입력된 전체 주소</p>
                 <p className="text-sm text-blue-800">
                   {formData.address}
@@ -206,7 +206,7 @@ export default function LocationEditPage() {
               </div>
             )}
 
-            <div className="p-4 bg-gray-50 border border-gray-200 rounded-xl">
+            <div className="p-4 bg-gray-50 border border-gray-200 rounded-md">
               <p className="text-sm text-gray-700">
                 💡 <strong>주소 검색</strong> 버튼을 클릭하면 카카오 주소 검색이 열립니다.
                 정확한 주소를 검색하여 선택해주세요.

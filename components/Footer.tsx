@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Globe } from 'lucide-react';
+import Image from 'next/image';
 
 export default function Footer() {
   return (
@@ -9,9 +9,14 @@ export default function Footer() {
           {/* 회사 정보 */}
           <div>
             <div className="flex items-center gap-2.5 mb-4">
-              <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-primary-600 rounded-lg flex items-center justify-center">
-                <Globe className="w-5 h-5 text-white" />
-              </div>
+              <Image
+                src="/logo.jpg"
+                alt="Bridge World"
+                width={48}
+                height={48}
+                className="rounded-lg"
+                style={{ width: "auto", height: "auto" }}
+              />
               <span className="text-xl font-bold text-white">Bridge World</span>
             </div>
             <p className="text-sm text-gray-400 mb-4">
@@ -52,11 +57,27 @@ export default function Footer() {
             <h3 className="text-white font-bold mb-4">고객 지원</h3>
             <ul className="space-y-2 text-sm">
               <li>
+                <span className="text-gray-400">대표전화:</span>{' '}
+                <a href="tel:070-4060-0805" className="hover:text-white transition-colors">
+                  070-4060-0805
+                </a>
+              </li>
+              <li>
+                <span className="text-gray-400">고객지원:</span>{' '}
                 <a
-                  href="mailto:support@bridgeworld.co.kr"
+                  href="mailto:support@linkbw.com"
                   className="hover:text-white transition-colors"
                 >
-                  고객센터: support@bridgeworld.co.kr
+                  support@linkbw.com
+                </a>
+              </li>
+              <li>
+                <span className="text-gray-400">이메일:</span>{' '}
+                <a
+                  href="mailto:yjpark@ssmhr.com"
+                  className="hover:text-white transition-colors"
+                >
+                  yjpark@ssmhr.com
                 </a>
               </li>
               <li>
@@ -77,10 +98,11 @@ export default function Footer() {
         <div className="border-t border-gray-800 pt-8">
           <div className="text-sm text-gray-500 space-y-1">
             <p className="font-bold text-gray-400 mb-2">사업자 정보</p>
-            <p>상호: 선한이웃 | 대표자: 박윤미</p>
+            <p>상호: SSMHR(선한이웃) | 대표자: 박윤미</p>
             <p>사업자등록번호: 412-19-01752 | 개업일: 2022년 05월 09일</p>
-            <p>주소: 경기도 수원시 팔달구 팔달로 33, 7층 713호(고등동, 제일에비뉴)</p>
-            <p>사업 종류: 고용 알선업, 생활식품 관리, 도매 및 소매업, SNS마켓</p>
+            <p>(본사) 경기도 수원시 팔달구 고등동 336-1(팔달로33) 웨일애비뉴 713호</p>
+            <p>(서울사무소) 서울특별시 강남구 강남대로156길12 다복빌딩 4층 G42</p>
+            <p>사업 종류: 고용알선, 전자상거래</p>
           </div>
 
           {/* 저작권 */}

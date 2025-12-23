@@ -63,7 +63,11 @@ interface RefundStats {
   totalRefundedAmount: number;
 }
 
-export default function AdminRefundsTab() {
+interface AdminRefundsTabProps {
+  isActive?: boolean;
+}
+
+export default function AdminRefundsTab({ isActive = true }: AdminRefundsTabProps) {
   const [refundRequests, setRefundRequests] = useState<RefundRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<RefundStats | null>(null);
@@ -80,29 +84,49 @@ export default function AdminRefundsTab() {
 
   // 데이터 로드
   useEffect(() => {
-    loadRefundRequests();
-    loadStats();
-  }, [statusFilter]);
+    if (isActive) {
+      loadRefundRequests();
+      loadStats();
+    }
+  }, [isActive, statusFilter]);
 
   // 환불 요청 목록 조회
   const loadRefundRequests = async () => {
+    const TIMEOUT_MS = 10000; // 10초 타임아웃
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
+
     setLoading(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      console.log('[AdminRefundsTab] 데이터 로드 시작...');
+
+      // 세션 토큰 가져오기 (타임아웃 적용)
+      const sessionResult = await Promise.race([
+        supabase.auth.getSession(),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('세션 조회 타임아웃 (10초)')), TIMEOUT_MS)
+        )
+      ]);
+
+      const { data: { session } } = sessionResult;
       if (!session?.access_token) {
         console.error('No session');
         return;
       }
+
+      console.log('[AdminRefundsTab] 세션 확인 완료, API 호출 중...');
 
       let url = '/api/payment/refund/process?';
       if (statusFilter !== 'all') {
         url += `status=${statusFilter}&`;
       }
 
+      // fetch에 AbortController signal 추가
       const response = await fetch(url, {
         headers: {
           'Authorization': `Bearer ${session.access_token}`
-        }
+        },
+        signal: controller.signal,
       });
 
       if (!response.ok) {
@@ -113,9 +137,15 @@ export default function AdminRefundsTab() {
 
       const data = await response.json();
       setRefundRequests(data.refundRequests || []);
+      console.log('[AdminRefundsTab] 데이터 로드 완료:', data.refundRequests?.length || 0, '건');
     } catch (error) {
-      console.error('Error loading refund requests:', error);
+      if (error instanceof Error && error.name === 'AbortError') {
+        console.error('[AdminRefundsTab] 요청 타임아웃 (10초 초과)');
+      } else {
+        console.error('Error loading refund requests:', error);
+      }
     } finally {
+      clearTimeout(timeoutId);
       setLoading(false);
     }
   };
@@ -240,7 +270,7 @@ export default function AdminRefundsTab() {
       {/* 통계 카드 */}
       {stats && (
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-          <div className="bg-white rounded-xl p-5 border-2 border-gray-200 hover:border-primary-600 transition-colors shadow-sm">
+          <div className="bg-white rounded-md p-5 border-2 border-gray-200 hover:border-primary-600 transition-colors shadow-sm">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-gray-500 text-sm mb-1">전체 요청</p>
@@ -252,7 +282,7 @@ export default function AdminRefundsTab() {
             </div>
           </div>
 
-          <div className="bg-white rounded-xl p-5 border-2 border-yellow-400 shadow-sm">
+          <div className="bg-white rounded-md p-5 border-2 border-yellow-400 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-gray-500 text-sm mb-1">대기 중</p>
@@ -264,7 +294,7 @@ export default function AdminRefundsTab() {
             </div>
           </div>
 
-          <div className="bg-white rounded-xl p-5 border-2 border-green-400 shadow-sm">
+          <div className="bg-white rounded-md p-5 border-2 border-green-400 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-gray-500 text-sm mb-1">환불 완료</p>
@@ -276,7 +306,7 @@ export default function AdminRefundsTab() {
             </div>
           </div>
 
-          <div className="bg-white rounded-xl p-5 border-2 border-red-400 shadow-sm">
+          <div className="bg-white rounded-md p-5 border-2 border-red-400 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-gray-500 text-sm mb-1">거절됨</p>
@@ -288,7 +318,7 @@ export default function AdminRefundsTab() {
             </div>
           </div>
 
-          <div className="bg-white rounded-xl p-5 border-2 border-primary-600 shadow-sm">
+          <div className="bg-white rounded-md p-5 border-2 border-primary-600 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-gray-500 text-sm mb-1">총 환불액</p>
@@ -303,7 +333,7 @@ export default function AdminRefundsTab() {
       )}
 
       {/* 필터 및 검색 */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+      <div className="bg-white rounded-md shadow-sm border border-gray-200">
         <div className="p-4 border-b border-gray-200">
           <div className="flex flex-wrap items-center justify-between gap-4">
             {/* 검색 */}
@@ -432,7 +462,7 @@ export default function AdminRefundsTab() {
       {/* 상세/처리 모달 */}
       {selectedRequest && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-md shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6 border-b border-gray-200">
               <div className="flex items-center justify-between">
                 <h2 className="text-2xl font-bold text-gray-900">환불 요청 상세</h2>

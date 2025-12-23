@@ -124,7 +124,7 @@ export default function Section4Benefits({ formData, onChange, errors }: Props) 
 
       {/* 선택된 복지 (상단에 표시) */}
       {selectedCount > 0 && (
-        <div className="p-4 bg-primary-50 border border-primary-200 rounded-xl">
+        <div className="p-4 bg-primary-50 border border-primary-200 rounded-md">
           <p className="text-sm font-medium text-gray-700 mb-3">선택된 복지</p>
           <div className="flex flex-wrap gap-2">
             {formData.basicBenefits.map((benefit) => (
@@ -192,12 +192,12 @@ export default function Section4Benefits({ formData, onChange, errors }: Props) 
               }}
               placeholder="복지 내용 입력 (최대 20자)"
               maxLength={20}
-              className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none"
+              className="flex-1 px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 outline-none"
             />
             <button
               type="button"
               onClick={handleAddCustomBenefit}
-              className="px-6 py-3 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition-colors font-medium"
+              className="px-6 py-3 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition-colors font-medium"
             >
               추가
             </button>
@@ -207,7 +207,7 @@ export default function Section4Benefits({ formData, onChange, errors }: Props) 
                 setShowCustomInput(false);
                 setCustomBenefit('');
               }}
-              className="px-4 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors"
+              className="px-4 py-3 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors"
             >
               취소
             </button>
@@ -216,7 +216,7 @@ export default function Section4Benefits({ formData, onChange, errors }: Props) 
           <button
             type="button"
             onClick={() => setShowCustomInput(true)}
-            className="w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-gray-300 rounded-xl hover:border-primary-400 hover:bg-primary-50 transition-colors text-gray-700 font-medium"
+            className="w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-gray-300 rounded-md hover:border-primary-400 hover:bg-primary-50 transition-colors text-gray-700 font-medium"
           >
             <Plus className="w-5 h-5" />
             복지 직접 추가하기
@@ -224,7 +224,7 @@ export default function Section4Benefits({ formData, onChange, errors }: Props) 
         )}
       </div>
 
-      <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl">
+      <div className="p-4 bg-blue-50 border border-blue-200 rounded-md">
         <p className="text-sm text-blue-800">
           💡 복지 정보는 선택사항입니다. 제공하는 복지를 입력하면 구직자들이 더 관심을 가질 수 있습니다.
         </p>

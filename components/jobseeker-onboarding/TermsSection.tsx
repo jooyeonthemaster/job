@@ -48,7 +48,7 @@ export default function TermsSection({
       </div>
 
       {/* 전체 동의 */}
-      <label className="flex items-center gap-3 p-4 border-2 border-primary-600 rounded-xl bg-primary-50 cursor-pointer hover:bg-primary-100 transition-colors mb-4">
+      <label className="flex items-center gap-3 p-4 border-2 border-primary-600 rounded-md bg-primary-50 cursor-pointer hover:bg-primary-100 transition-colors mb-4">
         <input
           type="checkbox"
           checked={formData.agreeAll}

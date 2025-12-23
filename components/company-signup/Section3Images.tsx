@@ -101,7 +101,7 @@ export default function Section3Images({ formData, onChange, errors }: Props) {
         </label>
 
         {logoPreview ? (
-          <div className="relative w-40 h-40 border-2 border-gray-300 rounded-xl overflow-hidden group">
+          <div className="relative w-40 h-40 border-2 border-gray-300 rounded-md overflow-hidden group">
             <img
               src={logoPreview}
               alt="로고 미리보기"
@@ -130,7 +130,7 @@ export default function Section3Images({ formData, onChange, errors }: Props) {
             />
             <label
               htmlFor="logo"
-              className="flex items-center gap-3 p-4 border-2 border-dashed border-gray-300 rounded-xl hover:border-primary-400 hover:bg-primary-50 transition-colors cursor-pointer"
+              className="flex items-center gap-3 p-4 border-2 border-dashed border-gray-300 rounded-md hover:border-primary-400 hover:bg-primary-50 transition-colors cursor-pointer"
             >
               <Upload className="w-6 h-6 text-gray-400" />
               <div className="flex-1">
@@ -152,7 +152,7 @@ export default function Section3Images({ formData, onChange, errors }: Props) {
         </label>
 
         {companyImagePreview ? (
-          <div className="relative w-full h-64 border-2 border-gray-300 rounded-xl overflow-hidden group">
+          <div className="relative w-full h-64 border-2 border-gray-300 rounded-md overflow-hidden group">
             <img
               src={companyImagePreview}
               alt="회사 전경 미리보기"
@@ -181,7 +181,7 @@ export default function Section3Images({ formData, onChange, errors }: Props) {
             />
             <label
               htmlFor="companyImage"
-              className="flex items-center gap-3 p-6 border-2 border-dashed border-gray-300 rounded-xl hover:border-primary-400 hover:bg-primary-50 transition-colors cursor-pointer"
+              className="flex items-center gap-3 p-6 border-2 border-dashed border-gray-300 rounded-md hover:border-primary-400 hover:bg-primary-50 transition-colors cursor-pointer"
             >
               <Building2 className="w-6 h-6 text-gray-400" />
               <div className="flex-1">

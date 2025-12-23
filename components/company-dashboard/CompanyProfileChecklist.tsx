@@ -81,12 +81,12 @@ export default function CompanyProfileChecklist({
 
   return (
     <>
-      <div className="bg-gradient-to-br from-primary-50 to-white rounded-2xl shadow-sm p-8 border border-primary-100">
+      <div className="bg-gradient-to-br from-primary-50 to-white rounded-lg shadow-sm p-8 border border-primary-100">
         <div className="relative">
           {/* Header */}
           <div className="flex items-start gap-6 mb-6">
             <div className="flex-shrink-0">
-              <div className="w-16 h-16 bg-gradient-to-br from-primary-500 to-primary-600 rounded-2xl flex items-center justify-center shadow-lg">
+              <div className="w-16 h-16 bg-gradient-to-br from-primary-500 to-primary-600 rounded-lg flex items-center justify-center shadow-lg">
                 <TrendingUp className="w-8 h-8 text-white" />
               </div>
             </div>
@@ -106,7 +106,7 @@ export default function CompanyProfileChecklist({
 
               {/* 미완성 선택 항목 안내 */}
               {optionalPercentage < 100 && (
-                <div className="bg-white/70 backdrop-blur-sm rounded-xl p-5 mb-5 border border-white">
+                <div className="bg-white/70 backdrop-blur-sm rounded-md p-5 mb-5 border border-white">
                   <p className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
                     <AlertCircle className="w-4 h-4 text-orange-600" />
                     아직 입력하지 않은 정보 (온보딩 선택 항목)
@@ -128,7 +128,7 @@ export default function CompanyProfileChecklist({
               <div className="flex items-center gap-4 flex-wrap">
                 <Link
                   href="/company-dashboard/edit"
-                  className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-xl hover:from-primary-700 hover:to-primary-800 transition-all shadow-lg hover:shadow-xl font-semibold"
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-md hover:from-primary-700 hover:to-primary-800 transition-all shadow-lg hover:shadow-xl font-semibold"
                 >
                   <Edit3 className="w-5 h-5" />
                   지금 바로 입력하기
@@ -138,7 +138,7 @@ export default function CompanyProfileChecklist({
                 <Link
                   href={companyPublicUrl}
                   target="_blank"
-                  className="inline-flex items-center gap-2 px-6 py-3 bg-white/90 backdrop-blur-sm text-gray-700 rounded-xl hover:bg-white transition-all border-2 border-gray-200 font-medium"
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-white/90 backdrop-blur-sm text-gray-700 rounded-md hover:bg-white transition-all border-2 border-gray-200 font-medium"
                 >
                   <Eye className="w-5 h-5" />
                   현재 정보 확인하기
@@ -146,7 +146,7 @@ export default function CompanyProfileChecklist({
 
                 <button
                   onClick={handlePublicProfileClick}
-                  className={`inline-flex items-center gap-2 px-6 py-3 rounded-xl transition-all shadow-lg hover:shadow-xl font-semibold ${
+                  className={`inline-flex items-center gap-2 px-6 py-3 rounded-md transition-all shadow-lg hover:shadow-xl font-semibold ${
                     eligibility.eligible
                       ? 'bg-white border-2 border-green-600 text-green-700 hover:bg-green-50'
                       : 'bg-gray-300 text-gray-500 cursor-not-allowed'
@@ -188,7 +188,7 @@ export default function CompanyProfileChecklist({
           onClick={() => setShowEligibilityModal(false)}
         >
           <div
-            className="bg-white rounded-2xl max-w-lg w-full p-6 max-h-[90vh] overflow-y-auto"
+            className="bg-white rounded-lg max-w-lg w-full p-6 max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-start justify-between mb-4">

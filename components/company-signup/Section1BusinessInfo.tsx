@@ -100,7 +100,7 @@ export default function Section1BusinessInfo({ formData, onChange, errors }: Pro
             value={formData.registrationNumber}
             onChange={(e) => handleRegistrationNumberChange(e.target.value)}
             placeholder="1234567890"
-            className={`w-full pl-10 pr-10 py-3 border rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-colors ${
+            className={`w-full pl-10 pr-10 py-3 border rounded-md focus:ring-2 focus:ring-primary-500 outline-none transition-colors ${
               errors.registrationNumber ? 'border-red-500' : 'border-gray-300'
             }`}
             maxLength={10}
@@ -139,7 +139,7 @@ export default function Section1BusinessInfo({ formData, onChange, errors }: Pro
           />
           <label
             htmlFor="registrationDocument"
-            className={`flex items-center gap-3 p-4 border-2 border-dashed rounded-xl hover:border-primary-400 hover:bg-primary-50 transition-colors cursor-pointer ${
+            className={`flex items-center gap-3 p-4 border-2 border-dashed rounded-md hover:border-primary-400 hover:bg-primary-50 transition-colors cursor-pointer ${
               errors.registrationDocument ? 'border-red-500' : 'border-gray-300'
             }`}
           >
@@ -177,7 +177,7 @@ export default function Section1BusinessInfo({ formData, onChange, errors }: Pro
             value={formData.name}
             onChange={(e) => onChange('name', e.target.value)}
             placeholder="주식회사 글로벌탤런트"
-            className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-colors ${
+            className={`w-full pl-10 pr-4 py-3 border rounded-md focus:ring-2 focus:ring-primary-500 outline-none transition-colors ${
               errors.name ? 'border-red-500' : 'border-gray-300'
             }`}
           />
@@ -199,7 +199,7 @@ export default function Section1BusinessInfo({ formData, onChange, errors }: Pro
             value={formData.nameEn || ''}
             onChange={(e) => onChange('nameEn', e.target.value)}
             placeholder="Bridge World Inc."
-            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-colors"
+            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 outline-none transition-colors"
           />
         </div>
       </div>
@@ -223,7 +223,7 @@ export default function Section1BusinessInfo({ formData, onChange, errors }: Pro
             dropdownMode="select"
             yearDropdownItemNumber={150}
             scrollableYearDropdown
-            className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-colors ${
+            className={`w-full pl-10 pr-4 py-3 border rounded-md focus:ring-2 focus:ring-primary-500 outline-none transition-colors ${
               errors.establishmentYear ? 'border-red-500' : 'border-gray-300'
             }`}
           />
@@ -246,7 +246,7 @@ export default function Section1BusinessInfo({ formData, onChange, errors }: Pro
             value={formData.ceoName}
             onChange={(e) => onChange('ceoName', e.target.value)}
             placeholder="홍길동"
-            className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-colors ${
+            className={`w-full pl-10 pr-4 py-3 border rounded-md focus:ring-2 focus:ring-primary-500 outline-none transition-colors ${
               errors.ceoName ? 'border-red-500' : 'border-gray-300'
             }`}
           />

@@ -75,7 +75,7 @@ export default function JobGridCard({ job, size = 'medium' }: JobGridCardProps) 
             "relative bg-white border transition-all duration-300 cursor-pointer h-full",
             sizeClasses[size],
             "shadow-sm hover:shadow-lg",
-            isHovered ? "border-primary-400 rounded-t-xl border-b-0" : "border-gray-200 rounded-xl"
+            isHovered ? "border-primary-400 rounded-t-xl border-b-0" : "border-gray-200 rounded-md"
           )}
         >
         {/* Badges */}

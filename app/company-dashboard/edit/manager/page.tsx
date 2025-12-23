@@ -162,7 +162,7 @@ export default function ManagerEditPage() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-8 border border-gray-100"
+          className="bg-white/80 backdrop-blur-sm rounded-lg shadow-xl p-8 border border-gray-100"
         >
           <div className="space-y-6">
             {/* 담당 부서 */}
@@ -177,7 +177,7 @@ export default function ManagerEditPage() {
                   value={formData.managerDepartment}
                   onChange={(e) => setFormData({ ...formData, managerDepartment: e.target.value })}
                   placeholder="예: 인사팀, HR팀"
-                  className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-colors ${
+                  className={`w-full pl-10 pr-4 py-3 border rounded-md focus:ring-2 focus:ring-primary-500 outline-none transition-colors ${
                     errors.managerDepartment ? 'border-red-500' : 'border-gray-300'
                   }`}
                 />
@@ -199,7 +199,7 @@ export default function ManagerEditPage() {
                   value={formData.managerName}
                   onChange={(e) => setFormData({ ...formData, managerName: e.target.value })}
                   placeholder="홍길동"
-                  className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-colors ${
+                  className={`w-full pl-10 pr-4 py-3 border rounded-md focus:ring-2 focus:ring-primary-500 outline-none transition-colors ${
                     errors.managerName ? 'border-red-500' : 'border-gray-300'
                   }`}
                 />
@@ -221,7 +221,7 @@ export default function ManagerEditPage() {
                   value={formData.managerPosition}
                   onChange={(e) => setFormData({ ...formData, managerPosition: e.target.value })}
                   placeholder="예: 과장, 매니저"
-                  className="w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-colors border-gray-300"
+                  className="w-full pl-10 pr-4 py-3 border rounded-md focus:ring-2 focus:ring-primary-500 outline-none transition-colors border-gray-300"
                 />
               </div>
             </div>
@@ -240,7 +240,7 @@ export default function ManagerEditPage() {
                     value={phoneParts.part1}
                     onChange={(e) => handlePhonePart1Change(e.target.value)}
                     placeholder="010"
-                    className="w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-colors border-gray-300"
+                    className="w-full pl-10 pr-4 py-3 border rounded-md focus:ring-2 focus:ring-primary-500 outline-none transition-colors border-gray-300"
                     maxLength={3}
                   />
                 </div>
@@ -252,7 +252,7 @@ export default function ManagerEditPage() {
                     value={phoneParts.part2}
                     onChange={(e) => handlePhonePart2Change(e.target.value)}
                     placeholder="1234"
-                    className="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-colors border-gray-300"
+                    className="w-full px-4 py-3 border rounded-md focus:ring-2 focus:ring-primary-500 outline-none transition-colors border-gray-300"
                     maxLength={4}
                   />
                 </div>
@@ -264,14 +264,14 @@ export default function ManagerEditPage() {
                     value={phoneParts.part3}
                     onChange={(e) => handlePhonePart3Change(e.target.value)}
                     placeholder="5678"
-                    className="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-colors border-gray-300"
+                    className="w-full px-4 py-3 border rounded-md focus:ring-2 focus:ring-primary-500 outline-none transition-colors border-gray-300"
                     maxLength={4}
                   />
                 </div>
               </div>
             </div>
 
-            <div className="p-4 bg-gray-50 border border-gray-200 rounded-xl">
+            <div className="p-4 bg-gray-50 border border-gray-200 rounded-md">
               <p className="text-sm text-gray-700">
                 <strong>담당자 정보</strong>는 채용 공고와 관련된 문의 시 사용됩니다. 정확한 정보를 입력해주세요.
               </p>

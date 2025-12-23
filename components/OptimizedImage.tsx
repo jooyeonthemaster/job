@@ -12,6 +12,7 @@ interface OptimizedImageProps {
   className?: string;
   type?: 'profile' | 'logo' | 'banner' | 'general';
   priority?: boolean;
+  onError?: () => void;
 }
 
 /**
@@ -29,8 +30,14 @@ export default function OptimizedImage({
   className = '',
   type = 'general',
   priority = false,
+  onError: onErrorProp,
 }: OptimizedImageProps) {
   const [error, setError] = useState(false);
+
+  const handleError = () => {
+    setError(true);
+    onErrorProp?.();
+  };
 
   // Cloudinary URL인지 확인
   const isCloudinaryUrl = src?.includes('cloudinary.com');
@@ -104,7 +111,7 @@ export default function OptimizedImage({
         quality="auto"
         format="auto"
         loading={priority ? 'eager' : 'lazy'}
-        onError={() => setError(true)}
+        onError={handleError}
       />
     );
   }
@@ -118,7 +125,7 @@ export default function OptimizedImage({
       height={height}
       className={className}
       loading={priority ? 'eager' : 'lazy'}
-      onError={() => setError(true)}
+      onError={handleError}
     />
   );
 }

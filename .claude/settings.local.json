@@ -43,7 +43,9 @@
       "Bash(npm view:*)",
       "Bash(npx fix-react2shell-next:*)",
       "Bash(npm audit fix:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(for f in \"c:\\\\Users\\\\jooye\\\\Desktop\\\\20250919jobmatch\\\\app\\\\company-dashboard\\\\edit\\\\basic-benefits\\\\page.tsx\" \"c:\\\\Users\\\\jooye\\\\Desktop\\\\20250919jobmatch\\\\app\\\\company-dashboard\\\\edit\\\\page.tsx\" \"c:\\\\Users\\\\jooye\\\\Desktop\\\\20250919jobmatch\\\\app\\\\signup\\\\company\\\\page.tsx\")",
+      "Bash(do wc -l \"$f\")"
     ],
     "deny": [],
     "ask": []

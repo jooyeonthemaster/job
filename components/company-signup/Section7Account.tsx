@@ -40,7 +40,7 @@ export default function Section7Account({ formData, onChange, errors, isEmailSig
       </div>
 
       {/* 가입 방식 안내 */}
-      <div className={`p-4 border rounded-xl ${isEmailSignup ? 'bg-blue-50 border-blue-200' : 'bg-yellow-50 border-yellow-200'}`}>
+      <div className={`p-4 border rounded-md ${isEmailSignup ? 'bg-blue-50 border-blue-200' : 'bg-yellow-50 border-yellow-200'}`}>
         <div className="flex items-start gap-3">
           <ShieldCheck className={`w-5 h-5 mt-0.5 ${isEmailSignup ? 'text-blue-600' : 'text-yellow-600'}`} />
           <div>
@@ -69,7 +69,7 @@ export default function Section7Account({ formData, onChange, errors, isEmailSig
             onChange={(e) => onChange('email', e.target.value)}
             placeholder="company@example.com"
             disabled={isEmailSignup} // 이메일 가입만 disabled, 소셜 로그인(구글/카카오)은 editable
-            className={`w-full pl-10 pr-10 py-3 border rounded-xl outline-none transition-colors ${
+            className={`w-full pl-10 pr-10 py-3 border rounded-md outline-none transition-colors ${
               isEmailSignup ? 'bg-gray-50 cursor-not-allowed' : 'bg-white focus:ring-2 focus:ring-primary-500'
             } ${errors.email ? 'border-red-500' : 'border-gray-300'}`}
           />
@@ -101,7 +101,7 @@ export default function Section7Account({ formData, onChange, errors, isEmailSig
             onChange={(e) => onChange('password', e.target.value)}
             placeholder={isEmailSignup ? '설정된 비밀번호' : '8자 이상, 영문+숫자 조합'}
             disabled={isEmailSignup} // 이메일 가입자는 읽기 전용
-            className={`w-full pl-10 pr-12 py-3 border rounded-xl outline-none transition-colors ${
+            className={`w-full pl-10 pr-12 py-3 border rounded-md outline-none transition-colors ${
               isEmailSignup
                 ? 'bg-gray-50 cursor-not-allowed border-gray-300'
                 : errors.password
@@ -160,7 +160,7 @@ export default function Section7Account({ formData, onChange, errors, isEmailSig
               value={formData.passwordConfirm}
               onChange={(e) => onChange('passwordConfirm', e.target.value)}
               placeholder="비밀번호 재입력"
-              className={`w-full pl-10 pr-12 py-3 border rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-colors ${
+              className={`w-full pl-10 pr-12 py-3 border rounded-md focus:ring-2 focus:ring-primary-500 outline-none transition-colors ${
                 errors.passwordConfirm ? 'border-red-500' : 'border-gray-300'
               }`}
             />
@@ -200,7 +200,7 @@ export default function Section7Account({ formData, onChange, errors, isEmailSig
 
       {/* 보안 안내 */}
       {!isEmailSignup && (
-        <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-xl">
+        <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-md">
           <p className="text-sm text-yellow-800">
             🔒 <strong>보안을 위해</strong> 다른 사이트에서 사용하지 않는 비밀번호를 설정해주세요.
             비밀번호는 암호화되어 안전하게 저장됩니다.

@@ -8,6 +8,7 @@ import Image from 'next/image';
 import JobCard from '@/components/JobCard';
 import OptimizedImage from '@/components/OptimizedImage';
 import { getCompanyById, getCompanyJobs } from '@/lib/supabase/company-service';
+import { companies as dummyCompanies, jobs as dummyJobs } from '@/lib/data';
 import { 
   Building2, 
   MapPin, 
@@ -66,27 +67,86 @@ export default function CompanyDetailPage() {
   
   const companyId = params.id as string;
 
-  // Firebase에서 기업 데이터 가져오기
+  // 더미 데이터를 Supabase 형식으로 변환하는 헬퍼 함수
+  const transformDummyCompany = (dummyCompany: typeof dummyCompanies[0]) => ({
+    id: dummyCompany.id,
+    name: dummyCompany.name,
+    name_en: dummyCompany.nameEn,
+    logo: dummyCompany.logo,
+    company_image: dummyCompany.bannerImage,
+    industry: dummyCompany.industry,
+    location: dummyCompany.location,
+    employee_count: dummyCompany.employeeCount,
+    description: dummyCompany.description,
+    summary: dummyCompany.description,
+    established: dummyCompany.established,
+    tech_stack: dummyCompany.techStack?.map(tech => ({ tech_name: tech })) || [],
+    basic_benefits: dummyCompany.benefits?.map(b => ({ title: b })) || [],
+    rating: dummyCompany.rating,
+    reviewCount: dummyCompany.reviewCount,
+  });
+
+  // 더미 Job 데이터를 페이지 형식으로 변환
+  const transformDummyJob = (dummyJob: typeof dummyJobs[0]) => ({
+    id: dummyJob.id,
+    title: dummyJob.title,
+    department: dummyJob.department,
+    location: dummyJob.location,
+    employmentType: dummyJob.employmentType,
+    salary: dummyJob.salary,
+    deadline: dummyJob.deadline,
+    applicants: dummyJob.applicants,
+    tags: dummyJob.tags,
+  });
+
+  // Supabase 또는 더미 데이터에서 기업 데이터 가져오기
   useEffect(() => {
     const fetchCompanyData = async () => {
       try {
         setLoading(true);
         setError(null);
-        
+
         const [companyData, jobsData] = await Promise.all([
           getCompanyById(companyId),
           getCompanyJobs(companyId)
         ]);
-        
+
         if (!companyData) {
+          // Supabase에 데이터 없음 → 더미 데이터 확인 (ID 1-6)
+          const dummyCompany = dummyCompanies.find(c => c.id === companyId);
+          if (dummyCompany) {
+            console.log('[CompanyDetailPage] 더미 데이터 사용:', dummyCompany.name);
+            setCompany(transformDummyCompany(dummyCompany));
+
+            // 해당 기업의 더미 채용공고 필터링
+            const dummyCompanyJobs = dummyJobs
+              .filter(j => j.companyId === companyId)
+              .map(transformDummyJob);
+            setCompanyJobs(dummyCompanyJobs);
+            return;
+          }
+
           setError('기업 정보를 찾을 수 없습니다.');
           return;
         }
-        
+
         setCompany(companyData);
         setCompanyJobs(jobsData);
       } catch (err) {
         console.error('기업 데이터 로딩 실패:', err);
+
+        // 오류 시에도 더미 데이터 확인
+        const dummyCompany = dummyCompanies.find(c => c.id === companyId);
+        if (dummyCompany) {
+          console.log('[CompanyDetailPage] 오류 시 더미 데이터 사용:', dummyCompany.name);
+          setCompany(transformDummyCompany(dummyCompany));
+          const dummyCompanyJobs = dummyJobs
+            .filter(j => j.companyId === companyId)
+            .map(transformDummyJob);
+          setCompanyJobs(dummyCompanyJobs);
+          return;
+        }
+
         setError('기업 정보를 불러오는데 실패했습니다.');
       } finally {
         setLoading(false);
@@ -255,7 +315,7 @@ export default function CompanyDetailPage() {
 
             {/* Company Info */}
             <div className="flex items-start gap-6">
-              <div className="w-32 h-32 rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center shrink-0 shadow-sm overflow-hidden">
+              <div className="w-32 h-32 rounded-md bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center shrink-0 shadow-sm overflow-hidden">
                 {company.logo ? (
                   <OptimizedImage
                     src={company.logo}
@@ -335,7 +395,7 @@ export default function CompanyDetailPage() {
                 <div className="lg:col-span-2 space-y-8">
                   {/* Company Introduction */}
                   {company.description && (
-                    <div className="bg-white rounded-xl shadow-sm p-6">
+                    <div className="bg-white rounded-md shadow-sm p-6">
                       <h2 className="text-xl font-bold text-gray-900 mb-4">회사 소개</h2>
                       <p className="text-gray-700 leading-relaxed whitespace-pre-line">
                         {company.description}
@@ -345,7 +405,7 @@ export default function CompanyDetailPage() {
 
                   {/* Tech Stack */}
                   {company.tech_stack && company.tech_stack.length > 0 && (
-                    <div className="bg-white rounded-xl shadow-sm p-6">
+                    <div className="bg-white rounded-md shadow-sm p-6">
                       <h2 className="text-xl font-bold text-gray-900 mb-4">기술 스택</h2>
                       <div className="flex flex-wrap gap-3">
                         {company.tech_stack.map((tech: any) => (
@@ -362,7 +422,7 @@ export default function CompanyDetailPage() {
 
                   {/* Office Gallery - company_image 사용 */}
                   {company.company_image && (
-                    <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+                    <div className="bg-white rounded-md shadow-sm overflow-hidden">
                       <div className="p-6 pb-4">
                         <h2 className="text-xl font-bold text-gray-900">회사 전경</h2>
                       </div>
@@ -382,7 +442,7 @@ export default function CompanyDetailPage() {
                 {/* Right Sidebar */}
                 <div className="space-y-6">
                   {/* Company Info Card */}
-                  <div className="bg-white rounded-xl shadow-sm p-6">
+                  <div className="bg-white rounded-md shadow-sm p-6">
                     <h3 className="font-bold text-gray-900 mb-4">기업 정보</h3>
                     <dl className="space-y-3">
                       {companyDetail.ceo && (
@@ -431,7 +491,7 @@ export default function CompanyDetailPage() {
 
                   {/* Benefits Section - basic_benefits 데이터 기반 */}
                   {companyDetail.culture.perks.length > 0 && (
-                    <div className="bg-white rounded-xl shadow-sm p-6">
+                    <div className="bg-white rounded-md shadow-sm p-6">
                       <h3 className="font-bold text-gray-900 mb-4">복지 및 혜택</h3>
                       <div className="space-y-2">
                         {companyDetail.culture.perks.map((benefit: string, index: number) => (
@@ -448,7 +508,7 @@ export default function CompanyDetailPage() {
 
             {/* Jobs Section */}
               <div className="space-y-6 mt-8">
-                <div className="bg-white rounded-xl shadow-sm p-4">
+                <div className="bg-white rounded-md shadow-sm p-4">
                   <div className="flex items-center justify-between">
                     <p className="text-sm text-gray-600">
                       총 <span className="font-bold text-gray-900">{companyJobs.length}개</span>의 포지션이 열려있습니다
@@ -468,7 +528,7 @@ export default function CompanyDetailPage() {
                     <Link 
                       key={job.id}
                       href={`/jobs/${job.id}`}
-                      className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow p-6"
+                      className="bg-white rounded-md shadow-sm hover:shadow-md transition-shadow p-6"
                     >
                       <div className="flex items-start justify-between mb-3">
                         <div>
@@ -534,7 +594,7 @@ export default function CompanyDetailPage() {
                 </div>
 
                 {companyJobs.length === 0 && (
-                  <div className="bg-white rounded-xl shadow-sm p-12 text-center">
+                  <div className="bg-white rounded-md shadow-sm p-12 text-center">
                     <Briefcase className="w-12 h-12 text-gray-300 mx-auto mb-4" />
                     <p className="text-gray-600">현재 채용중인 포지션이 없습니다</p>
                   </div>
@@ -555,12 +615,12 @@ export default function CompanyDetailPage() {
             <div className="flex items-center justify-center gap-4 mt-8">
               <Link
                 href={`/companies/${company.id}/jobs`}
-                className="px-6 py-3 bg-white text-primary-600 font-medium rounded-xl hover:bg-gray-50 transition-colors inline-flex items-center gap-2"
+                className="px-6 py-3 bg-white text-primary-600 font-medium rounded-md hover:bg-gray-50 transition-colors inline-flex items-center gap-2"
               >
                 채용공고 보기
                 <Briefcase className="w-4 h-4" />
               </Link>
-              <button className="px-6 py-3 bg-white/20 text-white font-medium rounded-xl hover:bg-white/30 transition-colors inline-flex items-center gap-2 backdrop-blur">
+              <button className="px-6 py-3 bg-white/20 text-white font-medium rounded-md hover:bg-white/30 transition-colors inline-flex items-center gap-2 backdrop-blur">
                 인재풀 등록
                 <Users className="w-4 h-4" />
               </button>

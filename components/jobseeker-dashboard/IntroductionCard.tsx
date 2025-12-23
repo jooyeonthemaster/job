@@ -10,7 +10,7 @@ export default function IntroductionCard({ introduction }: Props) {
   if (!introduction) return null;
 
   return (
-    <div className="bg-white rounded-xl shadow-sm p-6">
+    <div className="bg-white rounded-md shadow-sm p-6">
       <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
         <User className="w-5 h-5 text-primary-600" />
         자기소개

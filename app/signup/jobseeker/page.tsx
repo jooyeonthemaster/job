@@ -87,14 +87,14 @@ export default function JobseekerSignupPage() {
           {/* Logo */}
           <div className="flex justify-center mb-8">
             <Link href="/" className="flex items-center gap-3">
-              <div className="w-14 h-14 bg-gradient-to-br from-primary-500 to-primary-600 rounded-2xl flex items-center justify-center shadow-lg">
+              <div className="w-14 h-14 bg-gradient-to-br from-primary-500 to-primary-600 rounded-lg flex items-center justify-center shadow-lg">
                 <Globe className="w-8 h-8 text-white" />
               </div>
               <span className="text-3xl font-bold text-gray-900">Bridge World</span>
             </Link>
           </div>
 
-          <div className="bg-white rounded-2xl shadow-xl p-8">
+          <div className="bg-white rounded-lg shadow-xl p-8">
             <div className="text-center mb-6">
               <div className="inline-flex p-3 bg-secondary-100 rounded-full mb-4">
                 <UserPlus className="w-8 h-8 text-secondary-600" />
@@ -121,7 +121,7 @@ export default function JobseekerSignupPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="your@email.com"
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-secondary-500 focus:border-secondary-500 outline-none transition-colors"
+                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-secondary-500 focus:border-secondary-500 outline-none transition-colors"
                     required
                   />
                 </div>
@@ -137,7 +137,7 @@ export default function JobseekerSignupPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="비밀번호 (6자 이상)"
-                    className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-secondary-500 focus:border-secondary-500 outline-none transition-colors"
+                    className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-secondary-500 focus:border-secondary-500 outline-none transition-colors"
                     required
                   />
                   <button
@@ -160,7 +160,7 @@ export default function JobseekerSignupPage() {
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="비밀번호 재입력"
-                    className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-secondary-500 focus:border-secondary-500 outline-none transition-colors"
+                    className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-secondary-500 focus:border-secondary-500 outline-none transition-colors"
                     required
                   />
                 </div>
@@ -169,7 +169,7 @@ export default function JobseekerSignupPage() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full py-3 px-4 bg-secondary-600 text-white font-medium rounded-xl hover:bg-secondary-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full py-3 px-4 bg-secondary-600 text-white font-medium rounded-md hover:bg-secondary-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isLoading ? '가입 중...' : '이메일로 가입하기'}
                 <ArrowRight className="w-5 h-5" />

@@ -430,14 +430,14 @@ const Step2Experience = ({ data, onNext, onBack }: Props) => {
         <button
           type="button"
           onClick={onBack}
-          className="px-6 py-3 bg-gray-100 text-gray-700 font-medium rounded-xl hover:bg-gray-200 transition-colors"
+          className="px-6 py-3 bg-gray-100 text-gray-700 font-medium rounded-md hover:bg-gray-200 transition-colors"
         >
           이전 단계로
         </button>
         <button
           type="button"
           onClick={handleNext}
-          className="px-6 py-3 bg-secondary-600 text-white font-medium rounded-xl hover:bg-secondary-700 transition-colors"
+          className="px-6 py-3 bg-secondary-600 text-white font-medium rounded-md hover:bg-secondary-700 transition-colors"
         >
           다음 단계로
         </button>

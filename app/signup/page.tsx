@@ -90,7 +90,7 @@ export default function SignupPage() {
           {/* Logo */}
           <div className="flex justify-center mb-12">
             <Link href="/" className="flex items-center gap-3">
-              <div className="w-14 h-14 bg-gradient-to-br from-primary-500 to-primary-600 rounded-2xl flex items-center justify-center shadow-lg">
+              <div className="w-14 h-14 bg-gradient-to-br from-primary-500 to-primary-600 rounded-lg flex items-center justify-center shadow-lg">
                 <Globe className="w-8 h-8 text-white" />
               </div>
               <span className="text-3xl font-bold text-gray-900">Bridge World</span>
@@ -102,7 +102,7 @@ export default function SignupPage() {
             <BenefitsSection activeTab={activeTab} />
 
             {/* Right Side - Signup Form */}
-            <div className="bg-white rounded-2xl shadow-md p-10">
+            <div className="bg-white rounded-lg shadow-md p-10">
               <h2 className="text-2xl font-bold text-gray-900 mb-8">회원가입</h2>
 
               {/* Tab Navigation */}

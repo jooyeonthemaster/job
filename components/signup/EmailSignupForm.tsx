@@ -36,7 +36,7 @@ export default function EmailSignupForm({
           value={formData.email}
           onChange={(e) => onFieldChange('email', e.target.value)}
           placeholder={isPerson ? "your@email.com" : "company@example.com"}
-          className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-colors"
+          className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-colors"
           required
         />
       </div>
@@ -52,7 +52,7 @@ export default function EmailSignupForm({
             value={formData.password}
             onChange={(e) => onFieldChange('password', e.target.value)}
             placeholder="비밀번호 (6자 이상)"
-            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-colors"
+            className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-colors"
             required
           />
           <button
@@ -75,7 +75,7 @@ export default function EmailSignupForm({
           value={formData.confirmPassword}
           onChange={(e) => onFieldChange('confirmPassword', e.target.value)}
           placeholder="비밀번호 재입력"
-          className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-colors"
+          className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-colors"
           required
         />
       </div>
@@ -110,7 +110,7 @@ export default function EmailSignupForm({
       <button
         type="submit"
         disabled={isLoading}
-        className="w-full py-3 px-4 bg-primary-600 text-white font-medium rounded-xl hover:bg-primary-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full py-3 px-4 bg-primary-600 text-white font-medium rounded-md hover:bg-primary-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {isLoading ? '가입 중...' : '회원가입'}
         <ArrowRight className="w-5 h-5" />

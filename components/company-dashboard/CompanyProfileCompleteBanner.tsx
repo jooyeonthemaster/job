@@ -11,7 +11,7 @@ type Props = {
 
 export default function CompanyProfileCompleteBanner({ companyId }: Props) {
   return (
-    <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl shadow-sm p-6 border-l-4 border-green-500">
+    <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-md shadow-sm p-6 border-l-4 border-green-500">
       <div className="flex items-start gap-4">
         <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center shrink-0">
           <CheckCircle className="w-6 h-6 text-green-600" />

@@ -78,7 +78,7 @@ export default function JobApplicationModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-lg shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b">
           <div>
@@ -99,7 +99,7 @@ export default function JobApplicationModal({
         {/* Body */}
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {/* 지원자 정보 */}
-          <div className="bg-gray-50 rounded-xl p-4 space-y-2">
+          <div className="bg-gray-50 rounded-md p-4 space-y-2">
             <h3 className="font-medium text-gray-900">지원자 정보</h3>
             <div className="text-sm text-gray-700">
               <p><span className="font-medium">이름:</span> {userProfile?.full_name || user?.user_metadata?.full_name || '이름 없음'}</p>
@@ -119,7 +119,7 @@ export default function JobApplicationModal({
               disabled={isSubmitting}
               placeholder="간단한 자기소개와 지원 동기를 작성해주세요. (최소 10자)"
               rows={8}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none disabled:bg-gray-100 disabled:cursor-not-allowed"
+              className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none disabled:bg-gray-100 disabled:cursor-not-allowed"
             />
             <p className="text-xs text-gray-500 mt-1">
               {message.length}자 / 최소 10자
@@ -128,14 +128,14 @@ export default function JobApplicationModal({
 
           {/* Error Message */}
           {error && (
-            <div className="flex items-start gap-2 p-4 bg-red-50 border border-red-200 rounded-xl">
+            <div className="flex items-start gap-2 p-4 bg-red-50 border border-red-200 rounded-md">
               <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
               <p className="text-sm text-red-700">{error}</p>
             </div>
           )}
 
           {/* 안내 사항 */}
-          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+          <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
             <h4 className="font-medium text-blue-900 mb-2">📌 안내사항</h4>
             <ul className="text-sm text-blue-800 space-y-1">
               <li>• 지원서 제출 후 관리자 검토를 거쳐 담당자에게 전달됩니다.</li>
@@ -150,14 +150,14 @@ export default function JobApplicationModal({
               type="button"
               onClick={handleClose}
               disabled={isSubmitting}
-              className="flex-1 px-6 py-3 border border-gray-300 rounded-xl text-gray-700 font-medium hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 px-6 py-3 border border-gray-300 rounded-md text-gray-700 font-medium hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               취소
             </button>
             <button
               type="submit"
               disabled={isSubmitting || !message.trim() || message.trim().length < 10}
-              className="flex-1 px-6 py-3 bg-primary-600 text-white rounded-xl font-medium hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="flex-1 px-6 py-3 bg-primary-600 text-white rounded-md font-medium hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {isSubmitting ? (
                 <>

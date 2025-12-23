@@ -63,7 +63,7 @@ const Modal = ({
       {/* Modal Content */}
       <div 
         className={`
-          relative bg-white rounded-2xl shadow-2xl 
+          relative bg-white rounded-lg shadow-2xl 
           ${sizeClasses[size]} 
           w-full mx-4 max-h-[90vh] overflow-hidden
           animate-modal-slide-up
