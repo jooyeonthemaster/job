@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, Suspense, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useJobForm } from '@/hooks/useJobForm';
 import { useJobFormValidation } from '@/hooks/useJobFormValidation';
 import { supabase } from '@/lib/supabase/config';
+import { useAuth } from '@/contexts/AuthContext_Supabase';
 import CompanySelectOrCreate from '@/components/admin/CompanySelectOrCreate';
 import JobMetadataForm from '@/components/job-create/metadata/JobMetadataForm';
 import JobContentEditor from '@/components/job-create/editor/JobContentEditor';
@@ -20,10 +21,20 @@ interface SelectedCompany {
   address: string;
 }
 
+// 관리자 이메일 목록 (중앙 관리)
+const ADMIN_EMAILS = [
+  'admin@ssmhr.com',
+  'yjpark@ssmhr.com',
+  'joo.y.oh.ko@gmail.com',
+  'nadr110619@gmail.com',
+  'admin@gmail.com'
+];
+
 function AdminJobCreateContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { formData, updateField, resetForm } = useJobForm();
+  const { user, isLoading: authLoading } = useAuth(); // ✅ AuthContext 사용
 
   const [currentStep, setCurrentStep] = useState<'company' | 'metadata' | 'content'>('company');
   const [selectedCompany, setSelectedCompany] = useState<SelectedCompany | null>(null);
@@ -34,30 +45,36 @@ function AdminJobCreateContent() {
   const [error, setError] = useState('');
   const [showPreview, setShowPreview] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [accessToken, setAccessToken] = useState<string | null>(null); // ✅ 토큰 저장
+  const authCheckedRef = useRef(false);
 
-  // 관리자 권한 확인
+  // ✅ AuthContext 로딩 완료 후 관리자 권한 체크 (Race Condition 방지)
   useEffect(() => {
+    if (authLoading) {
+      console.log('[AdminJobCreate] AuthContext 로딩 중... 대기');
+      return;
+    }
+
+    if (authCheckedRef.current) return;
+    authCheckedRef.current = true;
+
     const checkAdminAccess = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
         if (!user) {
           router.push('/login');
           return;
         }
 
-        // 이메일 기반 관리자 체크 (admin 페이지와 동일)
-        const adminEmails = [
-          'admin@ssmhr.com',
-          'yjpark@ssmhr.com',
-          'joo.y.oh.ko@gmail.com',
-          'nadr110619@gmail.com',
-          'admin@gmail.com'
-        ];
-
-        if (!adminEmails.includes(user.email || '')) {
+        if (!ADMIN_EMAILS.includes(user.email || '')) {
           alert('관리자 권한이 필요합니다.');
           router.push('/');
           return;
+        }
+
+        // ✅ AuthContext에서 이미 인증된 상태이므로 getSession은 빠르게 응답
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.access_token) {
+          setAccessToken(session.access_token);
         }
 
         setIsAdmin(true);
@@ -68,7 +85,7 @@ function AdminJobCreateContent() {
     };
 
     checkAdminAccess();
-  }, [router]);
+  }, [authLoading, user, router]);
 
   // URL 파라미터에서 회사 정보 자동 로드
   useEffect(() => {
@@ -133,9 +150,8 @@ function AdminJobCreateContent() {
     setError('');
 
     try {
-      // 세션 토큰 가져오기
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
+      // ✅ 저장된 accessToken 사용 (getSession hang 방지)
+      if (!accessToken) {
         throw new Error('세션이 없습니다. 다시 로그인해주세요.');
       }
 
@@ -144,7 +160,7 @@ function AdminJobCreateContent() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`
+          'Authorization': `Bearer ${accessToken}`
         },
         body: JSON.stringify({
           companyId: selectedCompany.id,
@@ -192,9 +208,8 @@ function AdminJobCreateContent() {
     setError('');
 
     try {
-      // 세션 토큰 가져오기
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
+      // ✅ 저장된 accessToken 사용 (getSession hang 방지)
+      if (!accessToken) {
         throw new Error('세션이 없습니다. 다시 로그인해주세요.');
       }
 
@@ -203,7 +218,7 @@ function AdminJobCreateContent() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`
+          'Authorization': `Bearer ${accessToken}`
         },
         body: JSON.stringify({
           companyId: selectedCompany.id,
@@ -416,6 +431,7 @@ function AdminJobCreateContent() {
             <CompanySelectOrCreate
               selectedCompanyId={selectedCompany?.id || null}
               onCompanySelect={handleCompanySelect}
+              accessToken={accessToken} // ✅ 토큰 전달 (getSession hang 방지)
             />
           )}
 

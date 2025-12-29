@@ -33,9 +33,10 @@ interface AdminJob {
 
 interface AdminCreatedTabProps {
   isActive?: boolean;
+  accessToken?: string | null; // ✅ 부모에서 전달받은 토큰 (getSession hang 방지)
 }
 
-export default function AdminCreatedTab({ isActive = true }: AdminCreatedTabProps) {
+export default function AdminCreatedTab({ isActive = true, accessToken }: AdminCreatedTabProps) {
   const [companies, setCompanies] = useState<AdminCompany[]>([]);
   const [expandedCompanyId, setExpandedCompanyId] = useState<string | null>(null);
   const [companyJobs, setCompanyJobs] = useState<Record<string, AdminJob[]>>({});
@@ -493,6 +494,7 @@ export default function AdminCreatedTab({ isActive = true }: AdminCreatedTabProp
                   setShowCreateModal(false);
                   fetchAdminCreatedData(); // 목록 새로고침
                 }}
+                accessToken={accessToken} // ✅ 토큰 전달 (getSession hang 방지)
               />
             </div>
           </div>

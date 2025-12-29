@@ -8,7 +8,174 @@
 
 ## 📋 최근 주요 변경 사항
 
+### 2025-12-29
+
+#### 🐛 [FIX] onAuthStateChange 데드락으로 인한 프로필 조회 타임아웃 문제
+
+**변경 파일**:
+- `contexts/AuthContext_Supabase.tsx` (402줄)
+
+**문제 원인**:
+- Supabase auth-js 라이브러리의 `onAuthStateChange` 콜백이 exclusive lock 내부에서 실행됨
+- async 콜백에서 Supabase 쿼리(프로필 조회) 호출 시 데드락 발생
+- 데드락 → 5초 타임아웃 → profile이 null → 온보딩 페이지로 강제 리다이렉트
+
+**Supabase 공식 경고** (GoTrueClient.ts:2090-2094):
+> "Avoid using an async function inside `onAuthStateChange` as you might end up with a deadlock."
+
+**변경 내용**:
+- `onAuthStateChange` 콜백을 async → 동기로 변경
+- `handleAuthChange()`를 `setTimeout(0)`으로 감싸서 락 해제 후 실행
+
+**이유**:
+- Supabase 공식 권장사항 준수
+- 프로필 조회 데드락 해결
+
+---
+
 ### 2025-12-24
+
+#### 📄 [ADD] 개발 용역 계약서 작성
+
+**변경 파일**:
+- `docs/개발용역계약서_브릿지월드.md` (신규: 약 250줄)
+
+**변경 내용**:
+- 브릿지 월드 플랫폼 개발 최종 계약서 작성
+- 계약 당사자: 일해라 컴퍼니 (개발사) ↔ 브릿지 월드 (발주사)
+- 계약 금액: 총 500만원 (선금 150만원 + 잔금 350만원)
+- 계약 기간: 2024년 9월 29일 ~ 2025년 1월 25일
+- 유지보수: 무료(~2025.01.25), 이후 월 10만원
+
+**계약서 구성**:
+- 개발 범위 및 기술 스택 명시
+- 납품/검수 조건
+- 유지보수 포함/미포함 사항 상세 정의
+- 지식재산권, 비밀유지, 면책조항
+- 별첨: 산출물 목록, 유지보수 세부 기준
+
+**이유**:
+- 개발 완료 시점 공식 계약서 필요
+- 유지보수 범위 명확화로 분쟁 예방
+
+---
+
+#### 🐛 [FIX] 관리자 기업 생성 시 "생성 중..." 무한 로딩 (getSession hang 해결)
+
+**변경 파일**:
+- `components/admin/CompanySelectOrCreate.tsx` (601줄) - accessToken prop 추가, getSession() 제거
+- `components/admin/AdminCreatedTab.tsx` (505줄) - accessToken prop 추가, CompanySelectOrCreate에 전달
+- `app/admin/page.tsx` (289줄) - AdminCreatedTab에 accessToken 전달
+- `app/admin/jobs/create/page.tsx` (519줄) - useAuth() 활용, accessToken state 관리, getSession() 제거
+
+**문제 원인**:
+- 관리자 페이지에서 새 기업 생성 시 "생성 중..." 무한 로딩
+- `CompanySelectOrCreate.tsx`의 `handleCreateCompany()`에서 `getSession()` 호출 → hang
+- Edge 브라우저의 Tracking Prevention + Supabase 연결 stale 상태
+
+**동시 호출 분석**:
+```
+CompanySelectOrCreate.handleCreateCompany()
+└─ await supabase.auth.getSession() ← 여기서 hang 발생
+   └─ Edge의 Tracking Prevention이 storage 접근 차단
+   └─ Supabase WebSocket 연결이 stale 상태
+   └─ 결과: 무한 대기
+```
+
+**해결 방법**:
+1. `CompanySelectOrCreate`에 `accessToken` prop 추가
+2. 부모 컴포넌트(AdminCreatedTab, admin/jobs/create)에서 토큰 전달
+3. `getSession()` 직접 호출 대신 전달받은 `accessToken` 사용
+4. `admin/jobs/create/page.tsx`도 `useAuth()` 활용하도록 리팩토링
+
+**코드 패턴**:
+```tsx
+// CompanySelectOrCreate.tsx - accessToken prop 사용
+interface CompanySelectOrCreateProps {
+  accessToken?: string | null;
+}
+
+const handleCreateCompany = async () => {
+  // ❌ 이전: getSession() 호출 (hang 위험)
+  // const { data: { session } } = await supabase.auth.getSession();
+
+  // ✅ 수정: 부모에서 전달받은 accessToken 사용
+  if (!accessToken) throw new Error('세션 없음');
+
+  fetch('/api/admin/companies/create', {
+    headers: { 'Authorization': `Bearer ${accessToken}` }
+  });
+};
+
+// AdminCreatedTab.tsx - accessToken 전달
+<CompanySelectOrCreate accessToken={accessToken} />
+```
+
+**효과**:
+- ✅ 기업 생성 시 무한 로딩 해결
+- ✅ getSession() 호출 제거 (hang 위험 제거)
+- ✅ 토큰 prop drilling으로 안전한 인증 전달
+- ✅ Edge 브라우저 호환성 개선
+
+---
+
+#### 🐛 [FIX] 관리자 페이지 첫 로드 시 무한 로딩 (Race Condition 해결)
+
+**변경 파일**:
+- `app/admin/page.tsx` (288줄) - AuthContext 활용, 중복 getSession() 제거
+- `contexts/AuthContext_Supabase.tsx` (371줄) - Race Condition 방지 플래그, DB 조회 최적화
+
+**문제 원인**:
+- Edge 브라우저에서 관리자 페이지 접근 시 "인증 확인 중..." 무한 로딩
+- 새로고침하면 정상 작동, 첫 로드에서만 문제 발생
+- **Root Cause**: 3곳에서 동시에 Supabase 호출 → 연결 충돌 → Hang
+
+**동시 호출 분석**:
+```
+1. AuthContext.onAuthStateChange → handleAuthChange() → DB 조회
+2. AuthContext.sessionCheck() → getSession() (500ms 후)
+3. Admin/page.tsx.checkAuth() → getSession() (즉시)
+→ 4-5개 Supabase 요청이 동시 발생 → 연결 hang
+→ Edge의 Tracking Prevention이 상황 악화
+```
+
+**해결 방법**:
+1. Admin 페이지에서 AuthContext.isLoading 완료 후 checkAuth 실행
+2. AuthContext에서 user 정보 직접 활용 (getSession 중복 제거)
+3. onAuthStateChange가 이미 처리했으면 sessionCheck 스킵 (플래그)
+4. metadata에서 user_type 알면 DB 조회 스킵
+5. DB 조회에 3초 타임아웃 추가 (hang 방지)
+
+**코드 패턴**:
+```tsx
+// Admin 페이지 - AuthContext 활용
+const { user, isLoading: authLoading } = useAuth();
+
+useEffect(() => {
+  if (authLoading) return; // AuthContext 로딩 완료 대기
+  checkAuth();
+}, [authLoading, user]);
+
+// AuthContext - Race Condition 방지
+let authHandledByListener = false;
+
+onAuthStateChange(async (event, session) => {
+  authHandledByListener = true; // 플래그 설정
+  await handleAuthChange(session.user);
+});
+
+sessionCheck() {
+  if (authHandledByListener) return; // 이미 처리됨 → 스킵
+}
+```
+
+**효과**:
+- ✅ 첫 로드 시 무한 로딩 해결
+- ✅ 중복 Supabase 호출 제거 (4-5개 → 1-2개)
+- ✅ Edge 브라우저 호환성 개선
+- ✅ 새로고침 없이 정상 작동
+
+---
 
 #### 🐛 [FIX] 어드민 ProfileViewsTab - getSession() 호출 제거로 hang 방지
 

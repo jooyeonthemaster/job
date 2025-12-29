@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase/config';
+import { useAuth } from '@/contexts/AuthContext_Supabase';
 import JobsTab from '@/components/admin/JobsTab';
 import AdminCreatedTab from '@/components/admin/AdminCreatedTab';
 import ProfileViewsTab from '@/components/admin/ProfileViewsTab';
@@ -11,16 +12,41 @@ import AdminPaymentsTab from '@/components/admin/AdminPaymentsTab';
 import AdminRefundsTab from '@/components/admin/AdminRefundsTab';
 import { Settings, Briefcase, LogOut, Star, Eye, Monitor, CreditCard, RotateCcw } from 'lucide-react';
 
+// 관리자 이메일 목록 (중앙 관리)
+const ADMIN_EMAILS = [
+  'admin@ssmhr.com',
+  'yjpark@ssmhr.com',
+  'joo.y.oh.ko@gmail.com',
+  'nadr110619@gmail.com',
+  'admin@gmail.com'
+];
+
 export default function AdminPage() {
   const router = useRouter();
+  const { user, isLoading: authLoading } = useAuth();
   const [activeTab, setActiveTab] = useState<'jobs' | 'admin-created' | 'profile-views' | 'payments' | 'refunds' | 'banners'>('jobs');
   const [loading, setLoading] = useState(true);
   const [authorized, setAuthorized] = useState(false);
   const [accessToken, setAccessToken] = useState<string | null>(null);
+  const authCheckedRef = useRef(false);
 
+  // ✅ AuthContext 로딩 완료 후 관리자 권한 체크 (Race Condition 방지)
   useEffect(() => {
+    // AuthContext가 아직 로딩 중이면 대기
+    if (authLoading) {
+      console.log('[Admin] AuthContext 로딩 중... 대기');
+      return;
+    }
+
+    // 이미 체크했으면 스킵
+    if (authCheckedRef.current) {
+      return;
+    }
+    authCheckedRef.current = true;
+
+    console.log('[Admin] AuthContext 로딩 완료, 관리자 권한 체크 시작');
     checkAuth();
-  }, []);
+  }, [authLoading, user]);
 
   // 브라우저 탭이 다시 활성화될 때 세션 refresh (idle 후 stale 연결 방지)
   // 2분 이상 idle 상태였을 때만 체크
@@ -79,37 +105,36 @@ export default function AdminPage() {
 
   const checkAuth = async () => {
     try {
-      // 세션과 유저 정보를 한 번에 가져옴 (이후 자식 컴포넌트에서 재호출 안 함)
-      const { data: { session } } = await supabase.auth.getSession();
+      console.log('[Admin] checkAuth 시작, AuthContext user:', user?.email);
 
-      if (!session?.user) {
-        router.push('/login');
+      // ✅ AuthContext에서 이미 인증된 user가 있으면 활용 (getSession 중복 호출 방지)
+      if (user) {
+        // 관리자 이메일 체크
+        if (!ADMIN_EMAILS.includes(user.email || '')) {
+          console.log('[Admin] 관리자 권한 없음:', user.email);
+          alert('어드민 권한이 없습니다.');
+          router.push('/');
+          return;
+        }
+
+        console.log('[Admin] 관리자 인증 성공 (AuthContext 활용):', user.email);
+
+        // 세션 토큰 가져오기 (API 호출용) - 이미 AuthContext에서 세션이 있으므로 빠르게 응답
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.access_token) {
+          setAccessToken(session.access_token);
+        }
+
+        setAuthorized(true);
+        setLoading(false);
         return;
       }
 
-      const user = session.user;
-
-      // 간단한 어드민 체크 (이메일 기반)
-      // 프로덕션에서는 더 강력한 권한 체크 필요
-      const adminEmails = [
-        'admin@ssmhr.com',
-        'yjpark@ssmhr.com',
-        'joo.y.oh.ko@gmail.com',
-        'nadr110619@gmail.com',
-        'admin@gmail.com'
-      ];
-
-      if (!adminEmails.includes(user.email || '')) {
-        alert('어드민 권한이 없습니다.');
-        router.push('/');
-        return;
-      }
-
-      // 세션 토큰 저장 (자식 컴포넌트에서 사용)
-      setAccessToken(session.access_token);
-      setAuthorized(true);
+      // user가 없으면 로그인 페이지로
+      console.log('[Admin] 로그인 필요');
+      router.push('/login');
     } catch (error) {
-      console.error('Auth check failed:', error);
+      console.error('[Admin] Auth check failed:', error);
       router.push('/login');
     } finally {
       setLoading(false);
@@ -243,7 +268,7 @@ export default function AdminPage() {
           <JobsTab isActive={activeTab === 'jobs'} />
         </div>
         <div className={activeTab === 'admin-created' ? '' : 'hidden'}>
-          <AdminCreatedTab isActive={activeTab === 'admin-created'} />
+          <AdminCreatedTab isActive={activeTab === 'admin-created'} accessToken={accessToken} />
         </div>
         <div className={activeTab === 'profile-views' ? '' : 'hidden'}>
           <ProfileViewsTab isActive={activeTab === 'profile-views'} accessToken={accessToken} />

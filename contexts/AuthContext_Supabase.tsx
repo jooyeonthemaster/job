@@ -36,8 +36,8 @@ const AuthContext = createContext<AuthContextType>({
   userProfile: null,
   isLoading: true,
   isAuthenticated: false,
-  logout: async () => {},
-  refreshUserProfile: async () => {}
+  logout: async () => { },
+  refreshUserProfile: async () => { }
 });
 
 export const useAuth = () => {
@@ -194,15 +194,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     console.log('[AuthContext] 초기화 시작');
     let isMounted = true;
+    let authHandledByListener = false; // ✅ onAuthStateChange가 이미 처리했는지 플래그
 
     // 1. 초기 세션 체크 (5초 타임아웃 추가 - 무한 대기 방지)
     const sessionCheck = async () => {
       try {
-        // ✅ 500ms 지연 - 메인 페이지 데이터 로드와의 경쟁 방지
-        // 첫 Supabase 연결이 안정화된 후 Auth 쿼리 실행
+        // ✅ 500ms 지연 - onAuthStateChange가 먼저 처리할 기회를 줌
         await new Promise(resolve => setTimeout(resolve, 500));
 
         if (!isMounted) return;
+
+        // ✅ onAuthStateChange가 이미 SIGNED_IN을 처리했으면 스킵 (Race Condition 방지)
+        if (authHandledByListener) {
+          console.log('[AuthContext] 세션 체크 스킵 - onAuthStateChange가 이미 처리함');
+          return;
+        }
 
         console.log('[AuthContext] 세션 체크 시작 (500ms 지연 후)');
 
@@ -215,6 +221,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         if (!isMounted) return;
 
+        // ✅ 다시 한번 체크 - 비동기 작업 중 onAuthStateChange가 처리했을 수 있음
+        if (authHandledByListener) {
+          console.log('[AuthContext] 세션 체크 결과 무시 - onAuthStateChange가 이미 처리함');
+          return;
+        }
+
         if (session) {
           console.log('[AuthContext] 초기 세션 발견:', session.user.id);
           handleAuthChange(session.user);
@@ -224,8 +236,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       } catch (err) {
         console.warn('[AuthContext] 세션 체크 실패/타임아웃:', (err as Error).message);
-        if (isMounted) {
-          setIsLoading(false); // 타임아웃 시에도 로딩 종료
+        // ✅ 타임아웃이어도 onAuthStateChange가 처리 중이면 로딩 종료 안 함
+        if (isMounted && !authHandledByListener) {
+          setIsLoading(false);
         }
       }
     };
@@ -233,12 +246,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     sessionCheck();
 
     // 2. Auth 상태 변경 리스너 등록
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    // ✅ 동기 콜백 사용 - Supabase 공식 권장사항 (데드락 방지)
+    // 참고: GoTrueClient.ts:2090-2094 - async 콜백 + Supabase API 호출 = 데드락 위험
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       console.log('[AuthContext] Auth 상태 변경:', event, session?.user?.id);
 
       if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
         if (session?.user) {
-          await handleAuthChange(session.user);
+          authHandledByListener = true; // ✅ 플래그 설정 - sessionCheck에서 중복 처리 방지
+          // ✅ setTimeout(0)으로 락 해제 후 실행 (데드락 방지)
+          const user = session.user;
+          setTimeout(() => {
+            handleAuthChange(user);
+          }, 0);
         }
       } else if (event === 'SIGNED_OUT') {
         setUser(null);
@@ -252,7 +272,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       isMounted = false;
       subscription.unsubscribe();
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // ✅ 의존성 제거 - 최초 마운트 시 1번만 실행
 
   // ===================================================
@@ -270,47 +290,72 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const metadataUserType = authUser.user_metadata?.user_type as UserType | undefined;
       console.log('[AuthContext] metadata user_type:', metadataUserType);
 
-      // 3. DB 테이블 존재 여부로 사용자 타입 확인 (fallback)
-      const { data: companyData } = await supabase
-        .from('companies')
-        .select('id')
-        .eq('id', authUser.id)
-        .maybeSingle();
-
-      const { data: userData } = await supabase
-        .from('users')
-        .select('id')
-        .eq('id', authUser.id)
-        .maybeSingle();
-
       let type: UserType;
 
-      // ✅ 우선순위: localStorage > metadata > DB companies > DB users > 기본값
+      // ✅ metadata나 localStorage에서 이미 타입을 알면 DB 조회 스킵 (Race Condition 방지)
       if (pendingType) {
         type = pendingType;
         localStorage.removeItem('pending_user_type'); // 1회용 - 즉시 삭제
         console.log('[AuthContext] 사용자 타입:', type, '(localStorage 우선 - OAuth 중)');
       } else if (metadataUserType) {
         type = metadataUserType;
-        console.log('[AuthContext] 사용자 타입:', type, '(metadata 우선 - Race Condition 방지)');
-      } else if (companyData) {
-        type = 'company';
-        console.log('[AuthContext] 사용자 타입: company (DB 테이블 확인)');
-      } else if (userData) {
-        type = 'jobseeker';
-        console.log('[AuthContext] 사용자 타입: jobseeker (DB 테이블 확인)');
+        console.log('[AuthContext] 사용자 타입:', type, '(metadata 우선 - DB 조회 스킵)');
       } else {
-        // 최후의 기본값
-        type = 'jobseeker';
-        console.log('[AuthContext] 사용자 타입:', type, '(기본값)');
+        // 3. DB 테이블 존재 여부로 사용자 타입 확인 (fallback) - 타임아웃 추가
+        console.log('[AuthContext] DB 조회로 사용자 타입 확인 시작...');
+
+        // ✅ 3초 타임아웃으로 DB 조회 (hang 방지)
+        const dbCheckPromise = async () => {
+          const [companyResult, userResult] = await Promise.all([
+            supabase.from('companies').select('id').eq('id', authUser.id).maybeSingle(),
+            supabase.from('users').select('id').eq('id', authUser.id).maybeSingle()
+          ]);
+          return { companyData: companyResult.data, userData: userResult.data };
+        };
+
+        const timeoutPromise = new Promise<{ companyData: null; userData: null }>((resolve) =>
+          setTimeout(() => {
+            console.warn('[AuthContext] DB 조회 타임아웃 (3초) - 기본값 사용');
+            resolve({ companyData: null, userData: null });
+          }, 3000)
+        );
+
+        const { companyData, userData } = await Promise.race([dbCheckPromise(), timeoutPromise]);
+
+        if (companyData) {
+          type = 'company';
+          console.log('[AuthContext] 사용자 타입: company (DB 테이블 확인)');
+        } else if (userData) {
+          type = 'jobseeker';
+          console.log('[AuthContext] 사용자 타입: jobseeker (DB 테이블 확인)');
+        } else {
+          // 최후의 기본값
+          type = 'jobseeker';
+          console.log('[AuthContext] 사용자 타입:', type, '(기본값)');
+        }
       }
 
       setUser(authUser as AuthUser);
       setUserType(type);
 
-      // 2. 프로필 데이터 가져오기
-      const profile = await fetchUserProfile(authUser.id, type);
-      console.log('[AuthContext] 프로필 조회:', profile ? '성공' : '실패');
+      // 2. 프로필 데이터 가져오기 (타임아웃 적용)
+      console.log('[AuthContext] 프로필 데이터 가져오기 시작...');
+
+      // ✅ clearTimeout으로 성공 시 타임아웃 취소 (거짓 경보 방지)
+      let timeoutId: NodeJS.Timeout;
+      const fetchProfilePromise = fetchUserProfile(authUser.id, type);
+      const profileTimeoutPromise = new Promise<null>((resolve) => {
+        timeoutId = setTimeout(() => {
+          console.error('[AuthContext] ❌ 프로필 가져오기 타임아웃 (5초) - 로딩 강제 종료');
+          resolve(null);
+        }, 5000);
+      });
+
+      // Promise.race로 프로필 가져오기가 너무 오래 걸리면 null 리턴하고 넘어감
+      const profile = await Promise.race([fetchProfilePromise, profileTimeoutPromise]);
+      clearTimeout(timeoutId!); // ✅ 성공이든 타임아웃이든 타이머 정리
+
+      console.log('[AuthContext] 프로필 조회 결과:', profile ? '성공' : '실패/타임아웃');
 
       if (profile) {
         setUserProfile(profile);
@@ -318,8 +363,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // 3. 온보딩 완료 여부 체크
         checkOnboardingAndRedirect(profile, type);
       } else {
-        // 프로필이 없으면 온보딩으로
+        // 프로필이 없거나 실패했으면 (타임아웃 포함)
+        // 온보딩으로 보내거나, 에러 상태를 처리해야 함. 
+        // 여기서는 일단 기존 로직대로 온보딩 유도
+        console.log('[AuthContext] 프로필 없음 -> 온보딩 페이지 리다이렉트 검토');
         if (type === 'jobseeker') {
+          // 타임아웃일 수도 있으니 무조건 리다이렉트하기보단, 현재 페이지 유지가 나을 수 있음
+          // 하지만 "무한 로딩" 해결이 우선이므로, 로딩 상태만 끄고, 필요하면 사용자가 이동하도록 함.
+          // 단, 명확히 데이터가 없다는 확신이 없으므로(타임아웃 등), 
+          // 추가적인 리다이렉트는 조심스러움. 일단 기존 로직 유지.
           router.push('/onboarding/job-seeker/quick');
         } else {
           router.push('/signup/company');
@@ -329,9 +381,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (error) {
       console.error('[AuthContext] Auth 변경 처리 에러:', error);
     } finally {
-      // ✅ 무조건 로딩 종료
+      // ✅ 무조건 로딩 종료 - 이것이 제일 중요함
+      console.log('[AuthContext] ✅ 로딩 상태 해제 (isLoading: false)');
       setIsLoading(false);
-      console.log('[AuthContext] ✅ 초기화 완료');
     }
   };
 

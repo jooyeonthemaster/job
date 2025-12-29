@@ -40,8 +40,14 @@ async function fetchWithTimeoutAndRetry(
       }
     };
 
-    if (typeof input === 'string' && input.includes('/rest/v1/jobs')) {
-      console.log(`[Supabase Fetch] 요청 시작: ${input.substring(0, 100)}...`);
+    // 모든 요청에 대해 로그 출력 (디버깅용)
+    if (typeof input === 'string') {
+      if (input.includes('/rest/v1/')) {
+        const endpoint = input.split('/rest/v1/')[1].split('?')[0];
+        console.log(`[Supabase Fetch] 요청 시작: ${endpoint}`);
+      } else {
+        console.log(`[Supabase Fetch] 요청 시작: ${input.substring(0, 50)}...`);
+      }
     }
 
     if (originalSignal) {
@@ -74,8 +80,9 @@ async function fetchWithTimeoutAndRetry(
       });
       cleanup();
 
-      if (typeof input === 'string' && input.includes('/rest/v1/jobs')) {
-        console.log(`[Supabase Fetch] 응답 성공 (${attempt + 1}번째 시도)`);
+      if (typeof input === 'string' && input.includes('/rest/v1/')) {
+        const endpoint = input.split('/rest/v1/')[1].split('?')[0];
+        console.log(`[Supabase Fetch] 응답 성공 (${attempt + 1}번째 시도): ${endpoint}`);
       }
 
       // 응답 성공 (재시도 후 성공한 경우만 로그)

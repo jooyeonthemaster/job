@@ -19,11 +19,13 @@ interface Company {
 interface CompanySelectOrCreateProps {
   selectedCompanyId: string | null;
   onCompanySelect: (companyId: string, companyData: Company) => void;
+  accessToken?: string | null; // ✅ 부모에서 전달받은 토큰 사용 (getSession hang 방지)
 }
 
 export default function CompanySelectOrCreate({
   selectedCompanyId,
-  onCompanySelect
+  onCompanySelect,
+  accessToken
 }: CompanySelectOrCreateProps) {
   const [loading, setLoading] = useState(false);
   const [logoFile, setLogoFile] = useState<File | null>(null);
@@ -170,9 +172,8 @@ export default function CompanySelectOrCreate({
 
       console.log('API 호출 시작: /api/admin/companies/create');
 
-      // 현재 사용자 세션 가져오기
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
+      // ✅ 부모에서 전달받은 accessToken 사용 (getSession hang 방지)
+      if (!accessToken) {
         throw new Error('세션이 없습니다. 다시 로그인해주세요.');
       }
 
@@ -180,7 +181,7 @@ export default function CompanySelectOrCreate({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`
+          'Authorization': `Bearer ${accessToken}`
         },
         body: JSON.stringify({
           id: tempCompanyId,
