@@ -98,7 +98,18 @@ export default function Footer() {
         <div className="border-t border-gray-800 pt-8">
           <div className="text-sm text-gray-500 space-y-1">
             <p className="font-bold text-gray-400 mb-2">사업자 정보</p>
-            <p>상호: SSMHR(선한이웃) | 대표자: 박윤미</p>
+            <p>
+              상호:{' '}
+              <a
+                href="https://www.xn--6i4b46hfpa585b.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary-400 hover:text-primary-300 transition-colors"
+              >
+                SSMHR(선한이웃) ↗
+              </a>
+              {' '}| 대표자: 박윤미
+            </p>
             <p>사업자등록번호: 412-19-01752 | 개업일: 2022년 05월 09일</p>
             <p>(본사) 경기도 수원시 팔달구 고등동 336-1(팔달로33) 웨일애비뉴 713호</p>
             <p>(서울사무소) 서울특별시 강남구 강남대로156길12 다복빌딩 4층 G42</p>

@@ -12,7 +12,16 @@ import {
 import { getTalentById, type TalentProfile } from '@/lib/supabase/talent-service';
 import { supabase } from '@/lib/supabase/config';
 
-type AccessStatus = 'self' | 'applied' | 'approved' | 'pending' | 'rejected' | null;
+type AccessStatus = 'self' | 'applied' | 'approved' | 'pending' | 'rejected' | 'admin' | null;
+
+// 관리자 이메일 목록
+const ADMIN_EMAILS = [
+  'admin@ssmhr.com',
+  'yjpark@ssmhr.com',
+  'joo.y.oh.ko@gmail.com',
+  'nadr110619@gmail.com',
+  'admin@gmail.com'
+];
 
 export default function TalentDetailPage() {
   const params = useParams();
@@ -54,6 +63,18 @@ export default function TalentDetailPage() {
         if (!session) {
           setIsCompany(false);
           setHasContactAccess(false);
+          setCheckingAccess(false);
+          setLoading(false);
+          return;
+        }
+
+        // 2.5. 관리자 체크 - 관리자는 즉시 연락처 접근 가능
+        const userEmail = session.user.email || '';
+        if (ADMIN_EMAILS.includes(userEmail)) {
+          console.log('[TalentDetail] 관리자 접근:', userEmail);
+          setIsCompany(true); // 관리자도 기업처럼 연락처 볼 수 있게
+          setHasContactAccess(true);
+          setAccessStatus('admin');
           setCheckingAccess(false);
           setLoading(false);
           return;
@@ -456,10 +477,20 @@ export default function TalentDetailPage() {
               {hasContactAccess ? (
                 // 접근 권한 있음 - 연락처 공개
                 <div className="space-y-3">
-                  <div className="flex items-center gap-2 px-3 py-2 bg-green-50 rounded-lg border border-green-200 mb-4">
-                    <Unlock className="w-4 h-4 text-green-600" />
-                    <span className="text-sm text-green-700 font-medium">
-                      {accessStatus === 'self' ? '내 프로필' : accessStatus === 'applied' ? '지원자 연락처' : '열람 승인됨'}
+                  <div className={`flex items-center gap-2 px-3 py-2 rounded-lg border mb-4 ${
+                    accessStatus === 'admin'
+                      ? 'bg-purple-50 border-purple-200'
+                      : 'bg-green-50 border-green-200'
+                  }`}>
+                    <Unlock className={`w-4 h-4 ${accessStatus === 'admin' ? 'text-purple-600' : 'text-green-600'}`} />
+                    <span className={`text-sm font-medium ${accessStatus === 'admin' ? 'text-purple-700' : 'text-green-700'}`}>
+                      {accessStatus === 'admin'
+                        ? '🔑 관리자 권한으로 열람'
+                        : accessStatus === 'self'
+                        ? '내 프로필'
+                        : accessStatus === 'applied'
+                        ? '지원자 연락처'
+                        : '열람 승인됨'}
                     </span>
                   </div>
 

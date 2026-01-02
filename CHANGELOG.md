@@ -8,6 +8,340 @@
 
 ## 📋 최근 주요 변경 사항
 
+### 2026-01-02
+
+#### ✨ [ADD] 채용 공고 요약 테이블 탭 UI 추가
+
+**변경 파일**:
+- `components/job-detail/JobSummaryTable.tsx` (신규: 417줄)
+- `app/jobs/[id]/page.tsx` (577줄 → 630줄)
+- `utils/jobFormatters.ts` (85줄 → 105줄)
+- `components/JobDetailSidebar.tsx` (타입 수정)
+
+**변경 내용**:
+- **채용 공고 상세 페이지에 탭 네비게이션 추가**:
+  - '상세 정보' 탭: 기존 상세 UI
+  - '요약 표' 탭: 표 형식의 요약 정보
+  - 아이콘 포함 탭 버튼 (LayoutList, TableProperties)
+  - 옅은 블루 컨셉의 세련된 탭 UI
+
+- **JobSummaryTable 컴포넌트 생성**:
+  - 입력된 필드만 표 형식으로 표시 (hasValue 유틸)
+  - 섹션: 모집 개요, 근무 조건, 담당 업무, 자격 요건, 우대 사항, 언어/비자, 복지 혜택, 채용 담당자
+  - ListDisplay: 리스트 항목을 불릿 형식으로 표시
+  - TagsDisplay: 스킬을 태그 형식으로 표시
+  - BooleanDisplay: O/X 아이콘으로 표시
+
+- **jobFormatters 유틸 확장**:
+  - getEnglishLevelLabel 함수 추가
+  - getKoreanLevelLabel에 FLUENT 레벨 추가
+
+- **타입 정의 정리**:
+  - page.tsx에 JobData, CompanyData, ManagerData 타입 추가
+  - JobDetailSidebar의 CompanyInfo 타입 optional 필드 수정
+
+**이유**:
+- 사용자가 채용 공고를 표 형식으로 한눈에 파악할 수 있도록
+- 옅은 블루 컨셉의 톤앤매너에 맞춘 세련된 UI
+
+**영향**:
+- 채용 공고 상세 페이지에서 탭으로 뷰 전환 가능
+- 입력되지 않은 필드는 자동으로 숨김 처리
+
+---
+
+#### ✨ [ADD] 관리자 회원 관리 기능 추가
+
+**변경 파일**:
+- `components/admin/AdminMembersTab.tsx` (신규: 410줄)
+- `app/admin/page.tsx` (289줄 → 306줄)
+- `app/talent/[id]/page.tsx` (728줄 → 745줄)
+
+**변경 내용**:
+- **관리자 페이지 회원 관리 탭 추가**:
+  - 전체/구직자/기업 필터로 회원 목록 조회
+  - 검색(이름, 이메일, 전화번호) 기능
+  - 회원별 상세 정보 확장 패널 (연락처, 프로필, 스킬 등)
+  - 구직자: 이메일, 전화번호, 국적, 스킬, 자기소개, 이력서 링크
+  - 기업: 기본정보, 담당자정보, 회사소개
+
+- **관리자 인재풀 연락처 즉시 열람 기능**:
+  - ADMIN_EMAILS에 포함된 계정은 인재 상세 페이지에서 연락처 즉시 확인
+  - 승인 요청 없이 바로 이메일/전화번호 열람
+  - '🔑 관리자 권한으로 열람' 배지 표시 (보라색)
+
+**이유**:
+- 관리자가 전체 회원 정보를 한 곳에서 파악할 수 있도록
+- 관리자가 인재풀에서 연락처를 바로 확인할 수 있도록
+
+**영향**:
+- 관리자 페이지에 '회원 관리' 탭 추가
+- 관리자 계정으로 인재 상세 페이지 접근 시 연락처 즉시 표시
+
+---
+
+#### 🔄 [REFACTOR] 인재풀 필터 UI 통합 - 상단 필터를 좌측 사이드바로 이동
+
+**변경 파일**:
+- `components/talent/TalentSidebar.tsx` (159줄 → 212줄)
+- `components/talent/TalentFilterBar.tsx` (삭제)
+- `app/talent/page.tsx` (127줄 → 120줄)
+
+**변경 내용**:
+- 상단 필터바(국적, 경력, 가용성)를 좌측 사이드바 상단으로 통합
+- TalentFilterBar 컴포넌트 삭제
+- TalentSidebar에 기본 필터(국적/경력/가용성) + 직군별 필터 통합
+- sticky top-28 → top-20으로 조정
+
+**이유**:
+- 이미지 참조 UI와 일치시키기 위해 필터를 좌측 사이드바에 통합
+- 필터가 한 곳에 모여 사용성 향상
+
+**영향**:
+- 인재풀 페이지 상단 필터바 제거
+- 모든 필터가 좌측 사이드바에서 관리됨
+
+---
+
+#### ✨ [ADD] 푸터에 선한이웃 사이트 링크 추가
+
+**변경 파일**:
+- `components/Footer.tsx` (118줄 → 127줄)
+
+**변경 내용**:
+- 사업자 정보 섹션의 "SSMHR(선한이웃)"에 외부 링크 추가
+- 클릭 시 https://www.선한이웃.com/ 새 탭으로 열림
+
+**이유**:
+- 운영사 사이트로 이동할 수 있는 링크 필요
+
+**영향**:
+- 푸터에서 선한이웃 클릭 시 외부 사이트로 이동
+
+---
+
+#### ✨ [ADD] 웹사이트 번역 언어에 몽골어 추가
+
+**변경 파일**:
+- `app/layout.tsx` (77줄 → 77줄)
+- `components/Header.tsx` (515줄 → 518줄)
+
+**변경 내용**:
+- Google Translate 지원 언어에 몽골어(mn) 추가
+- Header langMap에 몽골어 매핑 추가
+- 데스크톱/모바일 언어 선택 드롭다운에 몽골어 옵션 추가
+
+**이유**:
+- 몽골 국적 사용자를 위한 번역 지원 필요
+
+**영향**:
+- 헤더 언어 선택에서 "Монгол" 선택 가능
+- Google Translate로 웹사이트 전체 몽골어 번역 지원
+
+---
+
+#### 🐛 [FIX] 프로필 체크리스트 링크 404 수정
+
+**변경 파일**:
+- `lib/utils/profile-checklist.ts`
+
+**변경 내용**:
+- 프로필 사진: `/profile/edit/basic-info` → `/profile/edit/basic`
+- 헤드라인: `/profile/edit/basic-info` → `/profile/edit/basic`
+
+**이유**:
+- `/profile/edit/basic-info` 페이지가 존재하지 않아 404 발생
+- 프로필 사진과 헤드라인은 `/profile/edit/basic` 페이지에서 입력 가능
+
+**영향**:
+- 대시보드 체크리스트에서 선택항목 클릭 시 정상 동작
+
+---
+
+#### 🎨 [REFACTOR] 프로필 편집 페이지 헤더 간소화
+
+**변경 파일**:
+- `app/profile/edit/basic/page.tsx` (99줄 → 99줄)
+- `app/profile/edit/experience/page.tsx` (117줄 → 117줄)
+- `app/profile/edit/skills/page.tsx` (116줄 → 111줄)
+- `app/profile/edit/preferences/page.tsx` (96줄 → 91줄)
+- `app/profile/edit/introduction/page.tsx` (152줄 → 147줄)
+- `app/profile/edit/resume/page.tsx` (303줄 → 298줄)
+- `components/onboarding/job-seeker/Step1ProfileBasic.tsx` - 중복 헤더 제거
+
+**변경 내용**:
+- 중복 헤더 제거: 페이지 헤더 + 컴포넌트 헤더 → 페이지 헤더만 유지
+- 뒤로가기 버튼 간소화: "대시보드로 돌아가기" 텍스트 제거, 아이콘만 표시
+- 레이아웃 간소화:
+  - `max-w-4xl` → `max-w-2xl`
+  - `py-8` → `py-6`
+  - 그라데이션 배경 제거 → 단순 `bg-gray-50`
+  - `motion.div` 제거 (framer-motion import 삭제)
+- 헤더 스타일: `text-3xl` → `text-xl`, 부제목 제거
+
+**이유**:
+- 사용자 피드백: "상단에 각 탭별로 제목이 두개씩 있는게 어색하고, 뒤돌아가는 버튼도 어색함"
+- 중복 제거로 UI 간결화
+- 일관된 페이지 헤더 패턴 적용
+
+**영향**:
+- 모든 프로필 편집 페이지 (`/profile/edit/*`) 동일한 헤더 패턴 적용
+
+---
+
+#### 🎨 [FIX] 보라색(secondary) → 파란색(primary) 색상 수정
+
+**변경 파일**:
+- `components/onboarding/job-seeker/Step1ProfileBasic.tsx` - 버튼/입력필드 색상 수정
+- `components/onboarding/OnboardingProgressBar.tsx` - 프로그레스바 색상 수정
+
+**변경 내용**:
+- `bg-secondary-600` → `bg-primary-500` (버튼)
+- `hover:bg-secondary-700` → `hover:bg-primary-600` (버튼 호버)
+- `focus:ring-secondary-500` → `focus:ring-primary-500` (입력필드 포커스)
+- 프로그레스바 보라색 → 파란색
+
+**이유**:
+- 사용자 피드백: "이상한 보라색이 갑자기 나타나게 하지 말라"
+- secondary(보라색)이 디자인 시스템과 불일치
+- primary(파란색)으로 통일하여 일관성 확보
+
+**영향**:
+- `/profile/edit/basic` 페이지 저장 버튼 색상 변경
+- 온보딩 프로그레스바 색상 변경
+
+---
+
+#### 🎨 [REFACTOR] Step 컴포넌트 콤팩트 + 키컬러 통일 (2차 개선)
+
+**변경 파일**:
+- `components/onboarding/job-seeker/Step1_BasicInfo.tsx` (248줄 → 218줄, -30줄)
+- `components/onboarding/job-seeker/Step2_Experience.tsx` (545줄 → 420줄, -125줄)
+- `components/onboarding/job-seeker/Step3_Skills.tsx` (396줄 → 336줄, -60줄)
+- `components/onboarding/job-seeker/Step4_Preferences.tsx` (463줄 → 386줄, -77줄)
+
+**변경 내용**:
+- **콤팩트 레이아웃**:
+  - 여백 축소: space-y-8 → space-y-4
+  - 패딩 축소: p-6 → p-4
+  - 입력 필드: py-3 → py-2, px-4 → px-3
+  - 폰트 크기: text-sm 통일
+  - 모서리: rounded-2xl → rounded-lg (더 깔끔)
+- **키컬러 통일** (메인 페이지와 일관성):
+  - 필수 항목: primary-500/100/50 (파란색 #3B82F6)
+  - 선택 항목: gray-50/100 (회색)
+  - 포커스 링: focus:ring-primary-500
+  - 기존 sky/emerald → primary로 전환
+- **전문적 톤앤매너**:
+  - 그라데이션 제거 (과한 효과 정리)
+  - 중앙 헤더 → 인라인 콤팩트 헤더
+  - 그림자 효과 최소화
+  - 깔끔한 border 스타일
+- **공통 스타일 정의**:
+  ```typescript
+  const inputClass = "w-full px-3 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 ...";
+  const selectClass = "w-full px-3 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 ...";
+  const labelClass = "flex items-center gap-1.5 text-sm font-medium text-gray-700 mb-1";
+  ```
+
+**이유**:
+- 사용자 피드백: "한 화면에 콤팩트하게", "키컬러와 톤앤매너 통일", "전문적으로"
+- 이전 sky/emerald 색상이 메인 페이지 디자인 시스템(primary=blue)과 불일치
+- 과한 그라데이션/그림자가 산만함 → 미니멀한 전문적 디자인으로 전환
+
+**시도했지만 실패한 방법**:
+- ❌ sky/emerald/rose 색상: 메인 디자인 시스템과 불일치, "알록달록" 피드백
+- ❌ 그라데이션 헤더/버튼: 과한 효과로 전문적이지 않음
+
+**영향**:
+- 총 292줄 코드 감소 (-18% 평균)
+- 메인 페이지와 일관된 디자인 시스템
+- 한 화면에 더 많은 콘텐츠 표시 가능
+- 프로필 편집 페이지(/profile/edit/*)에 동일 개선 적용
+
+---
+
+#### 🎨 [UPDATE] 프로필 입력 UI 전면 개선 (Step 컴포넌트)
+
+**변경 파일**:
+- `components/onboarding/job-seeker/Step1_BasicInfo.tsx` (기존 197줄 → 248줄)
+- `components/onboarding/job-seeker/Step2_Experience.tsx` (기존 약 500줄 → 545줄)
+- `components/onboarding/job-seeker/Step3_Skills.tsx` (기존 384줄 → 396줄)
+- `components/onboarding/job-seeker/Step4_Preferences.tsx` (기존 410줄 → 463줄)
+
+**변경 내용**:
+- **모던 UI 디자인 적용**:
+  - 중앙 정렬 헤더 + 그라데이션 아이콘 배경
+  - 카드 기반 섹션 디자인 (sky=필수, emerald=선택/학력)
+  - rounded-2xl 모서리 적용
+  - 그라데이션 배경 및 그림자 효과
+- **일관된 색상 테마**:
+  - sky (하늘색): 필수 항목, 경력, 스킬
+  - emerald (초록색): 선택 항목, 학력, 언어
+  - rose (분홍색): 에러 상태, 필수 표시(*)
+- **입력 필드 개선**:
+  - 아이콘 라벨 추가 (lucide-react)
+  - py-3 패딩으로 넉넉한 터치 영역
+  - focus:ring-2 포커스 효과
+  - 커스텀 select 드롭다운 아이콘
+- **버튼 스타일 개선**:
+  - 그라데이션 Primary 버튼 (sky→emerald)
+  - 그림자 효과 (shadow-lg shadow-sky-500/25)
+  - 호버 상태 애니메이션
+- **숫자 뱃지**: 선택된 항목에 번호 표시
+- **TypeScript 타입 강화**: `any` 타입 제거, 명시적 타입 정의
+
+**이유**:
+- 사용자 피드백: "디자인이 너무 별로네" → 모던하고 세련된 UI로 개선
+- 이전 색상 피드백: "알록달록" → 통일된 sky/emerald/rose 팔레트
+
+**영향**:
+- 구직자 프로필 편집 페이지 전체 UI 개선
+- 온보딩 플로우 시각적 일관성 향상
+- 사용자 경험 개선 (입력 영역 명확화, 필수/선택 구분)
+
+---
+
+#### ✨ [UPDATE] 인재풀 등록 간소화 (3.8 이력서 등록 간소화)
+
+**변경 파일**:
+- `lib/utils/talent-pool-eligibility.ts` (기존 150줄 → 237줄) - 필수 8개 → 6개로 간소화
+- `lib/utils/profile-checklist.ts` (기존 91줄 → 191줄) - 필수/선택 항목 구분 및 정렬
+- `components/jobseeker-dashboard/ProfileChecklist.tsx` (기존 320줄 → 약 430줄) - 필수/선택 구분 UI 개선
+- `app/api/talent/publish/route.ts` (기존 268줄 → 262줄) - 서버 검증 로직 동기화
+- `docs/DEVELOPMENT_PLAN_20251231.md` - 3.8 완료 표시
+
+**변경 내용**:
+- **인재풀 등록 필수 항목 간소화**: 8개 → 6개
+  - ⭐ 필수 항목 (6개): 연락처, 이메일, 경력, 보유기술, 자기소개, 희망직무
+  - 📋 선택 항목 (4개): 프로필사진, 헤드라인, 언어능력, 이력서파일
+- **UI/UX 개선**:
+  - 필수 항목이 먼저 표시되도록 순서 변경
+  - 프로그레스 바가 필수 항목 기준으로 표시
+  - 모달에서 필수/선택 항목 섹션 분리
+- **색상 통일 (2차 업데이트)**:
+  - 필수 미완료 항목: rose (옅은 분홍색) - `bg-rose-50`, `text-rose-500`
+  - 선택 항목: sky (옅은 하늘색) - `bg-sky-50`, `text-sky-400`
+  - 완료 항목: emerald (옅은 초록색) - `bg-emerald-50`, `text-emerald-600`
+  - 프로그레스 바: emerald(완료) / rose(미완료) 그라데이션
+  - CTA 영역: `bg-gradient-to-r from-sky-50 to-emerald-50`
+- **타입 시스템 개선**:
+  - `EligibilityIssue`에 `isRequired` 플래그 추가
+  - `EligibilityResult`에 `requiredCompleted/Total`, `optionalCompleted/Total` 추가
+  - `ExtendedChecklistItem` 타입 생성 (isRequired, priority 필드 포함)
+
+**이유**:
+- 클라이언트 요구사항: 인재풀 등록이 너무 까다로움, 필수 항목만 있으면 등록 가능하게
+- 기존에는 100% 완성 필수 (8개 항목) → 간소화하여 6개만 완성하면 등록 가능
+- UX 개선: 필수/선택 구분으로 사용자가 명확히 이해 가능
+
+**영향**:
+- 구직자 대시보드의 프로필 완성 체크리스트 UI 변경
+- 인재풀 등록 기준 완화로 더 많은 구직자 등록 유도
+- 클라이언트/서버 모두 동일한 6개 필수 항목 검증
+
+---
+
 ### 2026-01-01
 
 #### ✨ [ADD] 인재 고유번호 시스템 구현

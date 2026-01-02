@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext_Supabase';
 import { getUserProfile, updateUserProfile } from '@/lib/supabase/jobseeker-service';
 import { Upload, Check, AlertCircle, ArrowLeft, Save, Eye, Download, FileText } from 'lucide-react';
-import { motion } from 'framer-motion';
 import Link from 'next/link';
 import PDFImageViewer from '@/components/PDFImageViewer';
 
@@ -131,25 +130,21 @@ export default function ResumeEditPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 py-8 max-w-3xl">
-        {/* Header */}
-        <div className="mb-6">
-          <Link
-            href="/jobseeker-dashboard"
-            className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors mb-4"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            대시보드로 돌아가기
-          </Link>
-          <h1 className="text-3xl font-bold text-gray-900">이력서 관리</h1>
-          <p className="text-gray-600 mt-2">PDF 또는 Word 문서로 이력서를 업로드하세요</p>
+      <div className="container mx-auto px-4 py-6 max-w-2xl">
+        {/* 간소화된 헤더 */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <Link
+              href="/jobseeker-dashboard"
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5 text-gray-600" />
+            </Link>
+            <h1 className="text-xl font-bold text-gray-900">이력서 관리</h1>
+          </div>
         </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-md shadow-sm p-6"
-        >
+        <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-100">
           {/* 현재 이력서 */}
           {currentResumeUrl && !resumeFile && (
             <div className="mb-6 p-4 bg-gray-50 rounded-lg">
@@ -266,7 +261,7 @@ export default function ResumeEditPage() {
               취소
             </Link>
           </div>
-        </motion.div>
+        </div>
 
         {/* PDF 미리보기 모달 */}
         {showPreview && currentResumeUrl && (

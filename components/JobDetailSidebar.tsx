@@ -8,10 +8,10 @@ import { Building2, Share2, Mail, Phone } from 'lucide-react';
 type CompanyInfo = {
   id: string;
   name: string;
-  name_en: string;
+  name_en?: string;
   logo?: string;
-  industry: string;
-  location: string;
+  industry?: string;
+  location?: string;
   description?: string;
 };
 

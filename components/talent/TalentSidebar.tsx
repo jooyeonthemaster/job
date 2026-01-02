@@ -1,5 +1,5 @@
 // 인재풀 사이드바 필터 컴포넌트
-// app/talent/page.tsx에서 분리 (기능 변경 없음)
+// 상단 필터(국적, 경력, 가용성)와 직군별 필터 통합
 
 import { Filter, ChevronRight, ChevronDown } from 'lucide-react';
 import { TALENT_CATEGORIES } from '@/constants/talent-categories';
@@ -10,6 +10,15 @@ type TalentSidebarProps = {
   expandedCategories: string[];
   expandedSubcategories: string[];
   filteredCount: number;
+  // 기본 필터 props
+  selectedNationality: string;
+  selectedExperience: string;
+  selectedAvailability: string;
+  nationalities: string[];
+  onNationalityChange: (value: string) => void;
+  onExperienceChange: (value: string) => void;
+  onAvailabilityChange: (value: string) => void;
+  // 스킬/카테고리 필터 props
   onSkillsChange: (skills: string[]) => void;
   onCategoryChange: (categories: string[]) => void;
   onExpandedCategoriesChange: (categories: string[]) => void;
@@ -23,6 +32,13 @@ export default function TalentSidebar({
   expandedCategories,
   expandedSubcategories,
   filteredCount,
+  selectedNationality,
+  selectedExperience,
+  selectedAvailability,
+  nationalities,
+  onNationalityChange,
+  onExperienceChange,
+  onAvailabilityChange,
   onSkillsChange,
   onCategoryChange,
   onExpandedCategoriesChange,
@@ -30,10 +46,58 @@ export default function TalentSidebar({
   onResetFilters
 }: TalentSidebarProps) {
   return (
-    <div className="bg-white rounded-md shadow-sm p-6 sticky top-28">
+    <div className="bg-white rounded-md shadow-sm p-6 sticky top-20">
       <div className="flex items-center gap-2 mb-4">
         <Filter className="w-5 h-5 text-primary-600" />
         <h3 className="font-semibold text-gray-900">상세 필터</h3>
+      </div>
+
+      {/* 기본 필터: 국적, 경력, 가용성 */}
+      <div className="space-y-3 mb-6 pb-6 border-b border-gray-200">
+        {/* 국적 필터 */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">국적</label>
+          <select
+            value={selectedNationality}
+            onChange={(e) => onNationalityChange(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
+          >
+            <option value="all">모든 국적</option>
+            {nationalities.map(nat => (
+              <option key={nat} value={nat}>{nat}</option>
+            ))}
+          </select>
+        </div>
+
+        {/* 경력 필터 */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">경력</label>
+          <select
+            value={selectedExperience}
+            onChange={(e) => onExperienceChange(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
+          >
+            <option value="all">모든 경력</option>
+            <option value="0-2">0-2년</option>
+            <option value="3-5">3-5년</option>
+            <option value="6+">6년 이상</option>
+          </select>
+        </div>
+
+        {/* 가용성 필터 */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">가용성</label>
+          <select
+            value={selectedAvailability}
+            onChange={(e) => onAvailabilityChange(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
+          >
+            <option value="all">모두</option>
+            <option value="immediate">즉시 가능</option>
+            <option value="2weeks">2주 이내</option>
+            <option value="1month">1개월 이내</option>
+          </select>
+        </div>
       </div>
 
       {/* Industry Categories Filter */}

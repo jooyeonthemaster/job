@@ -1,34 +1,39 @@
 // 프로필 완성 체크리스트 컴포넌트
+// 2026-01-02 간소화: 필수 6개, 선택 4개 구분 표시
 
 'use client';
 
 import { useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext_Supabase';
-import { TrendingUp, CheckCircle, ChevronRight, Edit3, Users, AlertCircle, X, Eye } from 'lucide-react';
-import type { ChecklistItem, UserProfile } from '@/types/jobseeker-dashboard.types';
-import { checkTalentPoolEligibility, type EligibilityIssue } from '@/lib/utils/talent-pool-eligibility';
+import { TrendingUp, CheckCircle, ChevronRight, Users, AlertCircle, X, Eye, Star, Sparkles } from 'lucide-react';
+import type { UserProfile } from '@/types/jobseeker-dashboard.types';
+import type { ExtendedChecklistItem } from '@/lib/utils/profile-checklist';
+import { checkTalentPoolEligibility } from '@/lib/utils/talent-pool-eligibility';
 
 type Props = {
-  checklist: ChecklistItem[];
+  checklist: ExtendedChecklistItem[];
   checklistPercentage: number;
   profileData: UserProfile | null;
 };
 
 export default function ProfileChecklist({ checklist, checklistPercentage, profileData }: Props) {
   const { user } = useAuth();
-  const completedItems = checklist.filter(item => item.completed).length;
-  const totalItems = checklist.length;
   const [showEligibilityModal, setShowEligibilityModal] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
+
+  // 필수/선택 항목 분리
+  const requiredItems = checklist.filter(item => item.isRequired);
+  const optionalItems = checklist.filter(item => !item.isRequired);
+
+  const requiredCompleted = requiredItems.filter(item => item.completed).length;
+  const optionalCompleted = optionalItems.filter(item => item.completed).length;
 
   const eligibility = checkTalentPoolEligibility(profileData);
   const talentProfileUrl = user ? `/talent/${user.id}` : '/talent';
 
-  // 디버깅
-  console.log('[ProfileChecklist] User:', user);
-  console.log('[ProfileChecklist] Eligibility:', eligibility);
-  console.log('[ProfileChecklist] Profile Data:', profileData);
+  // 필수 항목 완성율 (인재풀 등록 기준)
+  const requiredPercentage = Math.round((requiredCompleted / requiredItems.length) * 100);
 
   const handleTalentPoolClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -89,105 +94,183 @@ export default function ProfileChecklist({ checklist, checklistPercentage, profi
           <h2 className="text-lg font-semibold text-gray-900 mb-1">
             프로필 완성하기
           </h2>
-          <p className="text-sm text-gray-600">
-            {completedItems} / {totalItems} 항목 완료 ({checklistPercentage}%)
-          </p>
+          <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600">
+            <span className="flex items-center gap-1">
+              <Star className="w-4 h-4 text-rose-400" />
+              필수 {requiredCompleted}/{requiredItems.length}
+            </span>
+            <span className="flex items-center gap-1">
+              <Sparkles className="w-4 h-4 text-sky-400" />
+              선택 {optionalCompleted}/{optionalItems.length}
+            </span>
+          </div>
         </div>
-        <div className="flex items-center gap-2 px-3 py-1 bg-primary-50 rounded-full">
-          <TrendingUp className="w-4 h-4 text-primary-600" />
-          <span className="text-sm font-medium text-primary-600">
-            {100 - checklistPercentage}% 남음
+        <div className={`flex items-center gap-2 px-3 py-1 rounded-full ${
+          eligibility.eligible
+            ? 'bg-emerald-50 text-emerald-600'
+            : 'bg-rose-50 text-rose-500'
+        }`}>
+          {eligibility.eligible ? (
+            <CheckCircle className="w-4 h-4" />
+          ) : (
+            <TrendingUp className="w-4 h-4" />
+          )}
+          <span className="text-sm font-medium">
+            {eligibility.eligible ? '등록 가능!' : `필수 ${requiredPercentage}%`}
           </span>
         </div>
       </div>
 
-      {/* Progress Bar */}
-      <div className="h-2 bg-gray-200 rounded-full overflow-hidden mb-4">
+      {/* Progress Bar - 필수 항목 기준 */}
+      <div className="relative h-3 bg-gray-100 rounded-full overflow-hidden mb-2">
         <div
-          className="h-full bg-gradient-to-r from-primary-500 to-primary-600 transition-all duration-500"
-          style={{ width: `${checklistPercentage}%` }}
+          className={`h-full transition-all duration-500 ${
+            eligibility.eligible
+              ? 'bg-gradient-to-r from-emerald-400 to-emerald-500'
+              : 'bg-gradient-to-r from-rose-300 to-rose-400'
+          }`}
+          style={{ width: `${requiredPercentage}%` }}
         />
       </div>
+      <p className="text-xs text-gray-500 mb-4">
+        {eligibility.eligible
+          ? '✅ 인재풀 등록 조건을 충족했습니다!'
+          : `⭐ 필수 항목 ${requiredItems.length - requiredCompleted}개를 더 완성하면 인재풀에 등록할 수 있습니다.`}
+      </p>
 
-      {/* Checklist Items */}
-      <div className="grid md:grid-cols-2 gap-3">
-        {checklist.map((item) => {
-          const Icon = item.icon;
-          return (
-            <Link
-              key={item.id}
-              href={item.link}
-              className={`flex items-center gap-3 p-3 rounded-lg border transition-all ${
-                item.completed
-                  ? 'bg-green-50 border-green-200'
-                  : 'bg-gray-50 border-gray-200 hover:border-primary-300 hover:bg-primary-50'
-              }`}
-            >
-              <div
-                className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+      {/* ⭐ 필수 항목 섹션 */}
+      <div className="mb-4">
+        <h3 className="text-sm font-semibold text-gray-800 mb-2 flex items-center gap-1.5">
+          <Star className="w-4 h-4 text-rose-400" />
+          필수 항목 ({requiredCompleted}/{requiredItems.length})
+        </h3>
+        <div className="grid md:grid-cols-2 gap-2">
+          {requiredItems.map((item) => {
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.id}
+                href={item.link}
+                className={`flex items-center gap-3 p-3 rounded-lg border transition-all ${
                   item.completed
-                    ? 'bg-green-100 text-green-600'
-                    : 'bg-gray-200 text-gray-500'
+                    ? 'bg-emerald-50 border-emerald-200'
+                    : 'bg-rose-50 border-rose-200 hover:border-rose-300 hover:bg-rose-100'
                 }`}
               >
-                {item.completed ? (
-                  <CheckCircle className="w-5 h-5" />
-                ) : (
-                  <Icon className="w-5 h-5" />
-                )}
-              </div>
-              <div className="flex-1">
-                <p
-                  className={`text-sm font-medium ${
-                    item.completed ? 'text-green-900' : 'text-gray-900'
+                <div
+                  className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                    item.completed
+                      ? 'bg-emerald-100 text-emerald-600'
+                      : 'bg-rose-100 text-rose-500'
                   }`}
                 >
-                  {item.title}
-                </p>
-                <p className="text-xs text-gray-500">{item.description}</p>
-              </div>
-              {!item.completed && (
-                <ChevronRight className="w-4 h-4 text-gray-400" />
-              )}
-            </Link>
-          );
-        })}
+                  {item.completed ? (
+                    <CheckCircle className="w-5 h-5" />
+                  ) : (
+                    <Icon className="w-5 h-5" />
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p
+                    className={`text-sm font-medium truncate ${
+                      item.completed ? 'text-emerald-800' : 'text-rose-700'
+                    }`}
+                  >
+                    {item.title}
+                    {!item.completed && <span className="text-rose-500 ml-1">*</span>}
+                  </p>
+                  <p className="text-xs text-gray-500 truncate">{item.description}</p>
+                </div>
+                {!item.completed && (
+                  <ChevronRight className="w-4 h-4 text-rose-400 shrink-0" />
+                )}
+              </Link>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* 📋 선택 항목 섹션 */}
+      <div className="mb-4">
+        <h3 className="text-sm font-semibold text-gray-800 mb-2 flex items-center gap-1.5">
+          <Sparkles className="w-4 h-4 text-sky-400" />
+          선택 항목 ({optionalCompleted}/{optionalItems.length})
+          <span className="text-xs font-normal text-gray-500 ml-1">- 권장</span>
+        </h3>
+        <div className="grid md:grid-cols-2 gap-2">
+          {optionalItems.map((item) => {
+            const Icon = item.icon;
+            const isWideItem = item.id === 'basic-extra';
+            return (
+              <Link
+                key={item.id}
+                href={item.link}
+                className={`flex items-center gap-3 p-3 rounded-lg border transition-all ${
+                  isWideItem ? 'md:col-span-2' : ''
+                } ${
+                  item.completed
+                    ? 'bg-emerald-50 border-emerald-200'
+                    : 'bg-sky-50 border-sky-200 hover:border-sky-300 hover:bg-sky-100'
+                }`}
+              >
+                <div
+                  className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                    item.completed
+                      ? 'bg-emerald-100 text-emerald-600'
+                      : 'bg-sky-100 text-sky-500'
+                  }`}
+                >
+                  {item.completed ? (
+                    <CheckCircle className="w-5 h-5" />
+                  ) : (
+                    <Icon className="w-5 h-5" />
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p
+                    className={`text-sm font-medium truncate ${
+                      item.completed ? 'text-emerald-800' : 'text-gray-700'
+                    }`}
+                  >
+                    {item.title}
+                  </p>
+                  <p className="text-xs text-gray-500 truncate">{item.description}</p>
+                </div>
+                {!item.completed && (
+                  <ChevronRight className="w-4 h-4 text-sky-400 shrink-0" />
+                )}
+              </Link>
+            );
+          })}
+        </div>
       </div>
 
       {/* CTA */}
-      <div className="mt-4 p-4 bg-gradient-to-r from-primary-50 to-secondary-50 rounded-lg">
+      <div className="p-4 bg-gradient-to-r from-sky-50 to-emerald-50 rounded-lg border border-gray-100">
         <p className="text-sm text-gray-700 mb-3">
-          <strong>💡 프로필 완성 혜택:</strong> 프로필이 완성되면 기업의 스카우트 제안을 받을 확률이 높아지고, AI 매칭 정확도도 향상됩니다.
+          <strong>💡 인재풀 등록 혜택:</strong> 필수 항목만 완성하면 기업의 스카우트 제안을 받을 수 있습니다!
         </p>
         <div className="flex flex-col sm:flex-row gap-2">
-          {/* 프로필 완성하기 버튼 숨김 처리 */}
-          {/* <Link
-            href="/profile/edit"
-            className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium"
-          >
-            <Edit3 className="w-4 h-4" />
-            지금 프로필 완성하기
-          </Link> */}
           <button
             onClick={handleTalentPoolClick}
-            className={`inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg transition-colors text-sm font-medium ${
+            className={`inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg transition-colors text-sm font-medium ${
               eligibility.eligible
-                ? 'bg-white border-2 border-green-600 text-green-700 hover:bg-green-50'
-                : 'bg-gray-100 border-2 border-gray-300 text-gray-500 cursor-not-allowed'
+                ? 'bg-emerald-500 text-white hover:bg-emerald-600 shadow-sm'
+                : 'bg-rose-50 border border-rose-300 text-rose-700 hover:bg-rose-100'
             }`}
           >
             <Users className="w-4 h-4" />
-            인재풀 등록하기
+            {eligibility.eligible ? '인재풀 등록하기' : '등록 조건 확인하기'}
             {!eligibility.eligible && (
-              <span className="ml-1 px-2 py-0.5 bg-gray-200 text-gray-600 rounded-full text-xs">
-                {eligibility.completionRate}%
+              <span className="ml-1 px-2 py-0.5 bg-rose-200 text-rose-800 rounded-full text-xs font-semibold">
+                {requiredCompleted}/{requiredItems.length}
               </span>
             )}
           </button>
           <Link
             href={talentProfileUrl}
             target="_blank"
-            className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
+            className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
           >
             <Eye className="w-4 h-4" />
             내 프로필 미리보기
@@ -234,50 +317,92 @@ export default function ProfileChecklist({ checklist, checklistPercentage, profi
               </div>
 
               {eligibility.eligible ? (
-                <div className="p-4 bg-green-50 border border-green-200 rounded-lg mb-4">
-                  <p className="text-sm text-green-900 font-medium mb-2">
-                    ✅ 등록 조건 충족!
+                <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-lg mb-4">
+                  <p className="text-sm text-emerald-800 font-medium mb-2">
+                    ✅ 필수 항목 완료!
                   </p>
-                  <p className="text-sm text-green-800">
-                    프로필이 100% 완성되었습니다. "인재풀에 등록하기" 버튼을 눌러 기업들에게 노출시키세요.
+                  <p className="text-sm text-emerald-700">
+                    인재풀 등록 조건을 충족했습니다. 아래 버튼을 눌러 기업들에게 프로필을 노출시키세요.
                   </p>
                 </div>
               ) : (
                 <>
-                  <p className="text-gray-700 mb-4">
-                    기업이 인재 프로필을 제대로 확인할 수 있도록 아래 정보를 먼저 완성해주세요.
-                    <strong className="text-primary-600"> (100% 완성 필수)</strong>
-                  </p>
-
-                  <div className="space-y-3">
-                    {eligibility.issues.map((issue, idx) => (
-                      <div key={idx} className="flex items-start gap-3 p-3 bg-orange-50 border border-orange-200 rounded-lg">
-                        <AlertCircle className="w-5 h-5 text-orange-600 shrink-0 mt-0.5" />
-                        <div className="flex-1">
-                          <p className="font-medium text-orange-900 text-sm">{issue.field}</p>
-                          <p className="text-orange-700 text-sm mt-1">{issue.message}</p>
+                  {/* 필수 항목 미완료 안내 */}
+                  <div className="mb-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Star className="w-4 h-4 text-rose-400" />
+                      <p className="font-semibold text-rose-700 text-sm">
+                        필수 항목 ({eligibility.requiredCompleted}/{eligibility.requiredTotal})
+                      </p>
+                    </div>
+                    <p className="text-gray-600 text-sm mb-3">
+                      아래 <strong className="text-rose-600">{eligibility.requiredTotal - eligibility.requiredCompleted}개 항목</strong>을 완성하면 인재풀에 등록할 수 있습니다.
+                    </p>
+                    <div className="space-y-2">
+                      {eligibility.issues.filter(issue => issue.isRequired).map((issue, idx) => (
+                        <div key={idx} className="flex items-start gap-3 p-3 bg-rose-50 border border-rose-200 rounded-lg">
+                          <AlertCircle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
+                          <div className="flex-1">
+                            <p className="font-medium text-rose-700 text-sm flex items-center gap-1">
+                              {issue.field}
+                              <span className="text-rose-500">*</span>
+                            </p>
+                            <p className="text-rose-600 text-sm mt-1">{issue.message}</p>
+                          </div>
+                          {issue.link && (
+                            <Link
+                              href={issue.link}
+                              onClick={() => setShowEligibilityModal(false)}
+                              className="px-3 py-1.5 bg-rose-500 text-white rounded-lg text-xs font-medium hover:bg-rose-600 transition-colors shrink-0"
+                            >
+                              입력하기
+                            </Link>
+                          )}
                         </div>
-                        {issue.link && (
-                          <Link
-                            href={issue.link}
-                            onClick={() => setShowEligibilityModal(false)}
-                            className="px-3 py-1 bg-orange-600 text-white rounded-lg text-xs font-medium hover:bg-orange-700 transition-colors shrink-0"
-                          >
-                            입력하기
-                          </Link>
-                        )}
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
+
+                  {/* 선택 항목 안내 (있는 경우만) */}
+                  {eligibility.issues.filter(issue => !issue.isRequired).length > 0 && (
+                    <div className="mb-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Sparkles className="w-4 h-4 text-sky-400" />
+                        <p className="font-semibold text-gray-700 text-sm">
+                          선택 항목 - 권장
+                        </p>
+                      </div>
+                      <div className="space-y-2">
+                        {eligibility.issues.filter(issue => !issue.isRequired).map((issue, idx) => (
+                          <div key={idx} className="flex items-start gap-3 p-3 bg-sky-50 border border-sky-200 rounded-lg">
+                            <Sparkles className="w-5 h-5 text-sky-400 shrink-0 mt-0.5" />
+                            <div className="flex-1">
+                              <p className="font-medium text-gray-700 text-sm">{issue.field}</p>
+                              <p className="text-gray-600 text-sm mt-1">{issue.message}</p>
+                            </div>
+                            {issue.link && (
+                              <Link
+                                href={issue.link}
+                                onClick={() => setShowEligibilityModal(false)}
+                                className="px-3 py-1.5 bg-sky-500 text-white rounded-lg text-xs font-medium hover:bg-sky-600 transition-colors shrink-0"
+                              >
+                                추가하기
+                              </Link>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </>
               )}
             </div>
 
-            <div className="p-4 bg-gradient-to-r from-primary-50 to-blue-50 border border-primary-200 rounded-lg mb-4">
-              <p className="text-sm text-gray-900 font-medium mb-2">
+            <div className="p-4 bg-gradient-to-r from-sky-50 to-emerald-50 border border-gray-200 rounded-lg mb-4">
+              <p className="text-sm text-gray-800 font-medium mb-2">
                 💡 인재풀 등록 혜택
               </p>
-              <ul className="text-sm text-gray-800 space-y-1">
+              <ul className="text-sm text-gray-600 space-y-1">
                 <li>• 인재 검색 페이지에 노출 → 기업 유입 증가</li>
                 <li>• 기업의 직접 스카우트 제안 수신 가능</li>
                 <li>• 프로필 노출로 채용 기회 대폭 증가</li>
@@ -288,7 +413,7 @@ export default function ProfileChecklist({ checklist, checklistPercentage, profi
             <div className="flex gap-3">
               <button
                 onClick={() => setShowEligibilityModal(false)}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 font-medium transition-colors"
+                className="flex-1 px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 font-medium text-gray-600 transition-colors"
               >
                 닫기
               </button>
@@ -296,7 +421,7 @@ export default function ProfileChecklist({ checklist, checklistPercentage, profi
                 <button
                   onClick={handlePublishTalentPool}
                   disabled={isPublishing}
-                  className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isPublishing ? '등록 중...' : '인재풀에 등록하기'}
                 </button>
@@ -304,7 +429,7 @@ export default function ProfileChecklist({ checklist, checklistPercentage, profi
                 <Link
                   href="/profile/edit"
                   onClick={() => setShowEligibilityModal(false)}
-                  className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium transition-colors text-center"
+                  className="flex-1 px-4 py-2 bg-sky-500 text-white rounded-lg hover:bg-sky-600 font-medium transition-colors text-center"
                 >
                   지금 완성하기
                 </Link>

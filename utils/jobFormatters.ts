@@ -62,6 +62,23 @@ export const getKoreanLevelLabel = (level: string): string => {
     BASIC: '기초',
     INTERMEDIATE: '중급',
     ADVANCED: '고급',
+    FLUENT: '유창',
+    NATIVE: '원어민'
+  };
+  return labels[level] || level;
+};
+
+/**
+ * 영어 수준을 한국어 라벨로 변환
+ * @param level 영어 수준 (NONE, BASIC, INTERMEDIATE, FLUENT, NATIVE)
+ * @returns 한국어 라벨
+ */
+export const getEnglishLevelLabel = (level: string): string => {
+  const labels: Record<string, string> = {
+    NONE: '무관',
+    BASIC: '기초',
+    INTERMEDIATE: '중급',
+    FLUENT: '유창',
     NATIVE: '원어민'
   };
   return labels[level] || level;

@@ -9,6 +9,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import JobApplicationModal from '@/components/JobApplicationModal';
 import JobDetailSidebar from '@/components/JobDetailSidebar';
+import JobSummaryTable from '@/components/job-detail/JobSummaryTable';
 import {
   formatSalary,
   getExperienceLabel,
@@ -25,17 +26,76 @@ import {
   CheckCircle,
   ArrowLeft,
   FileText,
-  Code
+  Code,
+  LayoutList,
+  TableProperties
 } from 'lucide-react';
+
+// 탭 타입 정의
+type ViewTab = 'detail' | 'summary';
+
+// 회사 정보 타입
+type CompanyData = {
+  id: string;
+  name: string;
+  name_en?: string;
+  logo?: string;
+  banner_image?: string;
+  industry?: string;
+  location?: string;
+  description?: string;
+};
+
+// 채용 담당자 타입
+type ManagerData = {
+  name?: string;
+  position?: string;
+  email?: string;
+  phone?: string;
+};
+
+// 채용 공고 타입
+type JobData = {
+  id: string;
+  title: string;
+  title_en?: string;
+  department?: string;
+  location?: string;
+  employment_type?: string;
+  experience_level?: string;
+  salary_min?: number;
+  salary_max?: number;
+  salary_negotiable?: boolean;
+  description?: string;
+  job_description?: string;
+  required_experience?: string;
+  required_skills?: string[];
+  main_tasks?: string[];
+  requirements?: string[];
+  preferred_qualifications?: string[];
+  visa_sponsorship?: boolean;
+  korean_level?: string;
+  english_level?: string;
+  probation?: string;
+  start_date?: string;
+  work_hours?: string;
+  benefits?: string[];
+  tags?: string[];
+  deadline?: string;
+  status?: string;
+  company?: CompanyData;
+  manager?: ManagerData;
+};
 
 export default function JobDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const { user, userProfile, userType } = useAuth();  // ✅ userType 추가
-  const [job, setJob] = useState<any>(null);
+  const { user, userProfile, userType } = useAuth();
+  const [job, setJob] = useState<JobData | null>(null);
   const [loading, setLoading] = useState(true);
   const [isApplicationModalOpen, setIsApplicationModalOpen] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string>('');  // ✅ 에러 메시지 상태
+  const [errorMessage, setErrorMessage] = useState<string>('');
+  const [activeTab, setActiveTab] = useState<ViewTab>('detail');  // 탭 상태
 
   // ✅ 에러 메시지 자동 제거 (3초)
   useEffect(() => {
@@ -88,9 +148,9 @@ export default function JobDetailPage() {
           });
           setJob({
             ...data,
-            company: data.companies,
-            manager: data.job_manager
-          });
+            company: data.companies as CompanyData,
+            manager: data.job_manager as ManagerData
+          } as JobData);
         }
       } catch (error) {
         console.error('Error fetching job:', error);
@@ -192,6 +252,10 @@ export default function JobDetailPage() {
 
   const handleApplicationSubmit = async (message: string) => {
     try {
+      if (!job) {
+        throw new Error('공고 정보를 불러올 수 없습니다.');
+      }
+
       if (!user?.id) {
         throw new Error('로그인이 필요합니다.');
       }
@@ -302,10 +366,10 @@ export default function JobDetailPage() {
             <div className="bg-white rounded-md shadow-sm p-8">
               <div className="flex items-start gap-4 mb-6">
                 <div className="w-16 h-16 rounded-md bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center shrink-0 overflow-hidden">
-                  {job.company?.logo ? (
+                  {(job.company as Record<string, unknown>)?.logo ? (
                     <Image
-                      src={job.company.logo}
-                      alt={job.company.name}
+                      src={(job.company as Record<string, unknown>).logo as string}
+                      alt={(job.company as Record<string, unknown>).name as string}
                       width={64}
                       height={64}
                       className="w-full h-full object-cover"
@@ -316,15 +380,15 @@ export default function JobDetailPage() {
                 </div>
                 <div className="flex-1">
                   <Link
-                    href={`/companies/${job.company?.id}`}
+                    href={`/companies/${(job.company as Record<string, unknown>)?.id}`}
                     className="text-sm font-medium text-gray-600 hover:text-primary-600 mb-1 inline-block"
                   >
-                    {job.company?.name}
+                    {(job.company as Record<string, unknown>)?.name as string}
                   </Link>
                   <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                    {job.title}
+                    {job.title as string}
                   </h1>
-                  <p className="text-lg text-gray-600">{job.title_en}</p>
+                  <p className="text-lg text-gray-600">{job.title_en as string}</p>
                 </div>
               </div>
 
@@ -334,7 +398,7 @@ export default function JobDetailPage() {
                   <MapPin className="w-5 h-5 text-gray-400" />
                   <div>
                     <p className="text-xs text-gray-500">근무지</p>
-                    <p className="text-sm font-medium text-gray-900">{job.location}</p>
+                    <p className="text-sm font-medium text-gray-900">{job.location as string}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
@@ -342,7 +406,7 @@ export default function JobDetailPage() {
                   <div>
                     <p className="text-xs text-gray-500">고용 형태</p>
                     <p className="text-sm font-medium text-gray-900">
-                      {getExperienceLabel(job.experience_level)} · {getEmploymentTypeLabel(job.employment_type)}
+                      {getExperienceLabel(job.experience_level as string)} · {getEmploymentTypeLabel(job.employment_type as string)}
                     </p>
                   </div>
                 </div>
@@ -351,7 +415,7 @@ export default function JobDetailPage() {
                   <div>
                     <p className="text-xs text-gray-500">급여</p>
                     <p className="text-sm font-medium text-gray-900">
-                      {formatSalary(job.salary_min, job.salary_max)} KRW
+                      {formatSalary(job.salary_min as number, job.salary_max as number)} KRW
                       {job.salary_negotiable && <span className="text-xs ml-1">(협상가능)</span>}
                     </p>
                   </div>
@@ -361,7 +425,7 @@ export default function JobDetailPage() {
                   <div>
                     <p className="text-xs text-gray-500">마감일</p>
                     <p className="text-sm font-medium text-gray-900">
-                      {job.deadline ? new Date(job.deadline).toLocaleDateString('ko-KR') : '상시 채용'}
+                      {job.deadline ? new Date(job.deadline as string).toLocaleDateString('ko-KR') : '상시 채용'}
                     </p>
                   </div>
                 </div>
@@ -378,21 +442,57 @@ export default function JobDetailPage() {
               )}
             </div>
 
+            {/* 탭 네비게이션 */}
+            <div className="bg-white rounded-md shadow-sm overflow-hidden">
+              <div className="flex border-b border-gray-100">
+                <button
+                  onClick={() => setActiveTab('detail')}
+                  className={`flex-1 flex items-center justify-center gap-2 px-6 py-4 text-sm font-medium transition-all ${
+                    activeTab === 'detail'
+                      ? 'text-primary-600 bg-primary-50/50 border-b-2 border-primary-500'
+                      : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  <LayoutList className="w-4 h-4" />
+                  상세 정보
+                </button>
+                <button
+                  onClick={() => setActiveTab('summary')}
+                  className={`flex-1 flex items-center justify-center gap-2 px-6 py-4 text-sm font-medium transition-all ${
+                    activeTab === 'summary'
+                      ? 'text-primary-600 bg-primary-50/50 border-b-2 border-primary-500'
+                      : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  <TableProperties className="w-4 h-4" />
+                  요약 표
+                </button>
+              </div>
+            </div>
+
+            {/* 탭 컨텐츠 - 요약 표 */}
+            {activeTab === 'summary' && (
+              <JobSummaryTable job={job as Parameters<typeof JobSummaryTable>[0]['job']} />
+            )}
+
+            {/* 탭 컨텐츠 - 상세 정보 (기존 UI) */}
+            {activeTab === 'detail' && (
+              <>
             {/* Job Description */}
             <div className="bg-white rounded-md shadow-sm p-8">
               <h2 className="text-xl font-bold text-gray-900 mb-4">공고 상세</h2>
               <div
                 className="prose prose-sm max-w-none"
-                dangerouslySetInnerHTML={{ __html: job.description || '<p>상세 내용이 없습니다.</p>' }}
+                dangerouslySetInnerHTML={{ __html: (job.description as string) || '<p>상세 내용이 없습니다.</p>' }}
               />
             </div>
 
             {/* Requirements */}
-            {job.requirements && job.requirements.length > 0 && (
+            {(job.requirements as string[]) && (job.requirements as string[]).length > 0 && (
               <div className="bg-white rounded-md shadow-sm p-8">
                 <h2 className="text-xl font-bold text-gray-900 mb-4">필수 요건</h2>
                 <ul className="space-y-2">
-                  {job.requirements.map((req: string, index: number) => (
+                  {(job.requirements as string[]).map((req: string, index: number) => (
                     <li key={index} className="flex items-start gap-2">
                       <CheckCircle className="w-5 h-5 text-primary-600 shrink-0 mt-0.5" />
                       <span className="text-gray-700">{req}</span>
@@ -403,11 +503,11 @@ export default function JobDetailPage() {
             )}
 
             {/* Preferred Qualifications */}
-            {job.preferred_qualifications && job.preferred_qualifications.length > 0 && (
+            {(job.preferred_qualifications as string[]) && (job.preferred_qualifications as string[]).length > 0 && (
               <div className="bg-white rounded-md shadow-sm p-8">
                 <h2 className="text-xl font-bold text-gray-900 mb-4">우대 사항</h2>
                 <ul className="space-y-2">
-                  {job.preferred_qualifications.map((qual: string, index: number) => (
+                  {(job.preferred_qualifications as string[]).map((qual: string, index: number) => (
                     <li key={index} className="flex items-start gap-2">
                       <CheckCircle className="w-5 h-5 text-gray-400 shrink-0 mt-0.5" />
                       <span className="text-gray-700">{qual}</span>
@@ -421,7 +521,7 @@ export default function JobDetailPage() {
             <div className="bg-white rounded-md shadow-sm p-8">
               <h2 className="text-xl font-bold text-gray-900 mb-4">한국어 수준 요구사항</h2>
               <p className="text-gray-700">
-                {getKoreanLevelLabel(job.korean_level)}
+                {getKoreanLevelLabel(job.korean_level as string)}
               </p>
             </div>
 
@@ -434,7 +534,7 @@ export default function JobDetailPage() {
                 </div>
                 <div className="p-4 border border-gray-200 rounded-lg bg-gray-50">
                   <p className="text-gray-800 whitespace-pre-wrap leading-relaxed">
-                    {job.job_description}
+                    {job.job_description as string}
                   </p>
                 </div>
               </div>
@@ -449,21 +549,21 @@ export default function JobDetailPage() {
                 </div>
                 <div className="p-4 border border-gray-200 rounded-lg bg-gray-50">
                   <p className="text-gray-800 whitespace-pre-wrap leading-relaxed">
-                    {job.required_experience}
+                    {job.required_experience as string}
                   </p>
                 </div>
               </div>
             )}
 
             {/* ✨ 필요 스킬 */}
-            {job.required_skills && job.required_skills.length > 0 && (
+            {(job.required_skills as string[]) && (job.required_skills as string[]).length > 0 && (
               <div className="bg-white rounded-md shadow-sm p-8">
                 <div className="flex items-center gap-2 mb-4">
                   <Code className="w-5 h-5 text-primary-600" />
                   <h2 className="text-xl font-bold text-gray-900">필요 스킬</h2>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {job.required_skills.map((skill: string, index: number) => (
+                  {(job.required_skills as string[]).map((skill: string, index: number) => (
                     skill.trim() && (
                       <span key={index} className="px-3 py-1.5 bg-primary-100 text-primary-700 rounded-full text-sm font-medium">
                         {skill}
@@ -472,6 +572,8 @@ export default function JobDetailPage() {
                   ))}
                 </div>
               </div>
+            )}
+              </>
             )}
           </div>
 

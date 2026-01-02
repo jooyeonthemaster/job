@@ -48,7 +48,7 @@ export default function RootLayout({
                 if (typeof google !== 'undefined' && google.translate) {
                   new google.translate.TranslateElement({
                     pageLanguage: 'ko',
-                    includedLanguages: 'ko,en,zh-CN,zh-TW,ja,vi,th,id,es,fr,de,ru,pt,ar',
+                    includedLanguages: 'ko,en,zh-CN,zh-TW,ja,vi,th,id,es,fr,de,ru,pt,ar,mn',
                     layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
                     autoDisplay: false,
                     multilanguagePage: true

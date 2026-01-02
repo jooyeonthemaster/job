@@ -6,7 +6,6 @@
 import { useState } from 'react';
 import Header from '@/components/Header';
 import TalentSearchBar from '@/components/talent/TalentSearchBar';
-import TalentFilterBar from '@/components/talent/TalentFilterBar';
 import TalentSidebar from '@/components/talent/TalentSidebar';
 import TalentCard from '@/components/talent/TalentCard';
 import LoginRequiredModal from '@/components/talent/LoginRequiredModal';
@@ -58,19 +57,8 @@ export default function TalentPage() {
         onSearchChange={setSearchTerm}
       />
 
-      {/* Filter Bar */}
-      <TalentFilterBar
-        selectedNationality={selectedNationality}
-        selectedExperience={selectedExperience}
-        selectedAvailability={selectedAvailability}
-        nationalities={nationalities}
-        onNationalityChange={setSelectedNationality}
-        onExperienceChange={setSelectedExperience}
-        onAvailabilityChange={setSelectedAvailability}
-      />
-
       {/* Main Content */}
-      <section className="py-12">
+      <section className="py-8">
         <div className="container mx-auto px-4 lg:px-8">
           <div className="grid lg:grid-cols-4 gap-8">
             {/* Sidebar Filters */}
@@ -81,6 +69,13 @@ export default function TalentPage() {
                 expandedCategories={expandedCategories}
                 expandedSubcategories={expandedSubcategories}
                 filteredCount={filteredProfiles.length}
+                selectedNationality={selectedNationality}
+                selectedExperience={selectedExperience}
+                selectedAvailability={selectedAvailability}
+                nationalities={nationalities}
+                onNationalityChange={setSelectedNationality}
+                onExperienceChange={setSelectedExperience}
+                onAvailabilityChange={setSelectedAvailability}
                 onSkillsChange={setSelectedSkills}
                 onCategoryChange={setSelectedCategory}
                 onExpandedCategoriesChange={setExpandedCategories}

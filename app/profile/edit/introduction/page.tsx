@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext_Supabase';
 import { getUserProfile, updateUserProfile } from '@/lib/supabase/jobseeker-service';
 import { ArrowLeft, Save } from 'lucide-react';
-import { motion } from 'framer-motion';
 import Link from 'next/link';
 
 export default function IntroductionEditPage() {
@@ -68,26 +67,22 @@ export default function IntroductionEditPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
-      <div className="container mx-auto px-4 py-8 max-w-3xl">
-        {/* Header */}
-        <div className="mb-6">
-          <Link
-            href="/jobseeker-dashboard"
-            className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors mb-4"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            대시보드로 돌아가기
-          </Link>
-          <h1 className="text-3xl font-bold text-gray-900">자기소개</h1>
-          <p className="text-gray-600 mt-2">자신을 소개하는 글을 작성하세요</p>
+    <div className="min-h-screen bg-gray-50">
+      <div className="container mx-auto px-4 py-6 max-w-2xl">
+        {/* 간소화된 헤더 */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <Link
+              href="/jobseeker-dashboard"
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5 text-gray-600" />
+            </Link>
+            <h1 className="text-xl font-bold text-gray-900">자기소개</h1>
+          </div>
         </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-white/80 backdrop-blur-sm rounded-lg shadow-xl p-8 border border-gray-100"
-        >
+        <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-100">
           <div className="space-y-6">
             {/* 자기소개 입력 */}
             <div>
@@ -144,7 +139,7 @@ export default function IntroductionEditPage() {
               </Link>
             </div>
           </div>
-        </motion.div>
+        </div>
       </div>
     </div>
   );

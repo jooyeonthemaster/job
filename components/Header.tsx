@@ -37,6 +37,7 @@ export default function Header() {
     'ru': 'Русский',
     'pt': 'Português',
     'ar': 'العربية',
+    'mn': 'Монгол',
   };
 
   // Cookie에서 언어 코드 읽기
@@ -313,6 +314,7 @@ export default function Header() {
                           { code: 'ru', name: 'Русский', native: 'Русский' },
                           { code: 'pt', name: 'Português', native: 'Português' },
                           { code: 'ar', name: 'العربية', native: 'العربية' },
+                          { code: 'mn', name: 'Монгол', native: 'Монгол' },
                         ].map((lang) => (
                           <button
                             key={lang.code}
@@ -438,6 +440,7 @@ export default function Header() {
                             { code: 'ru', name: 'Русский', native: 'Русский' },
                             { code: 'pt', name: 'Português', native: 'Português' },
                             { code: 'ar', name: 'العربية', native: 'العربية' },
+                            { code: 'mn', name: 'Монгол', native: 'Монгол' },
                           ].map((lang) => (
                             <button
                               key={lang.code}

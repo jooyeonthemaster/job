@@ -1,14 +1,27 @@
 'use client';
 
 import { useState } from 'react';
-import { Code, Plus, X } from 'lucide-react';
+import { Code, Plus, X, Languages, ChevronDown, Check } from 'lucide-react';
 import ValidationModal from '@/components/ValidationModal';
 
 interface Props {
-  data?: any;
-  onNext: (data: any) => void;
+  data?: {
+    skills?: string[];
+    koreanLevel?: string;
+    otherLanguages?: Array<{ language: string; proficiency: string }>;
+  };
+  onNext: (data: {
+    skills: string[];
+    koreanLevel: string;
+    otherLanguages: Array<{ language: string; proficiency: string }>;
+  }) => void;
   onBack: () => void;
 }
+
+// 공통 스타일 - primary(blue) 색상 적용
+const inputClass = "w-full px-3 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all placeholder:text-gray-400 text-gray-700 text-sm";
+const selectClass = "w-full px-3 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all text-gray-700 text-sm appearance-none cursor-pointer";
+const labelClass = "flex items-center gap-1.5 text-sm font-medium text-gray-700 mb-1";
 
 const Step3Skills = ({ data, onNext, onBack }: Props) => {
   const [skills, setSkills] = useState<string[]>(data?.skills || []);
@@ -20,55 +33,13 @@ const Step3Skills = ({ data, onNext, onBack }: Props) => {
   );
   const [showErrors, setShowErrors] = useState(false);
 
-  const skillCategories = {
-    '개발/IT': [
-      'JavaScript', 'TypeScript', 'React', 'Vue.js', 'Python', 'Java',
-      'Node.js', 'Spring', 'Django', 'AWS', 'Docker', 'Kubernetes'
-    ],
-    '디자인': [
-      'Figma', 'Adobe XD', 'Photoshop', 'Illustrator', 'Sketch',
-      'UI/UX 디자인', '3D 모델링', '브랜드 디자인', '모션그래픽'
-    ],
-    '마케팅/광고': [
-      'SEO/SEM', 'Google Analytics', 'Facebook Ads', '콘텐츠 마케팅',
-      '브랜드 전략', 'CRM', '퍼포먼스 마케팅', '인플루언서 마케팅'
-    ],
-    '영업/비즈니스': [
-      'B2B 영업', 'B2C 영업', '비즈니스 개발', '파트너십 관리',
-      'CRM 관리', '제안서 작성', '협상', '계약 관리'
-    ],
-    '재무/회계': [
-      'SAP', '재무분석', '회계', '세무', '감사', 'Excel 고급',
-      '재무제표 작성', '원가계산', '예산관리', '투자분석'
-    ],
-    '인사/총무': [
-      '채용', '교육/훈련', '성과관리', '급여관리', '노무관리',
-      '조직문화', 'HR Analytics', '복리후생 설계'
-    ],
-    '의료/바이오': [
-      '임상시험', 'GMP', '의료기기', '제약', '생명공학',
-      '간호', '의료 데이터 분석', '의료 품질관리'
-    ],
-    '제조/생산': [
-      'AutoCAD', 'SolidWorks', '품질관리', '생산관리', 'Six Sigma',
-      'Lean 제조', '공정설계', 'PLC 프로그래밍'
-    ],
-    '물류/유통': [
-      'SCM', 'WMS', '재고관리', '물류최적화', '수출입관리',
-      '화물운송', '창고관리', '국제물류'
-    ],
-    '교육': [
-      '교육과정 개발', '온라인 교육', '교수법', '학습평가',
-      'LMS 관리', '교육 콘텐츠 제작', 'e-러닝'
-    ],
-    '법무/컴플라이언스': [
-      '계약검토', '법률자문', '컴플라이언스', '지적재산권',
-      '소송관리', '법률 리서치', '규제대응'
-    ],
-    '미디어/콘텐츠': [
-      '영상편집', '콘텐츠 기획', '취재/보도', '방송제작',
-      'Premier Pro', 'After Effects', '스토리텔링'
-    ]
+  const skillCategories: Record<string, string[]> = {
+    '개발/IT': ['JavaScript', 'TypeScript', 'React', 'Vue.js', 'Python', 'Java', 'Node.js', 'AWS', 'Docker'],
+    '디자인': ['Figma', 'Adobe XD', 'Photoshop', 'Illustrator', 'UI/UX 디자인', '브랜드 디자인'],
+    '마케팅': ['SEO/SEM', 'Google Analytics', 'Facebook Ads', '콘텐츠 마케팅', '퍼포먼스 마케팅'],
+    '영업/비즈니스': ['B2B 영업', 'B2C 영업', '비즈니스 개발', '파트너십 관리', '협상'],
+    '재무/회계': ['SAP', '재무분석', '회계', '세무', 'Excel 고급', '예산관리'],
+    '인사/총무': ['채용', '교육/훈련', '성과관리', '급여관리', '노무관리']
   };
 
   const KOREAN_LEVELS = [
@@ -87,15 +58,6 @@ const Step3Skills = ({ data, onNext, onBack }: Props) => {
     { value: 'chinese', label: '중국어' },
     { value: 'japanese', label: '일본어' },
     { value: 'spanish', label: '스페인어' },
-    { value: 'french', label: '프랑스어' },
-    { value: 'german', label: '독일어' },
-    { value: 'russian', label: '러시아어' },
-    { value: 'arabic', label: '아랍어' },
-    { value: 'vietnamese', label: '베트남어' },
-    { value: 'thai', label: '태국어' },
-    { value: 'indonesian', label: '인도네시아어' },
-    { value: 'hindi', label: '힌디어' },
-    { value: 'portuguese', label: '포르투갈어' },
     { value: 'other', label: '기타' }
   ];
 
@@ -135,20 +97,9 @@ const Step3Skills = ({ data, onNext, onBack }: Props) => {
 
   const validateForm = () => {
     const errors = [];
-
     if (skills.length === 0) {
       errors.push('최소 1개 이상의 기술/역량을 추가해주세요');
     }
-
-    if (!koreanLevel) {
-      errors.push('한국어 능력을 선택해주세요');
-    }
-
-    const hasValidLanguage = otherLanguages.some(lang => lang.language && lang.proficiency);
-    if (!hasValidLanguage) {
-      errors.push('최소 1개 이상의 언어와 숙련도를 선택해주세요');
-    }
-
     return errors;
   };
 
@@ -167,211 +118,211 @@ const Step3Skills = ({ data, onNext, onBack }: Props) => {
   };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">스킬 및 언어</h2>
-        <p className="text-gray-600 mb-8">보유하신 기술 스킬과 언어 능력을 입력해주세요.</p>
+    <div className="space-y-4">
+      {/* 헤더 */}
+      <div className="flex items-center gap-3 pb-3 border-b border-gray-100">
+        <div className="w-10 h-10 bg-primary-50 rounded-lg flex items-center justify-center">
+          <Code className="w-5 h-5 text-primary-600" />
+        </div>
+        <div>
+          <h2 className="text-lg font-bold text-gray-900">스킬 및 언어</h2>
+          <p className="text-sm text-gray-500">보유하신 전문 기술과 언어 능력을 알려주세요</p>
+        </div>
       </div>
 
-      {/* 기술 스킬 */}
-      <div className="space-y-6">
-        <div>
-          <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2 mb-4">
-            <Code className="w-5 h-5" />
-            전문 기술 및 역량
+      {/* 전문 기술 섹션 */}
+      <div className="bg-primary-50/50 border border-primary-100 rounded-lg p-4">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-1.5">
+            <Code className="w-4 h-4 text-primary-500" />
+            전문 기술 <span className="text-red-500">*</span>
           </h3>
-          
-          {/* 스킬 입력 */}
-          <div className="flex gap-2 mb-4">
-            <input
-              type="text"
-              value={skillInput}
-              onChange={(e) => setSkillInput(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addSkill(skillInput))}
-              placeholder="보유하신 전문 기술이나 역량을 입력하세요"
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
-            />
-            <button
-              type="button"
-              onClick={() => addSkill(skillInput)}
-              className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
-            >
-              추가
-            </button>
-          </div>
+          {skills.length > 0 && (
+            <span className="text-xs text-primary-600 bg-primary-100 px-2 py-0.5 rounded-full">
+              {skills.length}개 선택
+            </span>
+          )}
+        </div>
 
-          {/* 카테고리 선택 및 스킬 추천 */}
-          <div className="mb-4">
-            <p className="text-sm text-gray-600 mb-2">직무 카테고리를 선택하세요:</p>
-            <select
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              className="w-full mb-3 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
-            >
-              <option value="">카테고리를 선택하세요</option>
-              {Object.keys(skillCategories).map((category) => (
-                <option key={category} value={category}>{category}</option>
-              ))}
-            </select>
-            
-            {selectedCategory && (
-              <div>
-                <p className="text-sm text-gray-600 mb-2">{selectedCategory} 분야 추천 스킬:</p>
-                <div className="flex flex-wrap gap-2">
-                  {skillCategories[selectedCategory as keyof typeof skillCategories].map((skill) => (
-                    <button
-                      key={skill}
-                      type="button"
-                      onClick={() => addSkill(skill)}
-                      disabled={skills.includes(skill)}
-                      className={`px-3 py-1 rounded-full text-sm transition-colors ${
-                        skills.includes(skill)
-                          ? 'bg-green-100 text-green-600 cursor-not-allowed'
-                          : 'bg-gray-100 text-gray-600 hover:bg-primary-100 hover:text-primary-600'
-                      }`}
-                    >
-                      {skill}
-                      {skills.includes(skill) && <span className="ml-1">✓</span>}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
+        {/* 스킬 입력 */}
+        <div className="flex gap-2 mb-3">
+          <input
+            type="text"
+            value={skillInput}
+            onChange={(e) => setSkillInput(e.target.value)}
+            onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addSkill(skillInput))}
+            placeholder="보유하신 기술을 입력하세요"
+            className={inputClass}
+          />
+          <button
+            type="button"
+            onClick={() => addSkill(skillInput)}
+            className="px-3 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors flex-shrink-0"
+          >
+            <Plus className="w-4 h-4" />
+          </button>
+        </div>
 
-          {/* 선택된 스킬 */}
-          <div>
-            <p className="text-sm font-medium text-gray-700 mb-2">
-              선택된 전문 기술 ({skills.length})
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {skills.map((skill) => (
-                <span
-                  key={skill}
-                  className="px-3 py-1 bg-primary-100 text-primary-700 rounded-full text-sm flex items-center gap-1"
+        {/* 카테고리 선택 */}
+        <div className="relative mb-3">
+          <select
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
+            className={`${selectClass} text-xs`}
+          >
+            <option value="">카테고리에서 빠르게 선택</option>
+            {Object.keys(skillCategories).map((category) => (
+              <option key={category} value={category}>{category}</option>
+            ))}
+          </select>
+          <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+        </div>
+
+        {selectedCategory && (
+          <div className="flex flex-wrap gap-1.5 mb-3">
+            {skillCategories[selectedCategory].map((skill) => (
+              <button
+                key={skill}
+                type="button"
+                onClick={() => addSkill(skill)}
+                disabled={skills.includes(skill)}
+                className={`px-2 py-1 rounded text-xs font-medium transition-all ${
+                  skills.includes(skill)
+                    ? 'bg-primary-100 text-primary-600 cursor-not-allowed'
+                    : 'bg-gray-100 text-gray-600 hover:bg-primary-100 hover:text-primary-600'
+                }`}
+              >
+                {skill}
+                {skills.includes(skill) && <Check className="inline w-3 h-3 ml-0.5" />}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* 선택된 스킬 */}
+        {skills.length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            {skills.map((skill) => (
+              <span
+                key={skill}
+                className="inline-flex items-center gap-1 px-2 py-1 bg-white text-primary-700 rounded text-xs font-medium border border-primary-200"
+              >
+                {skill}
+                <button
+                  type="button"
+                  onClick={() => removeSkill(skill)}
+                  className="p-0.5 hover:bg-primary-100 rounded transition-colors"
                 >
-                  {skill}
-                  <button
-                    type="button"
-                    onClick={() => removeSkill(skill)}
-                    className="text-primary-500 hover:text-red-500"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </span>
+                  <X className="w-3 h-3" />
+                </button>
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* 언어 능력 섹션 */}
+      <div className="bg-gray-50 rounded-lg p-4">
+        <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-1.5 mb-3">
+          <Languages className="w-4 h-4 text-gray-500" />
+          언어 능력 <span className="text-xs text-gray-400 font-normal">(선택)</span>
+        </h3>
+
+        <div className="grid grid-cols-2 gap-3 mb-3">
+          {/* 한국어 능력 */}
+          <div>
+            <label className={labelClass}>
+              🇰🇷 한국어 능력
+            </label>
+            <div className="relative">
+              <select
+                value={koreanLevel}
+                onChange={(e) => setKoreanLevel(e.target.value)}
+                className={selectClass}
+              >
+                <option value="">선택하세요</option>
+                {KOREAN_LEVELS.map((level) => (
+                  <option key={level.value} value={level.value}>{level.label}</option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+            </div>
+          </div>
+
+          {/* 기타 언어 */}
+          <div>
+            <label className={labelClass}>🌍 기타 언어</label>
+            <div className="space-y-2">
+              {otherLanguages.map((lang, index) => (
+                <div key={index} className="flex gap-2">
+                  <div className="flex-1 relative">
+                    <select
+                      value={lang.language}
+                      onChange={(e) => updateLanguage(index, 'language', e.target.value)}
+                      className={`${selectClass} text-xs`}
+                    >
+                      <option value="">언어</option>
+                      {LANGUAGE_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>{option.label}</option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-400 pointer-events-none" />
+                  </div>
+                  <div className="flex-1 relative">
+                    <select
+                      value={lang.proficiency}
+                      onChange={(e) => updateLanguage(index, 'proficiency', e.target.value)}
+                      className={`${selectClass} text-xs`}
+                    >
+                      <option value="">숙련도</option>
+                      {PROFICIENCY_LEVELS.map((option) => (
+                        <option key={option.value} value={option.value}>{option.label}</option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-400 pointer-events-none" />
+                  </div>
+                  {otherLanguages.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeLanguageRow(index)}
+                      className="p-1.5 text-red-500 hover:bg-red-50 rounded transition-colors"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
               ))}
+              <button
+                type="button"
+                onClick={addLanguageRow}
+                className="flex items-center gap-1 text-xs text-primary-600 hover:text-primary-700 font-medium"
+              >
+                <Plus className="w-3 h-3" />
+                언어 추가
+              </button>
             </div>
           </div>
         </div>
       </div>
 
-      {/* 언어 능력 */}
-      <div className="border-b pb-8">
-        <h3 className="text-lg font-semibold text-gray-900 mb-6">언어 능력</h3>
-
-        {/* 한국어 능력 */}
-        <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            한국어 능력 <span className="text-red-500">*</span>
-          </label>
-          <select
-            value={koreanLevel}
-            onChange={(e) => setKoreanLevel(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
-          >
-            <option value="">선택하세요</option>
-            {KOREAN_LEVELS.map((level) => (
-              <option key={level.value} value={level.value}>
-                {level.label}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* 한국어 외 언어 */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-3">
-            한국어 외 구사 가능 언어 <span className="text-red-500">*</span>
-          </label>
-          <div className="space-y-3">
-            {otherLanguages.map((lang, index) => (
-              <div key={index} className="flex gap-3">
-                <select
-                  value={lang.language}
-                  onChange={(e) => updateLanguage(index, 'language', e.target.value)}
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
-                >
-                  <option value="">언어 선택</option>
-                  {LANGUAGE_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-                <select
-                  value={lang.proficiency}
-                  onChange={(e) => updateLanguage(index, 'proficiency', e.target.value)}
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
-                >
-                  <option value="">숙련도 선택</option>
-                  {PROFICIENCY_LEVELS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-                {otherLanguages.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => removeLanguageRow(index)}
-                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-                )}
-              </div>
-            ))}
-            <button
-              type="button"
-              onClick={addLanguageRow}
-              className="flex items-center gap-2 px-4 py-2 text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
-            >
-              <Plus className="w-4 h-4" />
-              언어 추가
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* 팁 */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <h4 className="font-semibold text-blue-900 mb-2">💡 작성 팁</h4>
-        <ul className="text-sm text-blue-700 space-y-1">
-          <li>• 실제로 업무에 활용 가능한 수준의 기술과 역량만 추가해주세요</li>
-          <li>• 언어의 경우 기본적인 의사소통이 가능한 수준부터 추가해주세요</li>
-          <li>• 관련 자격증이나 수료증이 있다면 더욱 도움이 됩니다</li>
-        </ul>
-      </div>
-
-      {/* Navigation Buttons */}
-      <div className="flex justify-between pt-8">
+      {/* 버튼 */}
+      <div className="flex justify-between pt-2">
         <button
           type="button"
           onClick={onBack}
-          className="px-6 py-3 bg-gray-100 text-gray-700 font-medium rounded-md hover:bg-gray-200 transition-colors"
+          className="px-4 py-2 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-colors text-sm"
         >
           돌아가기
         </button>
         <button
           type="button"
           onClick={handleNext}
-          className="px-6 py-3 bg-primary-600 text-white font-medium rounded-md hover:bg-primary-700 transition-colors"
+          className="px-6 py-2 bg-primary-500 text-white font-medium rounded-lg hover:bg-primary-600 transition-colors text-sm"
         >
-          저장
+          저장하기
         </button>
       </div>
-      
-      {/* Validation Modal */}
+
       <ValidationModal
         isOpen={showErrors && validateForm().length > 0}
         onClose={() => setShowErrors(false)}

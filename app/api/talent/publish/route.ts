@@ -1,5 +1,6 @@
 // 인재풀 공개 API
 // 개인 구직자가 프로필을 인재풀에 공개할 때 호출
+// 2026-01-02 간소화: 필수 8개 → 6개로 변경
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
@@ -75,8 +76,8 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // 5. 프로필 완성도 검증 (100% 완성 필수)
-    // talent-pool-eligibility.ts의 로직과 동일하게 검증
+    // 5. 프로필 완성도 검증 (필수 6개 항목 완성 필수)
+    // talent-pool-eligibility.ts의 간소화 로직과 동일하게 검증
     const eligibilityCheck = await verifyProfileCompleteness(userId);
 
     if (!eligibilityCheck.eligible) {
@@ -132,8 +133,22 @@ export async function POST(request: NextRequest) {
 }
 
 /**
- * 프로필 완성도 검증 함수
- * talent-pool-eligibility.ts의 로직을 서버 사이드에서 재검증
+ * 프로필 완성도 검증 함수 (간소화 버전)
+ * 2026-01-02 간소화: 8개 필수 → 6개 필수로 변경
+ *
+ * ⭐ 필수 항목 (6개):
+ * 1. 연락처 (전화번호)
+ * 2. 이메일
+ * 3. 경력 (최소 1개)
+ * 4. 보유 기술 (최소 1개)
+ * 5. 자기소개
+ * 6. 희망 직무 (최소 1개)
+ *
+ * 📋 선택 항목 (4개) - 검증하지 않음:
+ * - 프로필 사진
+ * - 헤드라인 (한 줄 소개)
+ * - 언어 능력
+ * - 이력서 파일
  */
 async function verifyProfileCompleteness(userId: string): Promise<{
   eligible: boolean;
@@ -142,7 +157,7 @@ async function verifyProfileCompleteness(userId: string): Promise<{
 }> {
   const missingFields: string[] = [];
   let completedFields = 0;
-  const totalRequiredFields = 8; // 이력서 추가로 7→8
+  const totalRequiredFields = 6; // 간소화: 8→6
 
   try {
     // 사용자 기본 정보 조회
@@ -151,11 +166,9 @@ async function verifyProfileCompleteness(userId: string): Promise<{
       .select(`
         id,
         full_name,
-        profile_image_url,
-        headline,
-        introduction,
-        korean_level,
-        resume_file_url
+        email,
+        phone,
+        introduction
       `)
       .eq('id', userId)
       .single();
@@ -164,38 +177,33 @@ async function verifyProfileCompleteness(userId: string): Promise<{
       throw new Error('사용자 정보를 조회할 수 없습니다.');
     }
 
-    // 1. 프로필 사진
-    if (user.profile_image_url) {
+    // ⭐ 1. 연락처 (전화번호) - 필수
+    if (user.phone && user.phone.trim().length > 0) {
       completedFields++;
     } else {
-      missingFields.push('프로필 사진');
+      missingFields.push('연락처 (전화번호)');
     }
 
-    // 2. 헤드라인
-    if (user.headline && user.headline.trim().length > 0) {
+    // ⭐ 2. 이메일 - 필수
+    if (user.email && user.email.trim().length > 0) {
       completedFields++;
     } else {
-      missingFields.push('헤드라인 (한 줄 소개)');
+      missingFields.push('이메일');
     }
 
-    // 3. 경력 또는 학력 (최소 1개)
+    // ⭐ 3. 경력 (최소 1개) - 필수
     const { count: expCount } = await supabase
       .from('user_experiences')
       .select('*', { count: 'exact', head: true })
       .eq('user_id', userId);
 
-    const { count: eduCount } = await supabase
-      .from('user_educations')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', userId);
-
-    if ((expCount && expCount > 0) || (eduCount && eduCount > 0)) {
+    if (expCount && expCount > 0) {
       completedFields++;
     } else {
-      missingFields.push('경력 또는 학력 (최소 1개)');
+      missingFields.push('경력 사항 (최소 1개)');
     }
 
-    // 4. 스킬 (최소 1개)
+    // ⭐ 4. 스킬 (최소 1개) - 필수
     const { count: skillCount } = await supabase
       .from('user_skills')
       .select('*', { count: 'exact', head: true })
@@ -204,31 +212,17 @@ async function verifyProfileCompleteness(userId: string): Promise<{
     if (skillCount && skillCount >= 1) {
       completedFields++;
     } else {
-      missingFields.push(`스킬 (최소 1개, 현재 ${skillCount || 0}개)`);
+      missingFields.push(`보유 기술 (최소 1개, 현재 ${skillCount || 0}개)`);
     }
 
-    // 5. 언어 능력 (최소 1개)
-    const { count: langCount } = await supabase
-      .from('user_languages')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', userId);
-
-    const hasLanguage = user.korean_level || (langCount && langCount > 0);
-    if (hasLanguage) {
-      completedFields++;
-    } else {
-      missingFields.push('언어 능력 (최소 1개)');
-    }
-
-    // 6. 자기소개 (최소 1자)
+    // ⭐ 5. 자기소개 - 필수
     if (user.introduction && user.introduction.trim().length > 0) {
       completedFields++;
     } else {
-      const currentLength = user.introduction?.trim().length || 0;
-      missingFields.push(`자기소개 (최소 1자, 현재 ${currentLength}자)`);
+      missingFields.push('자기소개');
     }
 
-    // 7. 희망 직무 (최소 1개)
+    // ⭐ 6. 희망 직무 (최소 1개) - 필수
     const { count: positionCount } = await supabase
       .from('user_desired_positions')
       .select('*', { count: 'exact', head: true })
@@ -240,15 +234,16 @@ async function verifyProfileCompleteness(userId: string): Promise<{
       missingFields.push('희망 직무 (최소 1개)');
     }
 
-    // 8. 이력서 파일 (필수)
-    if (user.resume_file_url && user.resume_file_url.trim().length > 0) {
-      completedFields++;
-    } else {
-      missingFields.push('이력서 파일');
-    }
-
     const completionRate = Math.round((completedFields / totalRequiredFields) * 100);
     const eligible = completionRate === 100;
+
+    console.log('[verifyProfileCompleteness] 결과:', {
+      completedFields,
+      totalRequiredFields,
+      completionRate,
+      eligible,
+      missingFields
+    });
 
     return {
       eligible,
