@@ -1,5 +1,6 @@
-// 채용공고 채용 담당자 정보 섹션 컴포넌트
+// 채용공고 담당자 추가 정보 섹션 컴포넌트 (선택 입력)
 // RecruiterInfoSection을 래핑하여 기존 인터페이스 유지
+// 필수 필드(담당자 이름, 이메일)는 RequiredFieldsSection에서 관리
 
 import RecruiterInfoSection from './RecruiterInfoSection';
 import { JobFormData } from '@/types/job-form.types';
@@ -10,23 +11,20 @@ interface RecruiterSectionProps {
 }
 
 export default function RecruiterSection({ formData, onUpdate }: RecruiterSectionProps) {
-  // RecruiterInfoSection이 이제 manager* 필드를 직접 사용하므로
-  // 변환 없이 그대로 전달
-  const managerInfo = {
-    managerName: formData.managerName,
+  // 선택 필드만 전달 (필수 필드는 RequiredFieldsSection에서 관리)
+  const managerOptionalInfo = {
     managerPosition: formData.managerPosition,
-    managerEmail: formData.managerEmail,
     managerPhone: formData.managerPhone,
   };
 
-  // 업데이트 핸들러도 직접 전달
-  const handleUpdate = (field: 'managerName' | 'managerPosition' | 'managerEmail' | 'managerPhone', value: string) => {
+  // 업데이트 핸들러
+  const handleUpdate = (field: 'managerPosition' | 'managerPhone', value: string) => {
     onUpdate(field as keyof JobFormData, value);
   };
 
   return (
     <RecruiterInfoSection
-      formData={managerInfo}
+      formData={managerOptionalInfo}
       onUpdate={handleUpdate}
     />
   );

@@ -8,6 +8,330 @@
 
 ## 📋 최근 주요 변경 사항
 
+### 2026-01-01
+
+#### ✨ [ADD] 인재 고유번호 시스템 구현
+
+**변경 파일**:
+- `supabase/migrations/20260101_001_add_talent_number.sql` (신규: 84줄) - 마이그레이션 파일
+- `lib/supabase/talent-service.ts` (365줄 → 368줄) - TalentProfile 타입 및 쿼리 업데이트
+- `app/talent/[id]/page.tsx` (710줄 → 717줄) - 인재 상세 페이지에 고유번호 표시
+- `components/talent/TalentCard.tsx` (167줄 → 175줄) - 인재 카드에 고유번호 표시
+
+**변경 내용**:
+- 인재 고유번호 형식: `YYMM-XX-NNN` (예: 2601-01-001)
+  - YY: 연도 마지막 2자리
+  - MM: 월
+  - XX: 타입 코드 (01: 일반 구직자)
+  - NNN: 순번 (001부터 시작, 월별 리셋)
+- `users` 테이블에 `talent_number` 컬럼 추가
+- 신규 구직자 등록 시 자동 번호 부여 트리거
+- 기존 구직자에게 가입 순서대로 번호 백필
+- 인재 상세 페이지 및 카드에 고유번호 표시 (배지 형태)
+
+**이유**:
+- 클라이언트 요구사항: 인재 식별을 위한 고유번호 체계 필요
+- 월별 순번으로 가입 시기 파악 가능
+
+**영향**:
+- 인재 검색/필터에서 고유번호로 특정 인재 식별 가능
+- 기업-구직자 소통 시 인재 번호로 참조 가능
+
+---
+
+#### ✨ [ADD] 급여 정보 섹션에 최저임금 안내 추가
+
+**변경 파일**:
+- `components/job-create/SalarySection.tsx` (75줄 → 95줄) - 최저임금 안내 문구 및 링크 추가
+
+**변경 내용**:
+- 급여 정보 입력 섹션 하단에 최저임금 안내 영역 추가
+  - Info 아이콘과 함께 주 40시간 기준 최저연봉 계산 (약 25,155,240원)
+  - 2025년 최저시급 10,030원 기준
+- 최저임금법 준수 안내 문구 추가
+- 최저임금제도 안내 링크 (https://www.minimumwage.go.kr/index.jsp)
+
+**이유**:
+- 클라이언트 요구사항: 채용공고 등록 시 최저임금 안내 필요
+- 기업/관리자가 법적 기준 확인 가능하도록 정보 제공
+- 최저임금 미만 공고 방지를 위한 사전 안내
+
+**영향**:
+- 기업 대시보드 채용공고 작성 페이지에 안내 표시
+- 관리자 채용공고 작성 페이지에 안내 표시
+
+---
+
+### 2025-12-31
+
+#### 🔧 [FIX] 연락처 열람 요청 목록 API 구직자 정보 조회 수정
+
+**변경 파일**:
+- `app/api/contact-access/sent/route.ts` (182줄 → 205줄) - 구직자 정보 조회 로직 수정
+- `app/api/contact-access/received/route.ts` (107줄 → 119줄) - JOIN 쿼리를 별도 쿼리로 분리
+
+**변경 내용**:
+- 기존: `users` 테이블에서 `skills`, `experience_years`, `desired_position` 직접 조회 시도
+- 수정: 관련 정보를 별도 테이블에서 조회
+  - `skills` → `user_skills` 테이블
+  - `experience_years` → `user_experiences` 테이블에서 개수 계산
+  - `desired_position` → `user_desired_positions` 테이블
+- 에러 로깅 추가로 디버깅 용이
+
+**이유**:
+- "알 수 없는 사용자"로 표시되는 문제
+- `users` 테이블에 존재하지 않는 컬럼 조회로 쿼리 실패
+- 스킬/경력/희망직무는 별도 관계 테이블에 저장됨
+
+**영향**:
+- 기업 대시보드 "연락처 요청" 탭에서 구직자 이름/정보 정상 표시
+- 스킬, 경력, 희망 직무 정보도 함께 표시
+
+---
+
+#### 🔧 [FIX] 연락처 열람 API 및 페이지 기업 회원 감지 로직 수정
+
+**변경 파일**:
+- `app/talent/[id]/page.tsx` (기존: 711줄 → 720줄) - 기업 회원 감지 로직 개선
+- `app/api/contact-access/request/route.ts` (기존: 174줄 → 175줄) - 기업 확인 로직 수정
+- `app/api/contact-access/check/[userId]/route.ts` (기존: 137줄 → 138줄) - 기업 확인 로직 수정
+- `app/api/contact-access/sent/route.ts` (기존: 183줄 → 180줄) - 기업 확인 로직 수정
+
+**변경 내용**:
+- 기존 문제: `users` 테이블에서 `user_type === 'company'` 확인 + `companies.user_id` 조회
+- 수정: `user_metadata` 우선 확인, 없으면 `companies` 테이블 직접 조회 (`companies.id = auth.uid()`)
+- 이 프로젝트에서 기업 계정은 `companies` 테이블에 저장되고 `companies.id = auth.uid()` 직접 매핑
+
+**이유**:
+- 기업으로 로그인해도 "기업 회원만 연락처 열람을 요청할 수 있습니다" 에러 발생
+- 모든 관련 API와 페이지에서 동일한 기업 감지 패턴 적용
+
+**영향**:
+- 기업 회원이 인재 상세 페이지에서 "연락처 열람 요청" 버튼 정상 표시
+- 연락처 열람 요청 API 정상 작동
+- 기업 대시보드 "보낸 요청" 탭 정상 작동
+
+---
+
+#### 🔧 [FIX] 인재풀 결제 페이지 리다이렉트 제거
+
+**변경 파일**:
+- `components/talent/TalentCard.tsx` (기존: 198줄 → 170줄) - 결제 체크 로직 제거
+
+**변경 내용**:
+- 기업이 인재 카드 클릭 시 결제 페이지(`/payment/profile/`)로 리다이렉트 되던 로직 제거
+- 이제 바로 인재 상세 페이지(`/talent/[id]`)로 이동
+- 상세 페이지에서 연락처 요청/승인 상태 처리
+
+**이유**:
+- 5,000원 결제 시스템 → 연락처 요청 시스템으로 전환 완료
+- 인재 상세 페이지에 이미 연락처 요청 UI 구현됨
+
+---
+
+#### 🚀 [ADD] 인재풀 연락처 열람 요청 시스템 구현
+
+**변경 파일**:
+- `supabase/migrations/20251231_001_contact_access_requests.sql` (신규: 50줄) - DB 마이그레이션
+- `app/api/contact-access/request/route.ts` (신규: 130줄) - 요청 생성 API
+- `app/api/contact-access/received/route.ts` (신규: 107줄) - 받은 요청 목록 API
+- `app/api/contact-access/sent/route.ts` (신규: 192줄) - 보낸 요청 목록 API
+- `app/api/contact-access/check/[userId]/route.ts` (신규: 136줄) - 접근 권한 확인 API
+- `app/api/contact-access/[id]/respond/route.ts` (신규: 140줄) - 승인/거절 API
+- `app/talent/[id]/page.tsx` (기존: 700줄 → 711줄) - 인재 상세 페이지 UI 변경
+- `components/jobseeker-dashboard/ContactAccessRequests.tsx` (신규: 280줄) - 구직자 대시보드 컴포넌트
+- `components/company-dashboard/tabs/ContactAccessTab.tsx` (신규: 290줄) - 기업 대시보드 탭
+- `app/jobseeker-dashboard/page.tsx` (기존: 154줄 → 158줄) - 컴포넌트 추가
+- `app/company-dashboard/page.tsx` (기존: 166줄 → 166줄) - 컴포넌트 교체
+- `constants/dashboard-menu.ts` (기존: 19줄 → 19줄) - 메뉴 라벨 변경
+
+**변경 내용**:
+- **5,000원 결제 시스템 제거**: 인재풀 열람 시 결제 없이 무료 열람 가능
+- **연락처 블라인드 처리**: 이메일/전화번호는 기본적으로 마스킹 표시
+- **열람 요청 시스템 구현**:
+  - 기업이 구직자에게 연락처 열람 요청 전송 가능
+  - 요청 시 메시지 첨부 가능
+  - 구직자가 승인/거절 선택 가능
+- **구직자 대시보드**: 받은 요청 목록 + 통계 + 승인/거절 버튼
+- **기업 대시보드**: 보낸 요청 목록 + 승인된 연락처 확인
+
+**DB 스키마**:
+```sql
+contact_access_requests 테이블:
+- id, requester_company_id, target_user_id
+- status (pending/approved/rejected)
+- company_message, requested_at, responded_at
+```
+
+**이유**:
+- 클라이언트 요청: 결제 시스템 제거 및 요청 기반 시스템으로 전환
+- 구직자 프라이버시 보호 강화
+- 양방향 동의 기반 연락 시스템
+
+**영향**:
+- 기존 결제 API는 유지 (향후 제거 예정)
+- 인재 상세 페이지에서 결제 버튼 → 열람 요청 버튼으로 변경
+- 기업 대시보드 '열람한 프로필' → '연락처 요청' 탭으로 변경
+
+---
+
+#### 🗑️ [DELETE] 인기 기업 섹션에서 쿠팡 제거
+
+**변경 파일**:
+- `lib/data.ts` - 쿠팡 회사 데이터 삭제
+
+**변경 내용**:
+- companies 배열에서 쿠팡(id: '4') 항목 완전 제거
+- 관련 로고 참조(/logos/coupang.png) 제거
+
+**이유**:
+- 법적 이슈 가능성 방지 (상표권/초상권)
+- 실제 협력 관계 없는 기업 로고 사용 지양
+
+**영향**:
+- 메인 페이지 인기 기업 섹션: 6개 → 5개 기업
+- 남은 기업: 삼성전자, 네이버, 카카오, 토스, 배달의민족
+
+---
+
+#### 🏗️ [REFACTOR] 메인 페이지 → 채용 공고 그리드 레이아웃으로 전환
+
+**변경 파일**:
+- `app/page.tsx` (기존: 533줄 → 변경 후: 512줄) - 채용 공고 그리드 레이아웃 적용
+
+**변경 내용**:
+- **메인 페이지 구조 변경**: 기존 티어별 카드 레이아웃 → 채용 공고 그리드 레이아웃 (플래티넘 20개/프라임 25개/스페셜 30개)
+- **검색 기능 추가**: 통합 검색바 + 카테고리/지역/경력 필터 추가
+- **배너 유지**:
+  - "브릿지 월드가 당신이 찾고 있는" 배너 (흰색 배경, 파란색 글씨로 변경)
+  - "글로벌 인재에게 우리 기업을 알리세요" 광고 배너 (플래티넘 섹션 후 배치)
+  - "지금 시작하세요" 하단 CTA 섹션 유지
+- **인기 기업 섹션 유지**: 기존 그대로 유지
+- **사이드바 추가**: 배너 광고 영역 (xl 이상에서만 표시)
+
+**이유**:
+- 클라이언트 요청: 메인 페이지를 채용 공고 페이지처럼 변경
+- 채용 공고 중심의 서비스 구조로 전환
+- 배너 색상 변경 요청: 파란색 배경 → 흰색 배경, 흰색 글씨 → 파란색 글씨
+
+**영향**:
+- 메인 페이지 접속 시 즉시 채용 공고 그리드 확인 가능
+- 검색/필터 기능으로 원하는 공고 빠르게 탐색
+
+---
+
+#### 🔧 [FIX] JobGridCard 타입 호환성 수정
+
+**변경 파일**:
+- `components/JobGridCard.tsx` - id 타입 `number` → `string | number`로 변경
+
+**변경 내용**:
+- `JobGridCardProps` 인터페이스의 `id` 타입을 `string | number`로 확장
+- Supabase UUID (string) 및 기존 숫자 ID 모두 호환 가능하게 수정
+
+**이유**:
+- 메인 페이지 리팩토링 후 Supabase에서 가져온 job.id (UUID string) 타입 불일치 에러 발생
+- Link href에서 id를 문자열로 사용하므로 실제 동작에 문제 없음
+
+**영향**:
+- 메인 페이지, 채용 공고 페이지 모두 정상 빌드 가능
+
+---
+
+#### 🐛 [FIX] 관리자 공고 등록 - 상세 내용 선택 사항으로 변경
+
+**변경 파일**:
+- `app/admin/jobs/create/page.tsx` (526줄 → 522줄) - 상세 내용 필수 검증 제거
+
+**변경 내용**:
+- 관리자 공고 등록 페이지에서 상세 내용(editorContent) 필수 검증 제거
+- 기업 대시보드와 동일하게 상세 내용을 선택 사항으로 통일
+
+**이유**:
+- 필수 입력 항목은 4개(포지션명, 마감일, 담당자 이름, 이메일)로 통일
+- 기업 대시보드에서는 상세 내용이 이미 선택 사항이었으나, 관리자 페이지는 누락됨
+- 사용자 보고: "채용공고 상세 내용을 작성해주세요" 에러로 등록 불가
+
+**영향**:
+- 관리자도 최소 필수 정보만으로 공고 등록 가능
+
+---
+
+#### 🏗️ [REFACTOR] 필수 입력 항목 상단 통합 배치
+
+**변경 파일**:
+- `components/job-create/RequiredFieldsSection.tsx` (신규: 77줄) - 필수 필드 4개 통합 컴포넌트
+- `components/job-create/BasicInfoSection.tsx` (85줄 → 69줄) - 필수 필드 제거, 선택 필드만 유지
+- `components/job-create/RecruiterInfoSection.tsx` (160줄 → 57줄) - 필수 필드 제거, 선택 필드만 유지
+- `components/job-create/RecruiterSection.tsx` (49줄 → 31줄) - 인터페이스 변경 반영
+- `components/job-create/metadata/JobMetadataForm.tsx` (45줄 → 50줄) - RequiredFieldsSection 상단 추가
+
+**변경 내용**:
+- **RequiredFieldsSection 신규 생성**: 4개 필수 필드(포지션명 한글, 마감일, 담당자 이름, 이메일) 한 곳에 통합
+- **상단 배치**: 필수 입력 항목이 폼 가장 위에 표시
+- **시각적 강조**: 빨간색 테두리, 배경, 아이콘으로 필수 영역 명확히 구분
+- **BasicInfoSection 간소화**: 선택 필드만 (포지션명 영문, 부서/팀, 근무지, 고용형태, 경력수준)
+- **RecruiterInfoSection 간소화**: 선택 필드만 (직책, 전화번호)
+
+**이유**:
+- 사용자 요청: "필수 입력 항목을 상단에 몰아둘 수 있나?"
+- 필수 정보를 먼저 입력하고, 선택 정보는 나중에 입력하는 직관적 UX
+- 사용자가 최소 입력만으로 빠르게 공고 등록 가능
+
+**영향**:
+- 채용공고 작성 페이지 섹션 순서 변경
+- RecruiterInfoSection 인터페이스 축소 (managerName, managerEmail 제거)
+
+---
+
+#### 🎨 [STYLE] 채용공고 등록 UX 개선 - 안내 메시지 및 필수 필드 강조
+
+**변경 파일**:
+- `app/company-dashboard/jobs/create/page.tsx` (700줄) - 상단 안내 메시지 추가
+- `components/job-create/BasicInfoSection.tsx` (100줄) - 필수/선택 필드 시각적 분리
+- `components/job-create/RecruiterInfoSection.tsx` (160줄) - 필수/선택 필드 시각적 분리
+
+**변경 내용**:
+- **상단 안내 메시지 추가**: "* 표시된 필수 정보만 입력해도 공고 등록이 가능합니다. 단, 상세한 공고 정보를 입력할수록 더 많은 지원자 모집이 가능합니다."
+- **필수 필드 시각적 강조**: 빨간색 배경/테두리로 필수 입력 영역 구분
+- **선택 필드 구분**: 회색 라벨로 선택 입력 항목 명시
+
+**이유**:
+- 사용자가 필수/선택 필드를 명확히 구분할 수 있도록
+- 상세 정보 입력 유도 (더 많은 지원자 모집 가능 안내)
+
+---
+
+#### ✨ [UPDATE] 채용공고 등록 필수 필드 간소화
+
+**변경 파일**:
+- `hooks/useJobFormValidation.ts` (84줄) - 필수 필드 4개로 축소
+- `components/job-create/BasicInfoSection.tsx` (102줄) - required 표시 정리
+- `components/job-create/SalarySection.tsx` (73줄) - 필수 표시 제거
+- `components/job-create/RequirementsSection.tsx` (157줄) - 필수 표시 제거
+- `components/job-create/RecruiterInfoSection.tsx` (150줄) - 담당자 정보 필수화
+- `app/company-dashboard/jobs/create/page.tsx` (684줄) - 에디터 필수 해제 + 안내 멘트 추가
+
+**변경 내용**:
+- **필수 필드 간소화**: 기존 10개 이상 → 4개만 필수
+  - 포지션명 (한글) ✅
+  - 마감일 ✅
+  - 채용 담당자 이름 ✅
+  - 채용 담당자 이메일 ✅
+- **선택 필드로 전환**: 포지션명(영문), 부서/팀, 근무지, 급여, JD, 경력, 스킬, 상세 내용(에디터)
+- **안내 멘트 추가**: "등록이 어려우신가요? 담당자 이메일이나 연락처로 JD, 회사 소개, 회사 로고, 회사 전경 사진을 보내주세요. 자료가 없으시면 저희가 알아서 작성해드립니다."
+
+**이유**:
+- 클라이언트 요청: 채용공고 등록 간소화
+- 기업 담당자가 쉽게 공고 등록할 수 있도록 진입 장벽 낮춤
+- 필요시 운영팀이 상세 내용 대신 작성 가능
+
+**영향**:
+- 기업 채용공고 작성 페이지 (`/company-dashboard/jobs/create`)
+- 검증 로직 (`useJobFormValidation` 훅)
+
+---
+
 ### 2025-12-29
 
 #### 🐛 [FIX] onAuthStateChange 데드락으로 인한 프로필 조회 타임아웃 문제

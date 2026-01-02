@@ -1,5 +1,6 @@
 // 채용공고 급여 정보 섹션 컴포넌트
 
+import { Info } from 'lucide-react';
 import { JobFormData } from '@/types/job-form.types';
 
 interface SalarySectionProps {
@@ -16,7 +17,7 @@ export default function SalarySection({ formData, onUpdate }: SalarySectionProps
         <div className="grid md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              최소 연봉 (만원) <span className="text-red-500">*</span>
+              최소 연봉 (만원)
             </label>
             <input
               type="number"
@@ -29,7 +30,7 @@ export default function SalarySection({ formData, onUpdate }: SalarySectionProps
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              최대 연봉 (만원) <span className="text-red-500">*</span>
+              최대 연봉 (만원)
             </label>
             <input
               type="number"
@@ -51,6 +52,27 @@ export default function SalarySection({ formData, onUpdate }: SalarySectionProps
           />
           <span className="text-sm text-gray-700">협의 가능</span>
         </label>
+
+        {/* 최저임금 안내 */}
+        <div className="mt-4 pt-4 border-t border-gray-100">
+          <div className="flex items-start gap-2 text-sm text-gray-500 mb-2">
+            <Info className="w-4 h-4 mt-0.5 shrink-0" />
+            <span>
+              주 40시간 기준 최저연봉 약 25,155,240원 (2025년 최저시급 10,030원)
+            </span>
+          </div>
+          <p className="text-xs text-gray-400 mb-2 ml-6">
+            당사는 최저 임금법을 준수하며, 최저임금 미만의 공고는 강제 마감 및 행정 처분을 받을 수 있습니다.
+          </p>
+          <a
+            href="https://www.minimumwage.go.kr/index.jsp"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs text-primary-600 hover:text-primary-700 hover:underline ml-6"
+          >
+            최저임금제도 안내
+          </a>
+        </div>
       </div>
     </div>
   );

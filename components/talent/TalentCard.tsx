@@ -10,11 +10,9 @@ import {
   Star,
   Clock,
   Languages,
-  DollarSign,
-  User
+  DollarSign
 } from 'lucide-react';
 import OptimizedImage from '@/components/OptimizedImage';
-import { supabase } from '@/lib/supabase/config';
 import type { TalentProfile } from '@/lib/supabase/talent-service';
 import { formatSalary, getLanguageColor } from '@/lib/utils/talent';
 
@@ -34,7 +32,7 @@ export default function TalentCard({
   const router = useRouter();
   const [imageError, setImageError] = useState(false);
 
-  const handleViewProfile = async (e: React.MouseEvent) => {
+  const handleViewProfile = (e: React.MouseEvent) => {
     e.preventDefault();
 
     // 인증 확인 중이면 대기
@@ -48,37 +46,9 @@ export default function TalentCard({
       return;
     }
 
-    // 기업이면 결제 여부 확인
-    try {
-      // 현재 사용자의 세션 토큰 가져오기
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        onLoginRequired();
-        return;
-      }
-
-      const response = await fetch('/api/payment/profile/check', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`
-        },
-        body: JSON.stringify({ talentId: profile.id })
-      });
-
-      const data = await response.json();
-
-      if (data.hasPaid) {
-        // 이미 결제했으면 상세 페이지로
-        router.push(`/talent/${profile.id}`);
-      } else {
-        // 결제 안 했으면 결제 페이지로
-        router.push(`/payment/profile/${profile.id}`);
-      }
-    } catch (error) {
-      console.error('Failed to check payment:', error);
-      alert('결제 확인 중 오류가 발생했습니다.');
-    }
+    // 기업이면 바로 인재 상세 페이지로 이동
+    // 상세 페이지에서 연락처 요청/승인 상태 확인 및 처리
+    router.push(`/talent/${profile.id}`);
   };
 
   return (
@@ -107,9 +77,16 @@ export default function TalentCard({
             {/* Header */}
             <div className="flex items-start justify-between mb-3">
               <div>
-                <h3 className="text-xl font-semibold text-gray-900">
-                  {profile.name}
-                </h3>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-xl font-semibold text-gray-900">
+                    {profile.name}
+                  </h3>
+                  {profile.talentNumber && (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary-50 text-primary-600">
+                      #{profile.talentNumber}
+                    </span>
+                  )}
+                </div>
                 <p className="text-gray-600">{profile.title}</p>
               </div>
               {profile.rating && (

@@ -10,6 +10,7 @@ import HeroSection from '@/components/jobseeker-dashboard/HeroSection';
 import ProfileChecklist from '@/components/jobseeker-dashboard/ProfileChecklist';
 import ProfileCompleteBanner from '@/components/jobseeker-dashboard/ProfileCompleteBanner';
 import ProfileViewsNotification from '@/components/jobseeker-dashboard/ProfileViewsNotification';
+import ContactAccessRequests from '@/components/jobseeker-dashboard/ContactAccessRequests';
 import ApplicationStatus from '@/components/jobseeker-dashboard/ApplicationStatus';
 import ExperienceSection from '@/components/jobseeker-dashboard/ExperienceSection';
 import EducationSection from '@/components/jobseeker-dashboard/EducationSection';
@@ -72,6 +73,9 @@ export default function JobSeekerDashboard() {
 
               {/* Profile Views Notification */}
               <ProfileViewsNotification userId={user?.id} />
+
+              {/* Contact Access Requests */}
+              <ContactAccessRequests userId={user?.id} />
 
               {/* Application Status */}
               <ApplicationStatus />

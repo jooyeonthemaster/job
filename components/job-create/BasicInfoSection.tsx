@@ -15,33 +15,22 @@ interface BasicInfoSectionProps {
 export default function BasicInfoSection({ formData, onUpdate }: BasicInfoSectionProps) {
   return (
     <div className="bg-white rounded-md p-6 shadow-sm">
-      <h2 className="text-xl font-bold text-gray-900 mb-6">기본 정보</h2>
+      <h2 className="text-xl font-bold text-gray-900 mb-2">기본 정보</h2>
+      <p className="text-xs font-medium text-gray-500 mb-4">선택 입력 항목</p>
 
       <div className="space-y-4">
         <div className="grid md:grid-cols-2 gap-4">
-          <FormInput
-            label="포지션명 (한글)"
-            value={formData.title}
-            onChange={(value) => onUpdate('title', value)}
-            placeholder="예: 프론트엔드 개발자"
-            required
-          />
           <FormInput
             label="포지션명 (영문)"
             value={formData.titleEn}
             onChange={(value) => onUpdate('titleEn', value)}
             placeholder="예: Frontend Developer"
-            required
           />
-        </div>
-
-        <div className="grid md:grid-cols-2 gap-4">
           <FormInput
             label="부서/팀"
             value={formData.department}
             onChange={(value) => onUpdate('department', value)}
             placeholder="예: Engineering"
-            required
           />
         </div>
 
@@ -50,7 +39,6 @@ export default function BasicInfoSection({ formData, onUpdate }: BasicInfoSectio
           label="근무지"
           value={formData.location}
           onChange={(value) => onUpdate('location', value)}
-          required
           showDetailInput={false}
           showPreview={false}
         />
@@ -75,14 +63,6 @@ export default function BasicInfoSection({ formData, onUpdate }: BasicInfoSectio
             }))}
           />
         </div>
-
-        <FormDatePicker
-          label="마감일"
-          value={formData.deadline}
-          onChange={(value) => onUpdate('deadline', value)}
-          minDate={new Date()}
-          required
-        />
       </div>
     </div>
   );

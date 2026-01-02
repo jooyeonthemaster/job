@@ -42,7 +42,6 @@ export default function RequirementsSection({
           <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
             <FileText className="w-4 h-4 text-primary-600" />
             JD (Job Description)
-            <span className="text-red-500">*</span>
           </label>
           <textarea
             value={formData.jobDescription}
@@ -61,7 +60,6 @@ export default function RequirementsSection({
           <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
             <Briefcase className="w-4 h-4 text-primary-600" />
             필요 경력 사항
-            <span className="text-red-500">*</span>
           </label>
           <textarea
             value={formData.requiredExperience}
@@ -80,7 +78,6 @@ export default function RequirementsSection({
           <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
             <Code className="w-4 h-4 text-primary-600" />
             필요 스킬
-            <span className="text-red-500">*</span>
           </label>
 
           {/* 스킬 입력 필드 리스트 */}

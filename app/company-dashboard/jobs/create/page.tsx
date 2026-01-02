@@ -263,11 +263,8 @@ export default function JobCreatePage() {
       return;
     }
 
-    if (!editorContent.trim()) {
-      setError('채용공고 상세 내용을 작성해주세요.');
-      setCurrentStep('content');
-      return;
-    }
+    // 상세 내용 (에디터)은 선택 사항이므로 검증 제거
+    // 사용자가 원하면 담당자가 대신 작성해줌
 
     if (!jobId) {
       setError('결제를 완료한 후 공고를 작성할 수 있습니다.');
@@ -600,6 +597,26 @@ export default function JobCreatePage() {
                 </div>
               )}
 
+              {/* 필수/선택 안내 메시지 */}
+              <div className="mb-6 p-5 bg-gradient-to-r from-primary-50 to-blue-50 rounded-lg border border-primary-200">
+                <div className="flex items-start gap-4">
+                  <div className="p-2 bg-primary-100 rounded-lg flex-shrink-0">
+                    <Info className="w-5 h-5 text-primary-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-primary-900 mb-1">
+                      <span className="inline-flex items-center gap-1">
+                        <span className="text-red-500">*</span> 표시된 필수 정보만 입력해도 공고 등록이 가능합니다
+                      </span>
+                    </p>
+                    <p className="text-sm text-primary-700">
+                      단, 상세한 공고 정보를 입력할수록 <strong className="text-primary-900">더 많은 지원자 모집</strong>이 가능합니다.
+                      가능하시다면 회사 소개, 복지, 근무 환경 등 상세 정보를 함께 입력해주세요.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               {currentStep === 'metadata' ? (
                 <JobMetadataForm
                   formData={formData}
@@ -613,11 +630,25 @@ export default function JobCreatePage() {
                       <div className="w-8 h-8 bg-secondary-600 rounded-lg flex items-center justify-center">
                         <span className="text-white font-bold">2</span>
                       </div>
-                      <h2 className="text-2xl font-bold text-gray-900">상세 내용 작성</h2>
+                      <h2 className="text-2xl font-bold text-gray-900">상세 내용 작성 <span className="text-base font-normal text-gray-500">(선택)</span></h2>
                     </div>
                     <p className="text-sm text-gray-600 ml-11">
                       블로그 에디터처럼 자유롭게 작성하세요. 텍스트, 이미지, 표 등을 활용할 수 있습니다.
                     </p>
+                  </div>
+
+                  {/* 작성이 어려운 분들을 위한 안내 */}
+                  <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                    <div className="flex items-start gap-3">
+                      <Info className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <p className="text-sm font-medium text-blue-900">등록이 어려우신가요?</p>
+                        <p className="text-sm text-blue-700 mt-1">
+                          담당자 이메일이나 연락처로 JD, 회사 소개, 회사 로고, 회사 전경 사진을 보내주세요.
+                          자료가 없으시면 저희가 알아서 작성해드립니다.
+                        </p>
+                      </div>
+                    </div>
                   </div>
 
                   <JobContentEditor

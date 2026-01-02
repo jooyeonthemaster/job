@@ -198,11 +198,7 @@ function AdminJobCreateContent() {
       return;
     }
 
-    if (!editorContent.trim()) {
-      setError('채용공고 상세 내용을 작성해주세요.');
-      setCurrentStep('content');
-      return;
-    }
+    // 상세 내용(editorContent)은 선택 사항 - 검증 제거됨
 
     setLoading(true);
     setError('');

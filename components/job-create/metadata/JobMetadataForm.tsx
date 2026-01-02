@@ -1,6 +1,7 @@
 'use client';
 
 import { JobFormData } from '@/types/job-form.types';
+import RequiredFieldsSection from '../RequiredFieldsSection';
 import BasicInfoSection from '../BasicInfoSection';
 import SalarySection from '../SalarySection';
 import RequirementsSection from '../RequirementsSection';
@@ -30,6 +31,10 @@ export default function JobMetadataForm({ formData, onUpdate, showPostingTier = 
         </p>
       </div>
 
+      {/* 필수 입력 항목 - 상단 배치 */}
+      <RequiredFieldsSection formData={formData} onUpdate={onUpdate} />
+
+      {/* 선택 입력 항목들 */}
       <BasicInfoSection formData={formData} onUpdate={onUpdate} />
       <SalarySection formData={formData} onUpdate={onUpdate} />
       <RequirementsSection formData={formData} onUpdate={onUpdate} />

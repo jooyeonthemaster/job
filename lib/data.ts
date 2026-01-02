@@ -53,23 +53,6 @@ export const companies: Company[] = [
     established: '2014'
   },
   {
-    id: '4',
-    name: '쿠팡',
-    nameEn: 'Coupang',
-    logo: '/logos/coupang.png',
-    bannerImage: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=800&h=300&fit=crop',
-    industry: 'E-commerce',
-    location: '서울 송파구',
-    employeeCount: '10,000+',
-    description: 'Leading e-commerce platform',
-    rating: 3.9,
-    reviewCount: 2100,
-    openPositions: 25,
-    benefits: ['4대보험', '퇴직금', '성과급', '자기계발지원', '사내카페'],
-    techStack: ['Python', 'Django', 'React', 'AWS'],
-    established: '2010'
-  },
-  {
     id: '5',
     name: '토스',
     nameEn: 'Toss',

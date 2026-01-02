@@ -16,7 +16,7 @@ import { OverviewTab } from '@/components/company-dashboard/tabs/OverviewTab';
 import { ProfileTab } from '@/components/company-dashboard/tabs/ProfileTab';
 import { JobsTab } from '@/components/company-dashboard/tabs/JobsTab';
 import { ApplicantsTab } from '@/components/company-dashboard/tabs/ApplicantsTab';
-import { ViewedProfilesTab } from '@/components/company-dashboard/tabs/ViewedProfilesTab';
+import { ContactAccessTab } from '@/components/company-dashboard/tabs/ContactAccessTab';
 import { PaymentsTab } from '@/components/company-dashboard/tabs/PaymentsTab';
 import { VerificationTab } from '@/components/company-dashboard/tabs/VerificationTab';
 import { SettingsTab } from '@/components/company-dashboard/tabs/SettingsTab';
@@ -124,7 +124,7 @@ function CompanyDashboardContent() {
           )}
 
           {activeTab === 'viewed-profiles' && (
-            <ViewedProfilesTab />
+            <ContactAccessTab />
           )}
 
           {activeTab === 'payments' && (

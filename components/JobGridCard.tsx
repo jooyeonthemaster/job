@@ -14,7 +14,7 @@ import { cn } from '@/lib/utils';
 
 interface JobGridCardProps {
   job: {
-    id: number;
+    id: string | number;
     company: string;
     logo?: string | null;
     companyImage?: string | null;

@@ -17,6 +17,7 @@ import { supabase } from './config';
 export interface TalentProfile {
   // ===== 기본 정보 (Basic Information) =====
   id: string;                        // users.id
+  talentNumber?: string;             // users.talent_number (인재 고유번호: YYMM-01-NNN)
   name: string;                      // users.full_name
   email?: string;                    // users.email (결제 시 노출)
   title: string;                     // users.headline
@@ -112,6 +113,7 @@ export const getAllTalents = async (): Promise<TalentProfile[]> => {
       .from('users')
       .select(`
         id,
+        talent_number,
         full_name,
         headline,
         nationality,
@@ -167,6 +169,7 @@ export const getAllTalents = async (): Promise<TalentProfile[]> => {
 
       return {
         id: user.id,
+        talentNumber: user.talent_number || undefined,
         name: user.full_name || 'Unknown',
         title: user.headline || desiredPosition || 'Job Seeker',
         nationality: user.nationality || 'Not specified',
@@ -206,6 +209,7 @@ export const getTalentById = async (id: string): Promise<TalentProfile | null> =
       .from('users')
       .select(`
         id,
+        talent_number,
         email,
         full_name,
         headline,
@@ -303,6 +307,7 @@ export const getTalentById = async (id: string): Promise<TalentProfile | null> =
     return {
       // 기본 정보
       id: data.id,
+      talentNumber: data.talent_number || undefined,
       name: data.full_name || 'Unknown',
       email: data.email,
       title: data.headline || desiredPosition || 'Job Seeker',
