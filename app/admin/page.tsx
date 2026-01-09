@@ -11,7 +11,8 @@ import BannersTab from '@/components/admin/BannersTab';
 import AdminPaymentsTab from '@/components/admin/AdminPaymentsTab';
 import AdminRefundsTab from '@/components/admin/AdminRefundsTab';
 import AdminMembersTab from '@/components/admin/AdminMembersTab';
-import { Settings, Briefcase, LogOut, Star, Eye, Monitor, CreditCard, RotateCcw, Users } from 'lucide-react';
+import AdminApplicationsLogTab from '@/components/admin/AdminApplicationsLogTab';
+import { Settings, Briefcase, LogOut, Star, Eye, Monitor, CreditCard, RotateCcw, Users, ClipboardList } from 'lucide-react';
 
 // 관리자 이메일 목록 (중앙 관리)
 const ADMIN_EMAILS = [
@@ -25,7 +26,7 @@ const ADMIN_EMAILS = [
 export default function AdminPage() {
   const router = useRouter();
   const { user, isLoading: authLoading } = useAuth();
-  const [activeTab, setActiveTab] = useState<'jobs' | 'admin-created' | 'profile-views' | 'payments' | 'refunds' | 'banners' | 'members'>('jobs');
+  const [activeTab, setActiveTab] = useState<'jobs' | 'admin-created' | 'profile-views' | 'payments' | 'refunds' | 'banners' | 'members' | 'applications'>('jobs');
   const [loading, setLoading] = useState(true);
   const [authorized, setAuthorized] = useState(false);
   const [accessToken, setAccessToken] = useState<string | null>(null);
@@ -269,6 +270,17 @@ export default function AdminPage() {
               <Users className="w-5 h-5" />
               회원 관리
             </button>
+            <button
+              onClick={() => setActiveTab('applications')}
+              className={`flex items-center gap-2 px-6 py-4 border-b-2 font-medium transition-colors whitespace-nowrap ${
+                activeTab === 'applications'
+                  ? 'border-primary-600 text-primary-600'
+                  : 'border-transparent text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <ClipboardList className="w-5 h-5" />
+              지원 내역
+            </button>
           </div>
         </div>
       </div>
@@ -296,6 +308,9 @@ export default function AdminPage() {
         </div>
         <div className={activeTab === 'members' ? '' : 'hidden'}>
           <AdminMembersTab />
+        </div>
+        <div className={activeTab === 'applications' ? '' : 'hidden'}>
+          <AdminApplicationsLogTab isActive={activeTab === 'applications'} />
         </div>
       </div>
     </div>
