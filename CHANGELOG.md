@@ -8,6 +8,401 @@
 
 ## 📋 최근 주요 변경 사항
 
+### 2026-01-09
+
+#### ⭐ [ADD] 프로필 체크리스트에 "매칭률 UP" 선택 항목 추가
+
+**변경 파일**:
+- `lib/utils/profile-checklist.ts` (260줄) - optional 카테고리 및 4개 항목 추가
+- `components/jobseeker-dashboard/ProfileChecklist.tsx` (553줄 → 616줄) - 매칭률 UP 섹션 UI 추가
+
+**변경 내용**:
+- `ExtendedChecklistItem` 타입에 `'optional'` 카테고리 추가
+- 4가지 선택 항목 추가 (priority 11-14):
+  - 프로필 사진 (`profileImage`)
+  - 희망 근무지 (`preferredLocations`)
+  - 희망 연봉 (`salaryRange`)
+  - 근무 형태 (`remoteWork`)
+- 체크리스트 UI에 "⭐ 매칭률 UP" 섹션 추가
+- amber/orange 색상 테마로 선택 항목 구분
+- 모든 선택 항목 완료 시 축하 메시지 표시
+
+**이유**:
+- 사용자 요청: 프로필 사진 등 추가 정보 완성 시 매칭 향상 안내 필요
+- 필수 항목과 선택 항목의 시각적 구분 필요
+
+**영향**:
+- 구직자 대시보드에서 선택 항목 확인 가능
+- 프로필 완성도 향상 유도
+
+---
+
+#### 🐛 [FIX] 채용공고 지원 시 "프로필 정보가 필요합니다" 에러 수정
+
+**변경 파일**:
+- `app/jobs/[id]/page.tsx` (678줄) - 지원 검증 로직 수정
+
+**변경 내용**:
+- `handleApplicationSubmit` 함수에서 `full_name` 필수 체크 제거
+- `applicant_name`에 fallback 로직 추가: `full_name || headline || '지원자'`
+
+**이유**:
+- 온보딩 간소화로 `full_name`이 선택 항목이 됨
+- 인재풀 등록은 성공했지만 지원 시 `full_name` 체크로 인해 에러 발생
+- 통합 검증 로직(profile-eligibility.ts)과 불일치 해소
+
+**영향**:
+- `full_name` 없이 `headline`만 있어도 지원 가능
+- 기업에 지원자 이름 대신 한줄소개 또는 '지원자' 표시될 수 있음
+
+---
+
+#### 🔄 [REFACTOR] 구직자 온보딩 대폭 간소화
+
+**변경 파일**:
+- `types/jobseeker-onboarding.types.ts` (333줄) - 검증 로직 간소화
+- `components/jobseeker-onboarding/BasicInfoSection.tsx` (141줄 → 183줄) - 필수/선택 분리
+- `components/jobseeker-onboarding/PersonalInfoSection.tsx` (51줄 → 52줄) - 선택 항목으로 변경
+- `app/onboarding/job-seeker/quick/page.tsx` (179줄 → 235줄) - 간소화된 UI
+
+**변경 내용**:
+- **온보딩 필수 항목 대폭 축소** (14개 → 5개):
+  - ✅ 이메일 (자동 입력됨)
+  - ✅ 전화번호
+  - ✅ 한줄소개 (신규 필수화)
+  - ✅ 비밀번호 (소셜 로그인만)
+  - ✅ 약관 동의
+
+- **선택 항목 접이식 UI로 변경**:
+  - 국적, 이름, 외국인등록번호, 희망직군
+  - 주소, 성별, 비자, 언어능력
+  - "나중에 마이페이지에서 입력" 안내 추가
+
+- **UX 개선**:
+  - "빠른 시작하기" 타이틀로 변경
+  - "3분 내로 완료" 안내 추가
+  - 필수 항목만 먼저 보여주고 선택 항목은 토글로 숨김
+
+**이유**:
+- 클라이언트 요청: 온보딩 과정 간소화
+- profile-eligibility.ts의 통합 검증 기준과 일치 (이력서 제외)
+- 가입 전환율 향상을 위해 필수 입력 항목 최소화
+
+**영향**:
+- 기존 사용자 데이터 호환성 유지 (기존 필드는 그대로 저장됨)
+- 마이페이지에서 추가 정보 입력 유도 필요
+
+---
+
+#### 🔄 [REFACTOR] 지원 요구사항 간소화 및 검증 로직 통합 (#12)
+
+**변경 파일**:
+- `lib/utils/profile-eligibility.ts` (신규: 230줄) - 통합 검증 로직
+- `lib/utils/talent-pool-eligibility.ts` (237줄 → 141줄) - 리팩토링
+- `lib/utils/profile-checklist.ts` (184줄 → 209줄) - 카테고리 구조 추가
+- `app/jobs/[id]/page.tsx` (676줄 → 678줄) - handleApplyClick 간소화
+- `app/api/talent/publish/route.ts` (263줄 → 341줄) - 서버 검증 통합
+- `components/jobseeker-dashboard/ProfileChecklist.tsx` (445줄 → 553줄) - UI 업데이트
+- `app/jobseeker-dashboard/page.tsx` (1줄 수정) - 타입 에러 수정
+
+**변경 내용**:
+- **통합 검증 로직 신설** (`profile-eligibility.ts`):
+  - 채용공고 지원 + 인재풀 등록에 동일한 기준 적용
+  - 핵심 3가지 필수: 이메일, 전화번호, 한줄소개
+  - 이력서 파일 OR 프로필 6개 정보 (경력, 학력, 기술, 언어, 자기소개, 희망직무)
+
+- **UI 구조 개편** (`ProfileChecklist.tsx`):
+  - 카테고리별 그룹화: core, resume, profile
+  - "이력서 OR 프로필 정보" 시각적 구분
+  - 이력서 업로드 시 프로필 정보 섹션 비활성화 표시
+
+- **서버 검증 통합** (`app/api/talent/publish/route.ts`):
+  - 동일한 통합 기준 적용
+  - 학력, 언어능력 검증 추가
+  - hasResume 정보 응답에 포함
+
+**이유**:
+- 클라이언트 요청: 지원 요구사항 간소화
+- 기존 8단계 검증 → 통합 기준 1단계로 단순화
+- 채용지원/인재풀 등록 간 검증 로직 불일치 해소
+
+**새로운 통합 기준**:
+| 조건 | 필수 여부 |
+|------|----------|
+| 이메일 | ✅ 필수 |
+| 전화번호 | ✅ 필수 |
+| 한줄소개 | ✅ 필수 |
+| 이력서 파일 | ⚡ 있으면 바로 통과 |
+| 경력/학력/기술/언어/자기소개/희망직무 | 이력서 없으면 전부 필수 |
+
+**영향**:
+- 이력서만 있으면 프로필 정보 없이도 지원 가능
+- ProfileChecklist.tsx 553줄로 500줄 한도 초과 (추후 분리 검토)
+
+---
+
+#### 🆕 [ADD] 채용공고 국적별 채용 유형 필드 추가 (#10)
+
+**변경 파일**:
+- `supabase/migrations/20260109_add_hiring_type_columns.sql` (신규: 15줄)
+- `types/job-form.types.ts` (173줄 → 175줄)
+- `hooks/useJobForm.ts` (133줄 → 135줄)
+- `components/job-create/LanguageSection.tsx` (61줄 → 87줄)
+- `app/api/admin/jobs/create/route.ts` (222줄 → 224줄)
+- `app/api/jobs/initiate/route.ts` (109줄 → 111줄)
+- `app/jobs/[id]/page.tsx` (657줄 → 676줄)
+- `components/job-detail/JobSummaryTable.tsx` (417줄 → 437줄)
+
+**변경 내용**:
+- DB 마이그레이션: `for_korean`, `for_foreigner` BOOLEAN 컬럼 추가 (기본값: true)
+- TypeScript 타입: `JobFormData`에 `forKorean`, `forForeigner` 필드 추가
+- 채용공고 작성 폼: LanguageSection에 채용 대상 체크박스 UI 추가
+- API 라우트: 관리자 + 일반 기업 모두 해당 필드 DB INSERT에 포함
+- 채용공고 상세: JobSummaryTable에 채용 대상 행 추가
+- **채용공고 상세 헤더**: 비자 지원 옆에 채용 대상(국적) 표시 추가 (Users 아이콘)
+
+**이유**:
+- 클라이언트 요청: 내국인/외국인 채용 구분 표시 기능 필요
+- 외국인 전용 채용, 내국인 전용 채용, 국적 무관 표시 지원
+
+**표시 로직**:
+| 내국인 | 외국인 | 표시 |
+|--------|--------|------|
+| ✅ | ✅ | 국적 무관 |
+| ✅ | ❌ | 내국인 채용 |
+| ❌ | ✅ | 외국인 채용 |
+| ❌ | ❌ | 미지정 |
+
+**영향**:
+- 기존 공고: 기본값 true로 "국적 무관"으로 표시됨
+- 신규 공고: 폼에서 선택 가능
+
+---
+
+#### 🔧 [FIX] 회사 홈페이지 링크 버그 수정 (#9)
+
+**변경 파일**:
+- `app/companies/[id]/page.tsx` (633줄)
+
+**변경 내용**:
+- 회사 홈페이지 링크에 프로토콜 prefix 자동 추가 로직 구현
+- URL이 `http`로 시작하지 않으면 `https://` 자동 prepend
+- URL 앞뒤 공백 제거 (`.trim()`)
+
+**이유**:
+- 버그: `www. godius.kr` 같은 URL이 `http://` 없이 저장되어 있으면 브라우저가 상대 경로로 인식
+- 결과: `/companies/www.%20godius.kr`로 리다이렉트되어 404 에러 발생
+
+**수정 전**:
+```tsx
+href={companyDetail.website}
+```
+
+**수정 후**:
+```tsx
+href={companyDetail.website.startsWith('http') ? companyDetail.website : `https://${companyDetail.website.trim()}`}
+```
+
+---
+
+### 2026-01-08
+
+#### 🔧 [FIX] 로고 유연한 레이아웃 적용 (채용공고 + 기업정보)
+
+**변경 파일**:
+- `app/jobs/[id]/page.tsx` (656줄)
+- `app/companies/[id]/page.tsx` (633줄)
+
+**변경 내용**:
+- **채용공고 페이지**: 로고 `w-16 h-16` 고정 → `h-14 w-auto` 유연한 레이아웃
+- **기업정보 페이지**: 로고 `w-32 h-32` 고정 → `h-24 w-auto` 유연한 레이아웃
+- `object-cover` → `object-contain`으로 변경하여 이미지 잘림 방지
+- **기업정보 페이지**: `OptimizedImage`에 `type="logo"` 추가 (Cloudinary `crop: 'fit'` 적용)
+- 로고 없을 때만 정사각형 fallback (Building2 아이콘 또는 회사명 첫 글자)
+
+**이유**:
+- UI 개선: 가로로 긴 로고도 잘림 없이 자연스럽게 표시
+
+---
+
+#### 🔧 [UPDATE] 채용공고 상세 페이지 탭 순서 변경
+
+**변경 파일**:
+- `app/jobs/[id]/page.tsx` (656줄)
+
+**변경 내용**:
+- 기본 탭을 "요약 표"로 변경 (이전: "상세 정보")
+- 탭 버튼 순서 변경: "요약 표" → "상세 정보" (이전: 반대)
+
+**이유**:
+- 클라이언트 요청: 요약표가 먼저 표시되도록
+
+---
+
+#### 🔧 [UPDATE] 채용공고 상세 페이지 UI 개선
+
+**변경 파일**:
+- `app/jobs/[id]/page.tsx` (651줄 → 656줄)
+
+**변경 내용**:
+1. **한국어 요구사항 하단 이동**: 중간에서 필요 스킬 아래로 이동, 조건부 렌더링 추가, Globe 아이콘 추가
+2. **공고 상세 섹션 맨 하단 이동**: 내용 있을 때 맨 아래(한국어 요구사항 다음)에 표시, 없으면 숨김
+
+**새로운 섹션 순서**:
+1. 필수 요건 → 2. 우대 사항 → 3. JD → 4. 필요 경력 → 5. 필요 스킬 → 6. 한국어 요구사항 → 7. 공고 상세
+
+**이유**:
+- 클라이언트 요청: 한국어 요구사항과 공고 상세를 하단에 배치
+- UX 개선: 빈 섹션 표시 제거
+
+---
+
+#### 🔧 [UPDATE] 기업정보 업종 텍스트 줄바꿈 수정
+
+**변경 파일**:
+- `app/companies/[id]/page.tsx` (633줄 → 633줄)
+
+**변경 내용**:
+- 업종(industry) 필드에 `break-words`, `gap-2`, `shrink-0` CSS 추가
+- 긴 텍스트가 줄바꿈되어 레이아웃 깨짐 방지
+
+**이유**:
+- 버그 수정: 긴 업종 텍스트가 한 줄에 강제되어 레이아웃 문제 발생
+
+---
+
+### 2026-01-07
+
+#### ✨ [ADD] 기업 로고 업로드 크기/비율 검증 강화
+
+**변경 파일**:
+- `components/CustomCloudinaryUpload.tsx` (451줄 → 497줄)
+- `components/company-signup/Section3Images.tsx` (206줄 → 252줄)
+
+**변경 내용**:
+- 로고 이미지 최소 크기 검증 추가 (200x200 픽셀 이상)
+- 1:1 비율 검증 추가 (20% 오차 허용)
+- 프로필 이미지 최소 크기 검증 추가 (150x150 픽셀 이상)
+- 로고 미리보기 스타일 object-cover → object-contain으로 변경
+- 업로드 팁 문구 업데이트 (크기/비율 권장사항 명시)
+- 검증 실패 시 상세 에러 메시지 표시
+
+**이유**:
+- 로고가 일정한 레이아웃으로 표시되도록 업로드 단계에서 검증 강화
+- 너무 작거나 비율이 맞지 않는 이미지 업로드 방지
+
+**영향**:
+- 기업 회원가입 시 로고 업로드 검증 적용
+- 대시보드 로고 변경 시 검증 적용
+
+---
+
+#### 🔧 [UPDATE] 마감일 빠른 선택 옵션 수정
+
+**변경 파일**:
+- `components/job-create/RequiredFieldsSection.tsx` (105줄 → 105줄)
+
+**변경 내용**:
+- "2개월 후" 옵션 제거
+- 옵션: "1주 후", "2주 후", "1개월 후" (3개로 축소)
+
+**이유**:
+- 사용자 요청: 2개월 후 옵션 불필요
+
+---
+
+#### ✨ [ADD] 채용공고 키워드 검색 기능 구현
+
+**변경 파일**:
+- `app/page.tsx` (525줄 → 560줄)
+- `app/jobs/page.tsx` (553줄 → 600줄)
+
+**변경 내용**:
+- 검색 입력창에 state 연결 (searchQuery)
+- 실시간 필터링: 직무명, 회사명, 위치, 스킬로 검색
+- Enter 키 및 검색 버튼 동작 연결
+- 검색어 지우기 버튼 (✕) 추가
+- 필터 초기화 버튼 동작 연결
+- 메인 페이지에서 검색 시 /jobs?search=검색어로 이동
+- jobs 페이지에서 URL query parameter로 검색어 초기화
+
+**이유**:
+- 클라이언트 요청: 채용공고 키워드 검색 기능
+
+**영향**:
+- 메인/jobs 페이지에서 키워드 검색 가능
+
+---
+
+#### 🎨 [UPDATE] 푸터 로고 변경
+
+**변경 파일**:
+- `components/Footer.tsx` (129줄)
+
+**변경 내용**:
+- 푸터 로고 이미지를 `/logo.jpg` → `/puterlogo.png`로 변경
+- 클라이언트가 제공한 새 로고 적용
+
+**이유**:
+- 클라이언트 요청: 푸터 로고 변경
+
+---
+
+#### ✨ [ADD] 채용공고 마감일 빠른 선택 버튼 추가
+
+**변경 파일**:
+- `components/job-create/RequiredFieldsSection.tsx` (77줄 → 97줄)
+
+**변경 내용**:
+- 마감일 DatePicker 위에 빠른 선택 버튼 그룹 추가
+- 옵션: "1주 후", "2주 후", "1개월 후", "2개월 후"
+- 버튼 클릭 시 현재 날짜 기준으로 자동 계산하여 deadline 업데이트
+- 옅은 파란색 pill 형태의 버튼 UI
+
+**이유**:
+- 클라이언트 요청: 캘린더만 있는 방식 대신 빠른 선택 버튼 추가 요청
+
+---
+
+#### 🐛 [FIX] 급여 "0만원~0만원" 표시 버그 수정
+
+**변경 파일**:
+- `utils/jobFormatters.ts` (105줄 → 105줄)
+- `app/page.tsx` (526줄)
+- `app/jobs/page.tsx` (553줄)
+
+**변경 내용**:
+- `formatSalary()` 함수에 0, undefined 체크 추가
+- null, undefined, 0인 경우 "협의"로 표시
+- page.tsx, jobs/page.tsx의 인라인 급여 포맷팅을 formatSalary() 함수로 교체
+- Supabase에서 salary_min/max가 null로 오는 경우 안전하게 처리
+
+**이유**:
+- 클라이언트 버그 리포트: 급여가 "0만 원~0만 원"으로 표시되는 문제
+
+**영향**:
+- 급여 정보가 없거나 0인 경우 "협의"로 표시
+
+---
+
+#### 🐛 [FIX] 로고 이미지 로드 실패 시 fallback 추가
+
+**변경 파일**:
+- `app/jobs/[id]/page.tsx` (635줄 → 650줄)
+
+**변경 내용**:
+- 채용공고 상세 페이지의 회사 로고에 onError fallback 추가
+- 이미지 로드 실패 시 회사명 첫 글자를 파란색 배경에 표시
+- JobCard, JobGridCard와 동일한 패턴 적용
+
+**이유**:
+- 클라이언트 요청: 사이트 전반에서 로고가 깨지거나 잘리는 현상 수정
+
+**영향**:
+- 로고 이미지가 없거나 로드 실패 시에도 일관된 UI 표시
+
+---
+
 ### 2026-01-02
 
 #### ✨ [ADD] 채용 공고 요약 테이블 탭 UI 추가

@@ -46,16 +46,16 @@ export default function JobCard({ job }: JobCardProps) {
         <div className="p-6 flex-1">
           {/* Company Info */}
           <div className="flex items-center gap-3 mb-3">
-            <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 overflow-hidden font-bold text-sm ${
-              job.company.logo ? 'bg-gradient-to-br from-gray-100 to-gray-200' : 'bg-gradient-to-br from-primary-500 to-primary-600 text-white'
-            }`}>
+            <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 overflow-hidden font-bold text-sm ${job.company.logo ? 'bg-white' : 'bg-gradient-to-br from-primary-500 to-primary-600 text-white'
+              }`}>
               {job.company.logo ? (
                 <Image
                   src={job.company.logo}
                   alt={job.company.name}
-                  width={40}
-                  height={40}
-                  className="w-full h-full object-cover"
+                  width={80} // 2x 해상도 (Retina 디스플레이 대응)
+                  height={80} // 2x 해상도 (Retina 디스플레이 대응)
+                  quality={100} // 압축 노이즈 제거
+                  className="w-full h-full object-contain"
                   onError={(e) => {
                     // 이미지 로드 실패 시 회사 이름 첫 글자 표시
                     const target = e.target as HTMLImageElement;

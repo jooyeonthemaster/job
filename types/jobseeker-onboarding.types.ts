@@ -182,54 +182,56 @@ export interface ValidationResult {
   errors: Record<string, string>;
 }
 
+/**
+ * 온보딩 폼 유효성 검증 (2026-01-09 간소화)
+ *
+ * 📋 필수 항목 (핵심 3가지 + 비밀번호 + 약관):
+ * 1. 이메일 (이미 입력됨)
+ * 2. 전화번호 ✅
+ * 3. 한줄소개 (headline) ✅
+ * 4. 비밀번호 (소셜 로그인 시) ✅
+ * 5. 약관 동의 ✅
+ *
+ * 📝 선택 항목 (대시보드에서 나중에 입력):
+ * - 국적, 이름, 외국인등록번호, 희망직군
+ * - 주소, 성별, 비자, 언어능력
+ */
 export const validateJobseekerOnboardingForm = (
   formData: JobseekerOnboardingFormData,
   isEmailSignup: boolean
 ): ValidationResult => {
   const errors: Record<string, string> = {};
 
-  const isKorean = formData.nationality === KOREA_NATIONALITY_CODE;
+  // ============================================
+  // 🔵 핵심 정보 (3가지) - 필수
+  // ============================================
 
-  // 1. 이름 (필수)
-  if (!formData.fullName.trim()) {
-    errors.fullName = '이름을 입력해주세요.';
-  }
-
-  // 1-1. 희망 근무 직군 (필수)
-  if (!formData.desiredJobCategory.trim()) {
-    errors.desiredJobCategory = '희망 근무 직군을 입력해주세요.';
-  }
-
-  // 2. 전화번호 검증 (모든 국적 필수)
-  if (!formData.phoneCountryCode) {
-    errors.phoneCountryCode = '국가 코드를 선택해주세요.';
-  }
-  
-  if (!formData.phone) {
-    errors.phone = '전화번호를 입력해주세요.';
-  } else if (!validatePhone(formData.phone, formData.phoneCountryCode)) {
-    errors.phone = '올바른 전화번호 형식이 아닙니다.';
-  }
-
-  // 3. 외국인등록번호 검증 (외국인만 필수)
-  if (!isKorean) {
-    // 외국인: 외국인등록번호 필수
-    if (!formData.foreignerNumber) {
-      errors.foreignerNumber = '외국인등록번호를 입력해주세요.';
-    } else if (!validateForeignerNumber(formData.foreignerNumber)) {
-      errors.foreignerNumber = '올바른 형식이 아닙니다. (예: 123456-1234567)';
-    }
-  }
-
-  // 4. 이메일 (필수)
+  // 1. 이메일 (필수)
   if (!formData.email) {
     errors.email = '이메일을 입력해주세요.';
   } else if (!validateEmail(formData.email)) {
     errors.email = '올바른 이메일 형식이 아닙니다.';
   }
 
-  // 5. 비밀번호 (소셜 로그인 시에만 필수)
-  // 이메일 회원가입 사용자는 이미 비밀번호가 설정되어 있으므로 검증 스킵
+  // 2. 전화번호 (필수)
+  if (!formData.phoneCountryCode) {
+    errors.phoneCountryCode = '국가 코드를 선택해주세요.';
+  }
+
+  if (!formData.phone) {
+    errors.phone = '전화번호를 입력해주세요.';
+  } else if (!validatePhone(formData.phone, formData.phoneCountryCode)) {
+    errors.phone = '올바른 전화번호 형식이 아닙니다.';
+  }
+
+  // 3. 한줄소개 (필수) - 신규 필수화
+  if (!formData.headline || !formData.headline.trim()) {
+    errors.headline = '한줄소개를 입력해주세요. (예: "5년차 프론트엔드 개발자")';
+  }
+
+  // ============================================
+  // 🔐 비밀번호 (소셜 로그인 시 필수)
+  // ============================================
   if (!isEmailSignup) {
     // 소셜 로그인 사용자만 비밀번호 설정 필요
     if (!formData.password) {
@@ -238,7 +240,7 @@ export const validateJobseekerOnboardingForm = (
       errors.password = '비밀번호는 8~20자로, 문자와 숫자 또는 특수문자(!, @, #, $, ^, *, +, =, -)를 포함해야 합니다.';
     }
 
-    // 6. 비밀번호 확인
+    // 비밀번호 확인
     if (!formData.passwordConfirm) {
       errors.passwordConfirm = '비밀번호 확인을 입력해주세요.';
     } else if (formData.password !== formData.passwordConfirm) {
@@ -246,57 +248,29 @@ export const validateJobseekerOnboardingForm = (
     }
   }
 
-  // 7. 주소 (필수)
-  if (!formData.address) {
-    errors.address = '주소를 입력해주세요.';
-  }
-
-  // 8. 국적 (필수)
-  if (!formData.nationality) {
-    errors.nationality = '국적을 선택해주세요.';
-  }
-
-  // 9. 성별 (필수)
-  if (!formData.gender) {
-    errors.gender = '성별을 선택해주세요.';
-  }
-
-  // 10. 비자 유형 (외국인만 필수, 한국인은 선택)
-  if (!isKorean) {
-    // 외국인은 비자 유형 필수
-    if (!formData.visaType || formData.visaType.length === 0) {
-      errors.visaType = '비자 유형을 최소 1개 이상 선택해주세요.';
-    }
-  }
-  // 한국인은 비자 입력 선택사항
-
-  // 11. 한국어 능력 (필수)
-  if (!formData.koreanLevel) {
-    errors.koreanLevel = '한국어 능력을 선택해주세요.';
-  }
-
-  // 12. 어학 능력 (필수, 최소 1개)
-  if (!formData.otherLanguages || formData.otherLanguages.length === 0) {
-    errors.otherLanguages = '한국어 외 구사 가능한 언어를 최소 1개 이상 추가해주세요.';
-  } else {
-    // 각 언어의 언어명과 숙련도가 모두 선택되었는지 확인
-    const invalidLanguage = formData.otherLanguages.find(
-      (lang) => !lang.language || !lang.proficiency
-    );
-    if (invalidLanguage) {
-      errors.otherLanguages = '모든 언어의 언어명과 숙련도를 선택해주세요.';
-    }
-  }
-
-  // 13. 서비스 이용약관 동의 (필수)
+  // ============================================
+  // 📋 약관 동의 (필수)
+  // ============================================
   if (!formData.agreeServiceTerms) {
     errors.terms = '서비스 이용약관에 동의해주세요.';
   }
 
-  // 14. 개인정보 수집·이용 동의 (필수)
   if (!formData.agreePrivacyTerms) {
     errors.terms = '개인정보 수집·이용 동의는 필수입니다.';
   }
+
+  // ============================================
+  // 📝 선택 항목 - 검증 생략 (대시보드에서 나중에 입력)
+  // ============================================
+  // - 국적 (nationality)
+  // - 이름 (fullName)
+  // - 외국인등록번호 (foreignerNumber)
+  // - 희망 근무 직군 (desiredJobCategory)
+  // - 주소 (address)
+  // - 성별 (gender)
+  // - 비자 유형 (visaType)
+  // - 한국어 능력 (koreanLevel)
+  // - 기타 언어 (otherLanguages)
 
   return {
     isValid: Object.keys(errors).length === 0,

@@ -47,7 +47,9 @@
       "Bash(for f in \"c:\\\\Users\\\\jooye\\\\Desktop\\\\20250919jobmatch\\\\app\\\\company-dashboard\\\\edit\\\\basic-benefits\\\\page.tsx\" \"c:\\\\Users\\\\jooye\\\\Desktop\\\\20250919jobmatch\\\\app\\\\company-dashboard\\\\edit\\\\page.tsx\" \"c:\\\\Users\\\\jooye\\\\Desktop\\\\20250919jobmatch\\\\app\\\\signup\\\\company\\\\page.tsx\")",
       "Bash(do wc -l \"$f\")",
       "Bash(start \"\" \"c:/Users/jooye/Desktop/20250919jobmatch/docs/개발용역계약서_브릿지월드.html\")",
-      "Bash(wc:*)"
+      "Bash(wc:*)",
+      "Bash(ls -la \"c:\\\\Users\\\\jooye\\\\Desktop\\\\20250919jobmatch\\\\app\\\\talent\"\" 2>/dev/null || echo \"Directory not found \")",
+      "Bash(ls:*)"
     ],
     "deny": [],
     "ask": []

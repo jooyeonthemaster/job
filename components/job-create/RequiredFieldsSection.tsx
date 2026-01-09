@@ -6,12 +6,26 @@ import { User, Mail, AlertCircle } from 'lucide-react';
 import FormInput from '@/components/ui/form/FormInput';
 import FormDatePicker from '@/components/ui/form/FormDatePicker';
 
+// 마감일 빠른 선택 옵션
+const DEADLINE_QUICK_OPTIONS = [
+  { label: '1주 후', days: 7 },
+  { label: '2주 후', days: 14 },
+  { label: '1개월 후', days: 30 },
+] as const;
+
 interface RequiredFieldsProps {
   formData: JobFormData;
   onUpdate: <K extends keyof JobFormData>(field: K, value: JobFormData[K]) => void;
 }
 
 export default function RequiredFieldsSection({ formData, onUpdate }: RequiredFieldsProps) {
+  // 빠른 선택 버튼 클릭 핸들러
+  const handleQuickDeadline = (days: number) => {
+    const deadline = new Date();
+    deadline.setDate(deadline.getDate() + days);
+    onUpdate('deadline', deadline.toISOString().split('T')[0]);
+  };
+
   return (
     <div className="bg-white rounded-md p-6 shadow-sm border-2 border-red-100">
       {/* 섹션 헤더 */}
@@ -41,13 +55,28 @@ export default function RequiredFieldsSection({ formData, onUpdate }: RequiredFi
             placeholder="예: 프론트엔드 개발자"
             required
           />
-          <FormDatePicker
-            label="마감일"
-            value={formData.deadline}
-            onChange={(value) => onUpdate('deadline', value)}
-            minDate={new Date()}
-            required
-          />
+          <div className="space-y-2">
+            {/* 빠른 선택 버튼 */}
+            <div className="flex flex-wrap gap-2">
+              {DEADLINE_QUICK_OPTIONS.map((option) => (
+                <button
+                  key={option.days}
+                  type="button"
+                  onClick={() => handleQuickDeadline(option.days)}
+                  className="px-3 py-1.5 text-xs font-medium rounded-full border border-primary-200 bg-primary-50 text-primary-700 hover:bg-primary-100 hover:border-primary-300 transition-colors"
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+            <FormDatePicker
+              label="마감일"
+              value={formData.deadline}
+              onChange={(value) => onUpdate('deadline', value)}
+              minDate={new Date()}
+              required
+            />
+          </div>
         </div>
 
         {/* 담당자 정보 */}

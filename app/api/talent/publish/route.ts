@@ -1,6 +1,10 @@
 // 인재풀 공개 API
 // 개인 구직자가 프로필을 인재풀에 공개할 때 호출
-// 2026-01-02 간소화: 필수 8개 → 6개로 변경
+// 2026-01-09 통합: profile-eligibility.ts 기준 적용
+//
+// 📋 새로운 통합 기준:
+// 1. 핵심 정보 (3가지 필수): 이메일, 전화번호, 한줄소개
+// 2. 이력서 파일 OR 프로필 6개 정보 전부
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
@@ -76,8 +80,8 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // 5. 프로필 완성도 검증 (필수 6개 항목 완성 필수)
-    // talent-pool-eligibility.ts의 간소화 로직과 동일하게 검증
+    // 5. 프로필 완성도 검증 (통합 기준)
+    // 핵심 3가지 + (이력서 OR 프로필 6개)
     const eligibilityCheck = await verifyProfileCompleteness(userId);
 
     if (!eligibilityCheck.eligible) {
@@ -86,7 +90,8 @@ export async function POST(request: NextRequest) {
         {
           error: '프로필을 완성해야 인재풀에 등록할 수 있습니다.',
           missingFields: eligibilityCheck.missingFields,
-          completionRate: eligibilityCheck.completionRate
+          completionRate: eligibilityCheck.completionRate,
+          hasResume: eligibilityCheck.hasResume
         },
         { status: 400 }
       );
@@ -123,41 +128,43 @@ export async function POST(request: NextRequest) {
       user: updatedUser
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[API] 인재풀 공개 에러:', error);
+    const errorMessage = error instanceof Error ? error.message : '서버 오류가 발생했습니다.';
     return NextResponse.json(
-      { error: error.message || '서버 오류가 발생했습니다.' },
+      { error: errorMessage },
       { status: 500 }
     );
   }
 }
 
 /**
- * 프로필 완성도 검증 함수 (간소화 버전)
- * 2026-01-02 간소화: 8개 필수 → 6개 필수로 변경
+ * 프로필 완성도 검증 함수 (통합 버전)
+ * 2026-01-09 통합: profile-eligibility.ts 기준 적용
  *
- * ⭐ 필수 항목 (6개):
- * 1. 연락처 (전화번호)
- * 2. 이메일
- * 3. 경력 (최소 1개)
- * 4. 보유 기술 (최소 1개)
- * 5. 자기소개
- * 6. 희망 직무 (최소 1개)
+ * 📋 새로운 통합 기준:
+ * 🔵 핵심 정보 (3가지 필수):
+ *   1. 이메일
+ *   2. 전화번호
+ *   3. 한줄소개 (headline)
  *
- * 📋 선택 항목 (4개) - 검증하지 않음:
- * - 프로필 사진
- * - 헤드라인 (한 줄 소개)
- * - 언어 능력
- * - 이력서 파일
+ * 📄 이력서 파일 OR 프로필 6개 정보:
+ *   - 이력서 파일이 있으면 → 바로 자격 충족
+ *   - 이력서 없으면 → 아래 6가지 모두 필요:
+ *     1. 경력사항 (최소 1개)
+ *     2. 학력사항 (최소 1개)
+ *     3. 보유기술 (최소 1개)
+ *     4. 언어능력 (최소 1개)
+ *     5. 자기소개
+ *     6. 희망직무 (최소 1개)
  */
 async function verifyProfileCompleteness(userId: string): Promise<{
   eligible: boolean;
   completionRate: number;
   missingFields: string[];
+  hasResume: boolean;
 }> {
   const missingFields: string[] = [];
-  let completedFields = 0;
-  const totalRequiredFields = 6; // 간소화: 8→6
 
   try {
     // 사용자 기본 정보 조회
@@ -168,7 +175,9 @@ async function verifyProfileCompleteness(userId: string): Promise<{
         full_name,
         email,
         phone,
-        introduction
+        headline,
+        introduction,
+        resume_file_url
       `)
       .eq('id', userId)
       .single();
@@ -177,69 +186,138 @@ async function verifyProfileCompleteness(userId: string): Promise<{
       throw new Error('사용자 정보를 조회할 수 없습니다.');
     }
 
-    // ⭐ 1. 연락처 (전화번호) - 필수
-    if (user.phone && user.phone.trim().length > 0) {
-      completedFields++;
-    } else {
-      missingFields.push('연락처 (전화번호)');
-    }
+    // ============================================
+    // 🔵 핵심 정보 (3가지) - 항상 필수
+    // ============================================
+    let coreCompleted = 0;
+    const coreTotal = 3;
 
-    // ⭐ 2. 이메일 - 필수
+    // 1. 이메일
     if (user.email && user.email.trim().length > 0) {
-      completedFields++;
+      coreCompleted++;
     } else {
       missingFields.push('이메일');
     }
 
-    // ⭐ 3. 경력 (최소 1개) - 필수
+    // 2. 전화번호
+    if (user.phone && user.phone.trim().length > 0) {
+      coreCompleted++;
+    } else {
+      missingFields.push('전화번호');
+    }
+
+    // 3. 한줄소개 (headline)
+    if (user.headline && user.headline.trim().length > 0) {
+      coreCompleted++;
+    } else {
+      missingFields.push('한줄소개');
+    }
+
+    // ============================================
+    // 📄 이력서 확인
+    // ============================================
+    const hasResume = !!(user.resume_file_url && user.resume_file_url.trim().length > 0);
+
+    // ============================================
+    // 📋 프로필 6개 정보 (이력서 없을 때 필요)
+    // ============================================
+    let profileCompleted = 0;
+    const profileTotal = 6;
+
+    // 1. 경력사항 (최소 1개)
     const { count: expCount } = await supabase
       .from('user_experiences')
       .select('*', { count: 'exact', head: true })
       .eq('user_id', userId);
 
     if (expCount && expCount > 0) {
-      completedFields++;
-    } else {
-      missingFields.push('경력 사항 (최소 1개)');
+      profileCompleted++;
+    } else if (!hasResume) {
+      missingFields.push('경력사항 (최소 1개)');
     }
 
-    // ⭐ 4. 스킬 (최소 1개) - 필수
+    // 2. 학력사항 (최소 1개)
+    const { count: eduCount } = await supabase
+      .from('user_educations')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId);
+
+    if (eduCount && eduCount > 0) {
+      profileCompleted++;
+    } else if (!hasResume) {
+      missingFields.push('학력사항 (최소 1개)');
+    }
+
+    // 3. 보유기술 (최소 1개)
     const { count: skillCount } = await supabase
       .from('user_skills')
       .select('*', { count: 'exact', head: true })
       .eq('user_id', userId);
 
     if (skillCount && skillCount >= 1) {
-      completedFields++;
-    } else {
-      missingFields.push(`보유 기술 (최소 1개, 현재 ${skillCount || 0}개)`);
+      profileCompleted++;
+    } else if (!hasResume) {
+      missingFields.push('보유기술 (최소 1개)');
     }
 
-    // ⭐ 5. 자기소개 - 필수
+    // 4. 언어능력 (최소 1개)
+    const { count: langCount } = await supabase
+      .from('user_languages')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId);
+
+    if (langCount && langCount >= 1) {
+      profileCompleted++;
+    } else if (!hasResume) {
+      missingFields.push('언어능력 (최소 1개)');
+    }
+
+    // 5. 자기소개
     if (user.introduction && user.introduction.trim().length > 0) {
-      completedFields++;
-    } else {
+      profileCompleted++;
+    } else if (!hasResume) {
       missingFields.push('자기소개');
     }
 
-    // ⭐ 6. 희망 직무 (최소 1개) - 필수
+    // 6. 희망직무 (최소 1개)
     const { count: positionCount } = await supabase
       .from('user_desired_positions')
       .select('*', { count: 'exact', head: true })
       .eq('user_id', userId);
 
     if (positionCount && positionCount > 0) {
-      completedFields++;
-    } else {
-      missingFields.push('희망 직무 (최소 1개)');
+      profileCompleted++;
+    } else if (!hasResume) {
+      missingFields.push('희망직무 (최소 1개)');
     }
 
-    const completionRate = Math.round((completedFields / totalRequiredFields) * 100);
-    const eligible = completionRate === 100;
+    // ============================================
+    // 🎯 자격 판정
+    // ============================================
+    const coreAllComplete = coreCompleted === coreTotal;
+    const resumeOrProfileComplete = hasResume || (profileCompleted === profileTotal);
+    const eligible = coreAllComplete && resumeOrProfileComplete;
+
+    // ============================================
+    // 📈 완성율 계산
+    // ============================================
+    let completionRate: number;
+    if (hasResume) {
+      // 이력서 있으면 핵심 3개만 체크
+      completionRate = Math.round((coreCompleted / coreTotal) * 100);
+    } else {
+      // 이력서 없으면 핵심 3개 + 프로필 6개 = 총 9개
+      const totalCompleted = coreCompleted + profileCompleted;
+      const totalRequired = coreTotal + profileTotal;
+      completionRate = Math.round((totalCompleted / totalRequired) * 100);
+    }
 
     console.log('[verifyProfileCompleteness] 결과:', {
-      completedFields,
-      totalRequiredFields,
+      coreCompleted,
+      coreTotal,
+      hasResume,
+      profileCompleted,
+      profileTotal,
       completionRate,
       eligible,
       missingFields
@@ -248,7 +326,8 @@ async function verifyProfileCompleteness(userId: string): Promise<{
     return {
       eligible,
       completionRate,
-      missingFields
+      missingFields,
+      hasResume
     };
 
   } catch (error) {
@@ -256,7 +335,8 @@ async function verifyProfileCompleteness(userId: string): Promise<{
     return {
       eligible: false,
       completionRate: 0,
-      missingFields: ['프로필 정보 검증 중 오류 발생']
+      missingFields: ['프로필 정보 검증 중 오류 발생'],
+      hasResume: false
     };
   }
 }

@@ -138,6 +138,8 @@ export async function POST(request: NextRequest) {
 
         // 언어/비자
         visa_sponsorship: formData.visaSponsorship,
+        for_korean: formData.forKorean ?? true,       // 내국인 채용 여부
+        for_foreigner: formData.forForeigner ?? true, // 외국인 채용 여부
         korean_level: formData.koreanLevel,
         english_level: formData.englishLevel,
 

@@ -63,6 +63,8 @@ export async function POST(request: NextRequest) {
         required_experience: null,
         required_skills: null,
         visa_sponsorship: true,
+        for_korean: true,        // 기본값: 내국인 채용
+        for_foreigner: true,     // 기본값: 외국인 채용
         korean_level: 'INTERMEDIATE',
         english_level: 'INTERMEDIATE',
         posting_tier: postingTier as PostingTier,

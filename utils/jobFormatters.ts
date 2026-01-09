@@ -6,9 +6,9 @@
  * @param max 최대 급여
  * @returns 포맷된 급여 문자열 (예: "3,000만 - 5,000만")
  */
-export const formatSalary = (min: number | null, max: number | null): string => {
-  // null 체크 - 급여 정보가 없는 경우
-  if (min === null || max === null) {
+export const formatSalary = (min: number | null | undefined, max: number | null | undefined): string => {
+  // null, undefined, 0 체크 - 급여 정보가 없거나 유효하지 않은 경우
+  if (min === null || min === undefined || min === 0 || max === null || max === undefined || max === 0) {
     return '협의';
   }
 

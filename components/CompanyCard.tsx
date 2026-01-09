@@ -23,8 +23,9 @@ export default function CompanyCard({ company }: CompanyCardProps) {
               <Image
                 src={company.logo}
                 alt={`${company.name} 로고`}
-                width={64}
-                height={40}
+                width={128} // 2x 해상도 (Retina 디스플레이 대응)
+                height={80} // 2x 해상도 (Retina 디스플레이 대응)
+                quality={100} // 압축 노이즈 제거
                 className="max-w-full max-h-full object-contain"
                 onError={() => setLogoError(true)}
               />
@@ -81,8 +82,8 @@ export default function CompanyCard({ company }: CompanyCardProps) {
           <div className="mb-4">
             <div className="flex flex-wrap gap-1">
               {company.techStack.slice(0, 4).map(tech => (
-                <span 
-                  key={tech} 
+                <span
+                  key={tech}
                   className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded"
                 >
                   {tech}

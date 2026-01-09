@@ -48,6 +48,8 @@ export interface JobFormData {
 
   // 비자 및 언어
   visaSponsorship: boolean;
+  forKorean: boolean;      // 내국인 채용 여부
+  forForeigner: boolean;   // 외국인 채용 여부
   koreanLevel: LanguageLevel;
   englishLevel: LanguageLevel;
 

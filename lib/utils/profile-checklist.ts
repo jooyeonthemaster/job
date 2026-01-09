@@ -1,7 +1,13 @@
 // 프로필 완성도 체크리스트 생성
-// 2026-01-02 간소화: 필수 항목 6개, 선택 항목 4개로 재구성
+// 2026-01-09 통합: profile-eligibility.ts의 통합 로직 사용
+//
+// 📋 새로운 구조:
+// 1. 핵심 정보 (3가지 필수): 이메일, 전화번호, 한줄소개
+// 2. 이력서 파일 OR 프로필 6개 정보
+// 3. 선택 항목 (매칭률 UP): 프로필 사진, 희망 근무지, 희망 연봉, 근무 형태
 
 import type { ProfileData, ChecklistItem } from '@/types/jobseeker-dashboard.types';
+import { checkProfileEligibility } from './profile-eligibility';
 import {
   Upload,
   Briefcase,
@@ -12,139 +18,218 @@ import {
   Phone,
   Mail,
   FileText,
-  ImageIcon
+  GraduationCap,
+  Camera,
+  MapPin,
+  DollarSign,
+  Laptop
 } from 'lucide-react';
 
-// 확장된 체크리스트 아이템 타입 (필수/선택 구분)
+// 확장된 체크리스트 아이템 타입
 export type ExtendedChecklistItem = ChecklistItem & {
   isRequired: boolean;
-  priority: number; // 낮을수록 먼저 표시
+  priority: number;
+  category: 'core' | 'resume' | 'profile' | 'optional';
 };
 
 /**
- * 프로필 체크리스트 생성 (필수 항목 우선)
- *
- * ⭐ 필수 항목 (6개) - 인재풀 등록 필수:
- * 1. 연락처 (전화번호)
- * 2. 이메일
- * 3. 경력 (최소 1개)
- * 4. 보유 기술 (최소 1개)
- * 5. 자기소개
- * 6. 희망 직무 (최소 1개)
- *
- * 📋 선택 항목 (3개) - 권장 사항:
- * - 기본 정보 보완 (프로필 사진 + 헤드라인)
- * - 언어 능력
- * - 이력서 파일
+ * 프로필 체크리스트 생성 (통합 버전)
  */
 export const getProfileChecklist = (profileData: ProfileData | null): ExtendedChecklistItem[] => {
   if (!profileData) return [];
 
+  const eligibility = checkProfileEligibility(profileData);
+
   const items: ExtendedChecklistItem[] = [
-    // ⭐ 필수 항목 (priority 1-6)
-    {
-      id: 'phone',
-      title: '연락처',
-      description: '전화번호 입력 (기업 연락용)',
-      icon: Phone,
-      completed: !!(profileData?.phone && profileData.phone.trim().length > 0),
-      link: '/profile/edit/basic',
-      isRequired: true,
-      priority: 1
-    },
+    // 🔵 핵심 정보 (priority 1-3) - 항상 필수
     {
       id: 'email',
       title: '이메일',
       description: '이메일 주소 입력',
       icon: Mail,
-      completed: !!(profileData?.email && profileData.email.trim().length > 0),
+      completed: eligibility.coreFields.find(f => f.fieldKey === 'email')?.completed ?? false,
       link: '/profile/edit/basic',
       isRequired: true,
-      priority: 2
+      priority: 1,
+      category: 'core'
     },
     {
+      id: 'phone',
+      title: '전화번호',
+      description: '연락 가능한 전화번호',
+      icon: Phone,
+      completed: eligibility.coreFields.find(f => f.fieldKey === 'phone')?.completed ?? false,
+      link: '/profile/edit/basic',
+      isRequired: true,
+      priority: 2,
+      category: 'core'
+    },
+    {
+      id: 'headline',
+      title: '한줄소개',
+      description: '나를 표현하는 한 줄 (예: "5년차 개발자")',
+      icon: User,
+      completed: eligibility.coreFields.find(f => f.fieldKey === 'headline')?.completed ?? false,
+      link: '/profile/edit/basic',
+      isRequired: true,
+      priority: 3,
+      category: 'core'
+    },
+
+    // 📄 이력서 (priority 4)
+    {
+      id: 'resume',
+      title: '이력서 파일',
+      description: eligibility.hasResume ? '이력서 등록됨 ✓' : '이력서 업로드 (PDF, Word)',
+      icon: Upload,
+      completed: eligibility.hasResume,
+      link: '/profile/edit/resume',
+      isRequired: !eligibility.hasResume && eligibility.profileCompleted < eligibility.profileTotal,
+      priority: 4,
+      category: 'resume'
+    },
+
+    // 📋 프로필 6개 정보 (priority 5-10) - 이력서 없을 때 필수
+    {
       id: 'experience',
-      title: '경력 사항',
+      title: '경력사항',
       description: '최소 1개 이상의 경력',
       icon: Briefcase,
-      completed: !!(profileData?.experiences && profileData.experiences.length > 0),
+      completed: eligibility.profileFields.find(f => f.fieldKey === 'experiences')?.completed ?? false,
       link: '/profile/edit/experience',
-      isRequired: true,
-      priority: 3
+      isRequired: !eligibility.hasResume,
+      priority: 5,
+      category: 'profile'
+    },
+    {
+      id: 'education',
+      title: '학력사항',
+      description: '최소 1개 이상의 학력',
+      icon: GraduationCap,
+      completed: eligibility.profileFields.find(f => f.fieldKey === 'educations')?.completed ?? false,
+      link: '/profile/edit/experience',
+      isRequired: !eligibility.hasResume,
+      priority: 6,
+      category: 'profile'
     },
     {
       id: 'skills',
-      title: '보유 기술',
+      title: '보유기술',
       description: '최소 1개 이상의 기술',
       icon: Code,
-      completed: !!(profileData?.skills && profileData.skills.length >= 1),
+      completed: eligibility.profileFields.find(f => f.fieldKey === 'skills')?.completed ?? false,
       link: '/profile/edit/skills',
-      isRequired: true,
-      priority: 4
+      isRequired: !eligibility.hasResume,
+      priority: 7,
+      category: 'profile'
+    },
+    {
+      id: 'languages',
+      title: '언어능력',
+      description: '최소 1개 이상의 언어',
+      icon: Languages,
+      completed: eligibility.profileFields.find(f => f.fieldKey === 'languages')?.completed ?? false,
+      link: '/profile/edit/skills',
+      isRequired: !eligibility.hasResume,
+      priority: 8,
+      category: 'profile'
     },
     {
       id: 'introduction',
       title: '자기소개',
       description: '본인을 어필하는 소개글',
       icon: FileText,
-      completed: !!(profileData?.introduction && profileData.introduction.trim().length > 0),
+      completed: eligibility.profileFields.find(f => f.fieldKey === 'introduction')?.completed ?? false,
       link: '/profile/edit/introduction',
-      isRequired: true,
-      priority: 5
+      isRequired: !eligibility.hasResume,
+      priority: 9,
+      category: 'profile'
     },
     {
       id: 'preferences',
-      title: '희망 직무',
+      title: '희망직무',
       description: '최소 1개 이상 선택',
       icon: Target,
-      completed: !!(profileData?.desiredPositions && profileData.desiredPositions.length > 0),
+      completed: eligibility.profileFields.find(f => f.fieldKey === 'desiredPositions')?.completed ?? false,
       link: '/profile/edit/preferences',
-      isRequired: true,
-      priority: 6
+      isRequired: !eligibility.hasResume,
+      priority: 10,
+      category: 'profile'
     },
 
-    // 📋 선택 항목 (priority 7-9)
+    // ⭐ 선택 항목 (priority 11-14) - 매칭률 UP
     {
-      id: 'basic-extra',
-      title: '기본 정보 보완',
-      description: '프로필 사진, 한 줄 소개 (권장)',
-      icon: User,
-      completed: !!(
-        (profileData?.profileImageUrl && profileData.profileImageUrl.trim().length > 0) &&
-        (profileData?.headline && profileData.headline.trim().length > 0)
-      ),
+      id: 'profileImage',
+      title: '프로필 사진',
+      description: '프로필 사진 등록 시 매칭률 UP',
+      icon: Camera,
+      completed: !!(profileData.profileImageUrl && profileData.profileImageUrl.trim().length > 0),
       link: '/profile/edit/basic',
       isRequired: false,
-      priority: 7
+      priority: 11,
+      category: 'optional'
     },
     {
-      id: 'languages',
-      title: '언어 능력',
-      description: '구사 가능한 언어 (권장)',
-      icon: Languages,
-      completed: !!(profileData?.languages && profileData.languages.length > 0),
-      link: '/profile/edit/skills',
+      id: 'preferredLocations',
+      title: '희망 근무지',
+      description: '선호하는 근무 지역',
+      icon: MapPin,
+      completed: !!(profileData.preferredLocations && profileData.preferredLocations.length > 0),
+      link: '/profile/edit/preferences',
       isRequired: false,
-      priority: 9
+      priority: 12,
+      category: 'optional'
     },
     {
-      id: 'resume',
-      title: '이력서 파일',
-      description: '이력서 파일 업로드 (권장)',
-      icon: Upload,
-      completed: !!(profileData?.resumeFileUrl),
-      link: '/profile/edit/resume',
+      id: 'salaryRange',
+      title: '희망 연봉',
+      description: '기대하는 연봉 범위',
+      icon: DollarSign,
+      completed: !!(profileData.salaryRange && (profileData.salaryRange.min > 0 || profileData.salaryRange.max > 0)),
+      link: '/profile/edit/preferences',
       isRequired: false,
-      priority: 10
+      priority: 13,
+      category: 'optional'
+    },
+    {
+      id: 'remoteWork',
+      title: '근무 형태',
+      description: '재택/출근 선호도',
+      icon: Laptop,
+      completed: !!(profileData.remoteWork && profileData.remoteWork.trim().length > 0),
+      link: '/profile/edit/preferences',
+      isRequired: false,
+      priority: 14,
+      category: 'optional'
     }
   ];
 
-  // priority 순으로 정렬 (필수 항목이 먼저)
   return items.sort((a, b) => a.priority - b.priority);
 };
 
 /**
- * 필수 항목만 반환
+ * 핵심 정보 체크리스트만 반환
+ */
+export const getCoreChecklist = (profileData: ProfileData | null): ExtendedChecklistItem[] => {
+  return getProfileChecklist(profileData).filter(item => item.category === 'core');
+};
+
+/**
+ * 프로필 정보 체크리스트만 반환
+ */
+export const getProfileFieldsChecklist = (profileData: ProfileData | null): ExtendedChecklistItem[] => {
+  return getProfileChecklist(profileData).filter(item => item.category === 'profile');
+};
+
+/**
+ * 이력서 항목만 반환
+ */
+export const getResumeChecklist = (profileData: ProfileData | null): ExtendedChecklistItem | null => {
+  return getProfileChecklist(profileData).find(item => item.category === 'resume') ?? null;
+};
+
+/**
+ * 필수 항목만 반환 (현재 상태에 따라 동적)
  */
 export const getRequiredChecklist = (profileData: ProfileData | null): ExtendedChecklistItem[] => {
   return getProfileChecklist(profileData).filter(item => item.isRequired);
@@ -158,26 +243,17 @@ export const getOptionalChecklist = (profileData: ProfileData | null): ExtendedC
 };
 
 /**
- * 전체 체크리스트 완성율 계산 (필수 + 선택)
+ * 완성율 계산 (이력서 유무에 따라 동적)
  */
-export const calculateChecklistPercentage = (checklist: ExtendedChecklistItem[]): number => {
-  const completedItems = checklist.filter(item => item.completed).length;
-  const totalItems = checklist.length;
-  return Math.round((completedItems / totalItems) * 100);
-};
-
-/**
- * 필수 항목 완성율 계산 (인재풀 등록 기준)
- */
-export const calculateRequiredPercentage = (checklist: ExtendedChecklistItem[]): number => {
-  const requiredItems = checklist.filter(item => item.isRequired);
-  const completedRequired = requiredItems.filter(item => item.completed).length;
-  return Math.round((completedRequired / requiredItems.length) * 100);
+export const calculateChecklistPercentage = (profileData: ProfileData | null): number => {
+  const eligibility = checkProfileEligibility(profileData);
+  return eligibility.completionRate;
 };
 
 /**
  * 필수 항목 완료 여부 확인
  */
-export const isRequiredComplete = (checklist: ExtendedChecklistItem[]): boolean => {
-  return checklist.filter(item => item.isRequired).every(item => item.completed);
+export const isRequiredComplete = (profileData: ProfileData | null): boolean => {
+  const eligibility = checkProfileEligibility(profileData);
+  return eligibility.eligible;
 };

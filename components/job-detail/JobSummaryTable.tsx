@@ -37,6 +37,8 @@ type JobData = {
 
   // 언어/비자
   visa_sponsorship?: boolean;
+  for_korean?: boolean;      // 내국인 채용 여부
+  for_foreigner?: boolean;   // 외국인 채용 여부
   korean_level?: string;
   english_level?: string;
 
@@ -344,6 +346,24 @@ export default function JobSummaryTable({ job }: JobSummaryTableProps) {
                       trueText="지원 가능"
                       falseText="지원 불가"
                     />
+                  }
+                />
+              )}
+
+              {/* 채용 대상 표시 */}
+              {(job.for_korean !== undefined || job.for_foreigner !== undefined) && (
+                <TableRow
+                  label="채용 대상"
+                  value={
+                    job.for_korean && job.for_foreigner ? (
+                      <span className="text-gray-700">국적 무관</span>
+                    ) : job.for_korean ? (
+                      <span className="text-primary-600">내국인 채용</span>
+                    ) : job.for_foreigner ? (
+                      <span className="text-primary-600">외국인 채용</span>
+                    ) : (
+                      <span className="text-gray-400">미지정</span>
+                    )
                   }
                 />
               )}

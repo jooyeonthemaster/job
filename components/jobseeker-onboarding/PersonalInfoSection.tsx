@@ -1,22 +1,23 @@
-// 개인 정보 섹션 (성별)
+// 개인 정보 섹션 (성별 - 선택)
+// 2026-01-09 간소화: 필수 → 선택 변경
 
 import { type JobseekerOnboardingFormData } from '@/types/jobseeker-onboarding.types';
 
 type PersonalInfoSectionProps = {
   formData: JobseekerOnboardingFormData;
   errors: Record<string, string>;
-  onChange: (field: keyof JobseekerOnboardingFormData, value: any) => void;
+  onChange: (field: keyof JobseekerOnboardingFormData, value: string) => void;
 };
 
 export default function PersonalInfoSection({ formData, errors, onChange }: PersonalInfoSectionProps) {
   return (
-    <div className="border-b pb-8">
-      <h2 className="text-2xl font-bold text-gray-900 mb-6">개인 정보</h2>
+    <div className="pb-6">
+      <h3 className="text-lg font-semibold text-gray-800 mb-4">개인 정보</h3>
       <div>
-        {/* 성별 */}
+        {/* 성별 (선택) */}
         <div id="gender">
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            성별 <span className="text-red-500">*</span>
+            성별 <span className="text-gray-400">(선택)</span>
           </label>
           <div className="flex gap-4 mt-3">
             <label className="flex items-center gap-2 cursor-pointer">

@@ -315,17 +315,22 @@ export default function CompanyDetailPage() {
 
             {/* Company Info */}
             <div className="flex items-start gap-6">
-              <div className="w-32 h-32 rounded-md bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center shrink-0 shadow-sm overflow-hidden">
+              <div className={`h-24 shrink-0 overflow-hidden ${
+                company.logo
+                  ? ''
+                  : 'w-24 rounded-md bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center shadow-sm'
+              }`}>
                 {company.logo ? (
                   <OptimizedImage
                     src={company.logo}
                     alt={company.name}
-                    width={128}
-                    height={128}
-                    className="w-full h-full object-cover"
+                    width={200}
+                    height={96}
+                    className="h-24 w-auto object-contain"
+                    type="logo"
                   />
                 ) : (
-                  <Building2 className="w-16 h-16 text-gray-500" />
+                  <Building2 className="w-12 h-12 text-gray-500" />
                 )}
               </div>
               
@@ -470,15 +475,15 @@ export default function CompanyDetailPage() {
                         </div>
                       )}
                       {company.industry && (
-                        <div className="flex justify-between text-sm">
-                          <dt className="text-gray-600">업종</dt>
-                          <dd className="font-medium text-gray-900">{company.industry}</dd>
+                        <div className="flex justify-between text-sm gap-2">
+                          <dt className="text-gray-600 shrink-0">업종</dt>
+                          <dd className="font-medium text-gray-900 text-right break-words">{company.industry}</dd>
                         </div>
                       )}
                     </dl>
                     {companyDetail.website && (
                       <a
-                        href={companyDetail.website}
+                        href={companyDetail.website.startsWith('http') ? companyDetail.website : `https://${companyDetail.website.trim()}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="mt-4 w-full btn-primary text-center flex items-center justify-center gap-2"

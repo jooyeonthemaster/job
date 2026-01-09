@@ -16,6 +16,7 @@ import {
   getEmploymentTypeLabel,
   getKoreanLevelLabel
 } from '@/utils/jobFormatters';
+import { checkProfileEligibility, getFirstIncompleteField } from '@/lib/utils/profile-eligibility';
 import {
   Building2,
   MapPin,
@@ -28,7 +29,8 @@ import {
   FileText,
   Code,
   LayoutList,
-  TableProperties
+  TableProperties,
+  Users
 } from 'lucide-react';
 
 // 탭 타입 정의
@@ -74,6 +76,8 @@ type JobData = {
   requirements?: string[];
   preferred_qualifications?: string[];
   visa_sponsorship?: boolean;
+  for_korean?: boolean;      // 내국인 채용 여부
+  for_foreigner?: boolean;   // 외국인 채용 여부
   korean_level?: string;
   english_level?: string;
   probation?: string;
@@ -95,7 +99,7 @@ export default function JobDetailPage() {
   const [loading, setLoading] = useState(true);
   const [isApplicationModalOpen, setIsApplicationModalOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>('');
-  const [activeTab, setActiveTab] = useState<ViewTab>('detail');  // 탭 상태
+  const [activeTab, setActiveTab] = useState<ViewTab>('summary');  // 탭 상태 - 요약표가 기본
 
   // ✅ 에러 메시지 자동 제거 (3초)
   useEffect(() => {
@@ -168,7 +172,7 @@ export default function JobDetailPage() {
   };
 
   const handleApplyClick = () => {
-    // 로그인 확인
+    // 1. 로그인 확인
     if (!user) {
       setErrorMessage('로그인이 필요합니다.');
       setTimeout(() => {
@@ -177,71 +181,59 @@ export default function JobDetailPage() {
       return;
     }
 
-    // 구직자 계정 확인 (✅ userType 사용)
+    // 2. 구직자 계정 확인
     if (userType !== 'jobseeker') {
       setErrorMessage('구직자만 지원할 수 있습니다.');
       return;
     }
 
-    // ✅ 프로필 완성도 및 공개 여부 확인
+    // 3. 프로필 로드 확인
     if (!userProfile) {
       setErrorMessage('프로필 정보를 불러올 수 없습니다.');
       return;
     }
 
-    // 1. 프로필 공개 여부 확인
+    // 4. 프로필 공개 여부 확인 (인재풀 등록 여부)
     if (!userProfile.is_public) {
-      setErrorMessage('프로필을 공개로 설정해야 지원할 수 있습니다. 프로필을 완성하고 공개해주세요.');
+      setErrorMessage('프로필을 공개로 설정해야 지원할 수 있습니다. 대시보드에서 인재풀에 등록해주세요.');
       setTimeout(() => {
         router.push('/jobseeker-dashboard');
       }, 2500);
       return;
     }
 
-    // 2. 필수 기본 정보 확인 (이름, 한 줄 소개)
-    if (!userProfile.full_name || !userProfile.headline) {
-      setErrorMessage('기본 정보(이름, 한 줄 소개)를 입력해야 지원할 수 있습니다.');
-      setTimeout(() => {
-        router.push('/profile/edit/basic');
-      }, 2500);
-      return;
-    }
+    // 5. 통합 프로필 자격 검증 (간소화)
+    // 필수: 이메일, 전화번호, 한줄소개 + (이력서 OR 프로필 6개)
+    const profileForCheck = {
+      email: userProfile.email,
+      phone: userProfile.phone,
+      headline: userProfile.headline,
+      resumeFileUrl: userProfile.resume_file_url,
+      experiences: userProfile.experiences,
+      educations: userProfile.educations,
+      skills: userProfile.skills,
+      languages: userProfile.languages,
+      introduction: userProfile.introduction,
+      desiredPositions: userProfile.desired_positions,
+      fullName: userProfile.full_name || '',
+      profileCompletion: 0
+    };
 
-    // 3. 이력서 파일 확인
-    if (!userProfile.resume_file_url) {
-      setErrorMessage('이력서 파일을 업로드해야 지원할 수 있습니다.');
-      setTimeout(() => {
-        router.push('/profile/edit/resume');
-      }, 2500);
-      return;
-    }
+    const eligibility = checkProfileEligibility(profileForCheck);
 
-    // 4. 경력 또는 학력 확인
-    const hasExperience = userProfile.experiences && userProfile.experiences.length > 0;
-    const hasEducation = userProfile.educations && userProfile.educations.length > 0;
-    if (!hasExperience && !hasEducation) {
-      setErrorMessage('경력 또는 학력 정보를 1개 이상 입력해야 지원할 수 있습니다.');
-      setTimeout(() => {
-        router.push('/profile/edit/experience');
-      }, 2500);
-      return;
-    }
-
-    // 5. 기술 확인
-    if (!userProfile.skills || userProfile.skills.length === 0) {
-      setErrorMessage('보유 기술을 1개 이상 입력해야 지원할 수 있습니다.');
-      setTimeout(() => {
-        router.push('/profile/edit/skills');
-      }, 2500);
-      return;
-    }
-
-    // 6. 언어 능력 확인
-    if (!userProfile.languages || userProfile.languages.length === 0) {
-      setErrorMessage('언어 능력을 1개 이상 입력해야 지원할 수 있습니다.');
-      setTimeout(() => {
-        router.push('/profile/edit/skills');
-      }, 2500);
+    if (!eligibility.eligible) {
+      const firstIssue = getFirstIncompleteField(eligibility);
+      if (firstIssue) {
+        setErrorMessage(firstIssue.message);
+        setTimeout(() => {
+          router.push(firstIssue.link);
+        }, 2500);
+      } else {
+        setErrorMessage('프로필을 완성해야 지원할 수 있습니다.');
+        setTimeout(() => {
+          router.push('/jobseeker-dashboard');
+        }, 2500);
+      }
       return;
     }
 
@@ -260,7 +252,8 @@ export default function JobDetailPage() {
         throw new Error('로그인이 필요합니다.');
       }
 
-      if (!userProfile?.email || !userProfile?.full_name) {
+      // 이메일만 필수 체크 (full_name은 이제 선택 항목)
+      if (!userProfile?.email) {
         throw new Error('프로필 정보가 필요합니다.');
       }
 
@@ -273,7 +266,7 @@ export default function JobDetailPage() {
           company_id: job.company?.id,
           company_name: job.company?.name,
           applicant_id: user.id,
-          applicant_name: userProfile.full_name,
+          applicant_name: userProfile.full_name || userProfile.headline || '지원자',
           applicant_email: userProfile.email,
           message: message,
           status: 'pending',
@@ -365,17 +358,32 @@ export default function JobDetailPage() {
             {/* Job Header */}
             <div className="bg-white rounded-md shadow-sm p-8">
               <div className="flex items-start gap-4 mb-6">
-                <div className="w-16 h-16 rounded-md bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center shrink-0 overflow-hidden">
+                <div className={`h-14 shrink-0 overflow-hidden font-bold text-xl ${
+                  (job.company as Record<string, unknown>)?.logo
+                    ? ''
+                    : 'w-14 rounded-md flex items-center justify-center bg-gradient-to-br from-primary-500 to-primary-600 text-white'
+                }`}>
                   {(job.company as Record<string, unknown>)?.logo ? (
                     <Image
                       src={(job.company as Record<string, unknown>).logo as string}
                       alt={(job.company as Record<string, unknown>).name as string}
-                      width={64}
-                      height={64}
-                      className="w-full h-full object-cover"
+                      width={120}
+                      height={56}
+                      className="h-14 w-auto object-contain"
+                      onError={(e) => {
+                        // 이미지 로드 실패 시 회사 이름 첫 글자 표시
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                        const parent = target.parentElement;
+                        if (parent) {
+                          parent.classList.add('w-14', 'rounded-md', 'flex', 'items-center', 'justify-center', 'bg-gradient-to-br', 'from-primary-500', 'to-primary-600', 'text-white');
+                          const companyName = (job.company as Record<string, unknown>)?.name as string;
+                          parent.textContent = companyName?.charAt(0) || '?';
+                        }
+                      }}
                     />
                   ) : (
-                    <Building2 className="w-8 h-8 text-gray-500" />
+                    <span>{((job.company as Record<string, unknown>)?.name as string)?.charAt(0) || '?'}</span>
                   )}
                 </div>
                 <div className="flex-1">
@@ -431,13 +439,31 @@ export default function JobDetailPage() {
                 </div>
               </div>
 
-              {/* Stats */}
-              {job.visa_sponsorship && (
-                <div className="flex items-center gap-6 pt-6 border-t">
-                  <div className="flex items-center gap-2 text-sm text-primary-600">
-                    <Globe className="w-4 h-4" />
-                    비자 지원
-                  </div>
+              {/* Stats - 비자 지원 및 채용 대상 */}
+              {(job.visa_sponsorship || job.for_korean !== undefined || job.for_foreigner !== undefined) && (
+                <div className="flex items-center gap-6 pt-6 border-t flex-wrap">
+                  {/* 채용 대상 (국적) */}
+                  {(job.for_korean !== undefined || job.for_foreigner !== undefined) && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <Users className="w-4 h-4 text-primary-600" />
+                      {job.for_korean && job.for_foreigner ? (
+                        <span className="text-gray-700 font-medium">국적 무관</span>
+                      ) : job.for_korean ? (
+                        <span className="text-primary-600 font-medium">내국인 채용</span>
+                      ) : job.for_foreigner ? (
+                        <span className="text-primary-600 font-medium">외국인 채용</span>
+                      ) : (
+                        <span className="text-gray-400">채용 대상 미지정</span>
+                      )}
+                    </div>
+                  )}
+                  {/* 비자 지원 */}
+                  {job.visa_sponsorship && (
+                    <div className="flex items-center gap-2 text-sm text-primary-600">
+                      <Globe className="w-4 h-4" />
+                      비자 지원
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -445,17 +471,6 @@ export default function JobDetailPage() {
             {/* 탭 네비게이션 */}
             <div className="bg-white rounded-md shadow-sm overflow-hidden">
               <div className="flex border-b border-gray-100">
-                <button
-                  onClick={() => setActiveTab('detail')}
-                  className={`flex-1 flex items-center justify-center gap-2 px-6 py-4 text-sm font-medium transition-all ${
-                    activeTab === 'detail'
-                      ? 'text-primary-600 bg-primary-50/50 border-b-2 border-primary-500'
-                      : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-                  }`}
-                >
-                  <LayoutList className="w-4 h-4" />
-                  상세 정보
-                </button>
                 <button
                   onClick={() => setActiveTab('summary')}
                   className={`flex-1 flex items-center justify-center gap-2 px-6 py-4 text-sm font-medium transition-all ${
@@ -466,6 +481,17 @@ export default function JobDetailPage() {
                 >
                   <TableProperties className="w-4 h-4" />
                   요약 표
+                </button>
+                <button
+                  onClick={() => setActiveTab('detail')}
+                  className={`flex-1 flex items-center justify-center gap-2 px-6 py-4 text-sm font-medium transition-all ${
+                    activeTab === 'detail'
+                      ? 'text-primary-600 bg-primary-50/50 border-b-2 border-primary-500'
+                      : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  <LayoutList className="w-4 h-4" />
+                  상세 정보
                 </button>
               </div>
             </div>
@@ -478,15 +504,6 @@ export default function JobDetailPage() {
             {/* 탭 컨텐츠 - 상세 정보 (기존 UI) */}
             {activeTab === 'detail' && (
               <>
-            {/* Job Description */}
-            <div className="bg-white rounded-md shadow-sm p-8">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">공고 상세</h2>
-              <div
-                className="prose prose-sm max-w-none"
-                dangerouslySetInnerHTML={{ __html: (job.description as string) || '<p>상세 내용이 없습니다.</p>' }}
-              />
-            </div>
-
             {/* Requirements */}
             {(job.requirements as string[]) && (job.requirements as string[]).length > 0 && (
               <div className="bg-white rounded-md shadow-sm p-8">
@@ -516,14 +533,6 @@ export default function JobDetailPage() {
                 </ul>
               </div>
             )}
-
-            {/* Korean Level */}
-            <div className="bg-white rounded-md shadow-sm p-8">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">한국어 수준 요구사항</h2>
-              <p className="text-gray-700">
-                {getKoreanLevelLabel(job.korean_level as string)}
-              </p>
-            </div>
 
             {/* ✨ JD (Job Description) */}
             {job.job_description && (
@@ -571,6 +580,30 @@ export default function JobDetailPage() {
                     )
                   ))}
                 </div>
+              </div>
+            )}
+
+            {/* Korean Level - 하단에 배치 */}
+            {job.korean_level && (
+              <div className="bg-white rounded-md shadow-sm p-8">
+                <div className="flex items-center gap-2 mb-4">
+                  <Globe className="w-5 h-5 text-primary-600" />
+                  <h2 className="text-xl font-bold text-gray-900">한국어 수준 요구사항</h2>
+                </div>
+                <p className="text-gray-700">
+                  {getKoreanLevelLabel(job.korean_level as string)}
+                </p>
+              </div>
+            )}
+
+            {/* Job Description - 맨 하단에 배치 */}
+            {job.description && (
+              <div className="bg-white rounded-md shadow-sm p-8">
+                <h2 className="text-xl font-bold text-gray-900 mb-4">공고 상세</h2>
+                <div
+                  className="prose prose-sm max-w-none"
+                  dangerouslySetInnerHTML={{ __html: job.description as string }}
+                />
               </div>
             )}
               </>

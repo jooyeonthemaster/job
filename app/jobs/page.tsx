@@ -1,11 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Header from '@/components/Header';
 import JobGridCard from '@/components/JobGridCard';
 import AdBanner from '@/components/ui/AdBanner';
 import { supabase } from '@/lib/supabase/config';
 import { jobs as dummyJobs } from '@/lib/data';
+import { formatSalary } from '@/utils/jobFormatters';
 import {
   Search,
   Filter,
@@ -36,7 +38,10 @@ interface JobData {
   } | null;
 }
 
-export default function JobsPage() {
+function JobsPageContent() {
+  const searchParams = useSearchParams();
+  const initialSearch = searchParams.get('search') || '';
+
   const [topJobs, setTopJobs] = useState<any[]>([]);
   const [middleJobs, setMiddleJobs] = useState<any[]>([]);
   const [bottomJobs, setBottomJobs] = useState<any[]>([]);
@@ -44,6 +49,45 @@ export default function JobsPage() {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedLocation, setSelectedLocation] = useState('all');
   const [selectedExperience, setSelectedExperience] = useState('all');
+  const [searchQuery, setSearchQuery] = useState(initialSearch);
+
+  // 검색어로 jobs 필터링
+  const filterJobs = (jobs: any[]) => {
+    if (!searchQuery.trim()) return jobs;
+    const query = searchQuery.toLowerCase().trim();
+    return jobs.filter(job =>
+      job.position?.toLowerCase().includes(query) ||
+      job.company?.toLowerCase().includes(query) ||
+      job.location?.toLowerCase().includes(query) ||
+      job.skills?.some((skill: string) => skill.toLowerCase().includes(query))
+    );
+  };
+
+  // 필터링된 jobs
+  const filteredTopJobs = filterJobs(topJobs);
+  const filteredMiddleJobs = filterJobs(middleJobs);
+  const filteredBottomJobs = filterJobs(bottomJobs);
+
+  // 검색 핸들러
+  const handleSearch = () => {
+    // 이미 filterJobs로 실시간 필터링 중이므로 별도 처리 불필요
+    // 추후 서버 사이드 검색으로 전환 시 여기서 API 호출
+  };
+
+  // Enter 키 검색
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
+
+  // 필터 초기화
+  const handleReset = () => {
+    setSearchQuery('');
+    setSelectedCategory('all');
+    setSelectedLocation('all');
+    setSelectedExperience('all');
+  };
 
   // 경험 레벨 라벨 변환
   const getExperienceLabel = (level: string) => {
@@ -98,7 +142,7 @@ export default function JobsPage() {
       position: job.title || '',
       location: job.location || '',
       experience: getExperienceLabel(job.experience_level),
-      salary: `${Math.floor(job.salary_min / 10000)}만-${Math.floor(job.salary_max / 10000)}만원`,
+      salary: formatSalary(job.salary_min, job.salary_max),
       type: getEmploymentTypeLabel(job.employment_type),
       skills: [], // 태그 필드 추가 필요
       deadline: getDaysUntilDeadline(),
@@ -133,7 +177,7 @@ export default function JobsPage() {
       position: job.title,
       location: job.location,
       experience: getExperienceLabel(job.experienceLevel),
-      salary: `${Math.floor(job.salary.min / 10000)}만-${Math.floor(job.salary.max / 10000)}만원`,
+      salary: formatSalary(job.salary.min, job.salary.max),
       type: getEmploymentTypeLabel(job.employmentType),
       skills: job.tags || [],
       deadline: getDaysUntilDeadline(),
@@ -297,11 +341,25 @@ export default function JobsPage() {
                 <Search className="w-5 h-5 text-gray-400 mr-3 flex-shrink-0" />
                 <input
                   type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={handleKeyDown}
                   placeholder="직무, 회사명, 키워드로 검색하세요"
                   className="flex-1 bg-transparent outline-none text-gray-700 placeholder:text-gray-400"
                 />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="text-gray-400 hover:text-gray-600 ml-2"
+                  >
+                    ✕
+                  </button>
+                )}
               </div>
-              <button className="bg-primary-600 text-white font-semibold px-8 py-3 rounded-lg hover:bg-primary-700 transition-colors shadow-md hover:shadow-lg flex-shrink-0">
+              <button
+                onClick={handleSearch}
+                className="bg-primary-600 text-white font-semibold px-8 py-3 rounded-lg hover:bg-primary-700 transition-colors shadow-md hover:shadow-lg flex-shrink-0"
+              >
                 검색
               </button>
             </div>
@@ -360,7 +418,10 @@ export default function JobsPage() {
               </button>
 
               {/* Reset Button */}
-              <button className="text-sm text-gray-500 hover:text-gray-700 transition-colors">
+              <button
+                onClick={handleReset}
+                className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
+              >
                 초기화
               </button>
             </div>
@@ -396,13 +457,13 @@ export default function JobsPage() {
                   </div>
                 </div>
                 <div className="text-white/90 text-sm">
-                  {topJobs.length > 0 ? `총 ${topJobs.length}개` : '등록 대기 중'}
+                  {filteredTopJobs.length > 0 ? `총 ${filteredTopJobs.length}개` : '등록 대기 중'}
                 </div>
               </div>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {topJobs.length > 0 ? (
-                topJobs.map((job, index) => (
+              {filteredTopJobs.length > 0 ? (
+                filteredTopJobs.map((job, index) => (
                   <motion.div
                     key={job.id}
                     initial={{ opacity: 0, y: 20 }}
@@ -449,13 +510,13 @@ export default function JobsPage() {
                   </div>
                 </div>
                 <div className="text-white/90 text-sm">
-                  {middleJobs.length > 0 ? `총 ${middleJobs.length}개` : '등록 대기 중'}
+                  {filteredMiddleJobs.length > 0 ? `총 ${filteredMiddleJobs.length}개` : '등록 대기 중'}
                 </div>
               </div>
             </div>
             <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-              {middleJobs.length > 0 ? (
-                middleJobs.map((job, index) => (
+              {filteredMiddleJobs.length > 0 ? (
+                filteredMiddleJobs.map((job, index) => (
                   <motion.div
                     key={job.id}
                     initial={{ opacity: 0, y: 20 }}
@@ -502,13 +563,13 @@ export default function JobsPage() {
                   </div>
                 </div>
                 <div className="text-white/90 text-sm">
-                  {bottomJobs.length > 0 ? `총 ${bottomJobs.length}개` : '등록 대기 중'}
+                  {filteredBottomJobs.length > 0 ? `총 ${filteredBottomJobs.length}개` : '등록 대기 중'}
                 </div>
               </div>
             </div>
             <div className="grid grid-cols-3 md:grid-cols-5 lg:grid-cols-6 gap-2.5">
-              {bottomJobs.length > 0 ? (
-                bottomJobs.map((job, index) => (
+              {filteredBottomJobs.length > 0 ? (
+                filteredBottomJobs.map((job, index) => (
                   <motion.div
                     key={job.id}
                     initial={{ opacity: 0, y: 20 }}
@@ -548,5 +609,24 @@ export default function JobsPage() {
         </div>
       </section>
     </div>
+  );
+}
+
+// Suspense boundary로 감싸서 useSearchParams 사용 가능하게
+export default function JobsPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <div className="container mx-auto px-4 lg:px-8 py-20">
+          <div className="text-center">
+            <div className="w-16 h-16 border-4 border-primary-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-gray-600">채용공고를 불러오는 중...</p>
+          </div>
+        </div>
+      </div>
+    }>
+      <JobsPageContent />
+    </Suspense>
   );
 }

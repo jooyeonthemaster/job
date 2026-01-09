@@ -15,20 +15,65 @@ interface Props {
 export default function Section3Images({ formData, onChange, errors }: Props) {
   const [logoPreview, setLogoPreview] = useState<string>('');
   const [companyImagePreview, setCompanyImagePreview] = useState<string>('');
+  const [logoError, setLogoError] = useState<string>('');
+
+  // 이미지 크기 및 비율 검증
+  const validateLogoDimensions = (file: File): Promise<string | null> => {
+    return new Promise((resolve) => {
+      const img = new window.Image();
+      const objectUrl = URL.createObjectURL(file);
+
+      img.onload = () => {
+        URL.revokeObjectURL(objectUrl);
+        const { width, height } = img;
+
+        // 최소 크기 검증 (200x200)
+        if (width < 200 || height < 200) {
+          resolve('로고 이미지는 최소 200x200 픽셀 이상이어야 합니다.');
+          return;
+        }
+
+        // 1:1 비율 검증 (20% 오차 허용)
+        const aspectRatio = width / height;
+        if (aspectRatio < 0.8 || aspectRatio > 1.2) {
+          resolve('로고 이미지는 정사각형(1:1 비율)에 가까워야 합니다.');
+          return;
+        }
+
+        resolve(null);
+      };
+
+      img.onerror = () => {
+        URL.revokeObjectURL(objectUrl);
+        resolve('이미지를 로드할 수 없습니다.');
+      };
+
+      img.src = objectUrl;
+    });
+  };
 
   // 로고 업로드
-  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleLogoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      setLogoError('');
+
       // 파일 크기 체크 (5MB)
       if (file.size > 5 * 1024 * 1024) {
-        alert('로고 파일 크기는 5MB 이하여야 합니다.');
+        setLogoError('로고 파일 크기는 5MB 이하여야 합니다.');
         return;
       }
 
       // 이미지 파일만 허용
       if (!file.type.startsWith('image/')) {
-        alert('이미지 파일만 업로드 가능합니다.');
+        setLogoError('이미지 파일만 업로드 가능합니다.');
+        return;
+      }
+
+      // 이미지 크기 및 비율 검증
+      const dimensionError = await validateLogoDimensions(file);
+      if (dimensionError) {
+        setLogoError(dimensionError);
         return;
       }
 
@@ -47,6 +92,7 @@ export default function Section3Images({ formData, onChange, errors }: Props) {
   const handleLogoRemove = () => {
     onChange('logo', undefined);
     setLogoPreview('');
+    setLogoError('');
   };
 
   // 회사 전경 이미지 업로드
@@ -140,9 +186,12 @@ export default function Section3Images({ formData, onChange, errors }: Props) {
             </label>
           </>
         )}
-        {errors.logo && (
-          <p className="mt-1 text-sm text-red-600">{errors.logo}</p>
+        {(errors.logo || logoError) && (
+          <p className="mt-1 text-sm text-red-600">{logoError || errors.logo}</p>
         )}
+        <p className="mt-1 text-xs text-gray-500">
+          💡 정사각형(1:1 비율) 이미지, 최소 200x200 픽셀 권장
+        </p>
       </div>
 
       {/* 회사 전경 이미지 업로드 */}

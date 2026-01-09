@@ -35,6 +35,8 @@ const initialFormData: JobFormData = {
 
   // 비자 및 언어
   visaSponsorship: true,
+  forKorean: true,        // 기본값: 내국인 채용
+  forForeigner: true,     // 기본값: 외국인 채용
   koreanLevel: 'INTERMEDIATE',
   englishLevel: 'FLUENT',
 

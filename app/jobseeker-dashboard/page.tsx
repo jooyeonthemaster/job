@@ -34,7 +34,7 @@ export default function JobSeekerDashboard() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
 
   const checklist = getProfileChecklist(profileData);
-  const checklistPercentage = calculateChecklistPercentage(checklist);
+  const checklistPercentage = calculateChecklistPercentage(profileData);
 
   const handleDeleteAccount = () => {
     deleteAccount(user, logout);

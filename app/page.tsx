@@ -8,6 +8,7 @@ import CompanyCard from '@/components/CompanyCard';
 import AdBanner from '@/components/ui/AdBanner';
 import { supabase } from '@/lib/supabase/config';
 import { jobs as dummyJobs, companies } from '@/lib/data';
+import { formatSalary } from '@/utils/jobFormatters';
 import { useAuth } from '@/contexts/AuthContext_Supabase';
 import {
   Search,
@@ -70,6 +71,47 @@ export default function Home() {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedLocation, setSelectedLocation] = useState('all');
   const [selectedExperience, setSelectedExperience] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // 검색어로 jobs 필터링
+  const filterJobs = (jobs: TransformedJob[]) => {
+    if (!searchQuery.trim()) return jobs;
+    const query = searchQuery.toLowerCase().trim();
+    return jobs.filter(job =>
+      job.position?.toLowerCase().includes(query) ||
+      job.company?.toLowerCase().includes(query) ||
+      job.location?.toLowerCase().includes(query) ||
+      job.skills?.some((skill: string) => skill.toLowerCase().includes(query))
+    );
+  };
+
+  // 필터링된 jobs
+  const filteredTopJobs = filterJobs(topJobs);
+  const filteredMiddleJobs = filterJobs(middleJobs);
+  const filteredBottomJobs = filterJobs(bottomJobs);
+
+  // Enter 키 검색 - /jobs 페이지로 이동하면서 검색어 전달
+  const handleSearch = () => {
+    if (searchQuery.trim()) {
+      router.push(`/jobs?search=${encodeURIComponent(searchQuery.trim())}`);
+    } else {
+      router.push('/jobs');
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
+
+  // 필터 초기화
+  const handleReset = () => {
+    setSearchQuery('');
+    setSelectedCategory('all');
+    setSelectedLocation('all');
+    setSelectedExperience('all');
+  };
 
   // 경험 레벨 라벨 변환
   const getExperienceLabel = (level: string) => {
@@ -105,7 +147,7 @@ export default function Home() {
       position: job.title || '',
       location: job.location || '',
       experience: getExperienceLabel(job.experience_level),
-      salary: `${Math.floor(job.salary_min / 10000)}만-${Math.floor(job.salary_max / 10000)}만원`,
+      salary: formatSalary(job.salary_min, job.salary_max),
       type: getEmploymentTypeLabel(job.employment_type),
       skills: [],
       deadline: 'D-30',
@@ -135,7 +177,7 @@ export default function Home() {
       position: job.title,
       location: job.location,
       experience: getExperienceLabel(job.experienceLevel),
-      salary: `${Math.floor(job.salary.min / 10000)}만-${Math.floor(job.salary.max / 10000)}만원`,
+      salary: formatSalary(job.salary.min, job.salary.max),
       type: getEmploymentTypeLabel(job.employmentType),
       skills: job.tags || [],
       deadline: getDaysUntilDeadline(),
@@ -280,11 +322,25 @@ export default function Home() {
                 <Search className="w-5 h-5 text-gray-400 mr-3 flex-shrink-0" />
                 <input
                   type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={handleKeyDown}
                   placeholder="직무, 회사명, 키워드로 검색하세요"
                   className="flex-1 bg-transparent outline-none text-gray-700 placeholder:text-gray-400"
                 />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="text-gray-400 hover:text-gray-600 ml-2"
+                  >
+                    ✕
+                  </button>
+                )}
               </div>
-              <button className="bg-primary-600 text-white font-semibold px-8 py-3 rounded-lg hover:bg-primary-700 transition-colors shadow-md hover:shadow-lg flex-shrink-0">
+              <button
+                onClick={handleSearch}
+                className="bg-primary-600 text-white font-semibold px-8 py-3 rounded-lg hover:bg-primary-700 transition-colors shadow-md hover:shadow-lg flex-shrink-0"
+              >
                 검색
               </button>
             </div>
@@ -312,7 +368,7 @@ export default function Home() {
               <button className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-primary-600 hover:bg-primary-50 rounded-lg transition-colors">
                 <Filter className="w-4 h-4" />상세 필터
               </button>
-              <button className="text-sm text-gray-500 hover:text-gray-700 transition-colors">초기화</button>
+              <button onClick={handleReset} className="text-sm text-gray-500 hover:text-gray-700 transition-colors">초기화</button>
             </div>
           </div>
         </div>

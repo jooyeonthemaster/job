@@ -80,7 +80,53 @@ export default function CustomCloudinaryUpload({
 
   const config = getConfigByType();
 
-  // 파일 검증
+  // 이미지 크기 및 비율 검증
+  const validateImageDimensions = (file: File): Promise<string | null> => {
+    return new Promise((resolve) => {
+      const img = new window.Image();
+      const objectUrl = URL.createObjectURL(file);
+
+      img.onload = () => {
+        URL.revokeObjectURL(objectUrl);
+        const { width, height } = img;
+
+        // 로고 타입일 경우 추가 검증
+        if (type === 'logo') {
+          // 최소 크기 검증 (200x200)
+          if (width < 200 || height < 200) {
+            resolve('로고 이미지는 최소 200x200 픽셀 이상이어야 합니다.');
+            return;
+          }
+
+          // 1:1 비율 검증 (20% 오차 허용)
+          const aspectRatio = width / height;
+          if (aspectRatio < 0.8 || aspectRatio > 1.2) {
+            resolve('로고 이미지는 정사각형(1:1 비율)에 가까워야 합니다. 현재 비율이 너무 넓거나 좁습니다.');
+            return;
+          }
+        }
+
+        // 프로필 타입일 경우 추가 검증
+        if (type === 'profile') {
+          if (width < 150 || height < 150) {
+            resolve('프로필 이미지는 최소 150x150 픽셀 이상이어야 합니다.');
+            return;
+          }
+        }
+
+        resolve(null);
+      };
+
+      img.onerror = () => {
+        URL.revokeObjectURL(objectUrl);
+        resolve('이미지를 로드할 수 없습니다.');
+      };
+
+      img.src = objectUrl;
+    });
+  };
+
+  // 파일 검증 (기본 검증)
   const validateFile = (file: File): string | null => {
     if (file.size > config.maxSize) {
       return `파일 크기는 ${config.maxSize / 1024 / 1024}MB 이하여야 합니다.`;
@@ -128,11 +174,19 @@ export default function CustomCloudinaryUpload({
 
   // 파일 업로드 처리
   const handleFileUpload = async (file: File) => {
-    // 검증
+    // 기본 검증 (파일 크기, 타입)
     const validationError = validateFile(file);
     if (validationError) {
       setError(validationError);
       onUploadError?.(validationError);
+      return;
+    }
+
+    // 이미지 크기 및 비율 검증 (로고/프로필)
+    const dimensionError = await validateImageDimensions(file);
+    if (dimensionError) {
+      setError(dimensionError);
+      onUploadError?.(dimensionError);
       return;
     }
 
@@ -245,11 +299,11 @@ export default function CustomCloudinaryUpload({
               type === 'profile' ? 'aspect-square max-w-xs mx-auto' :
               type === 'logo' ? 'aspect-square max-w-sm mx-auto' :
               'aspect-[3/1] max-w-2xl mx-auto'
-            } overflow-hidden rounded-md border-2 border-primary-200`}>
+            } overflow-hidden rounded-md border-2 border-primary-200 ${type === 'logo' ? 'bg-gray-50' : ''}`}>
               <img
                 src={preview}
                 alt="Preview"
-                className="w-full h-full object-cover"
+                className={`w-full h-full ${type === 'logo' ? 'object-contain p-2' : 'object-cover'}`}
               />
               
               {/* 오버레이 */}
@@ -426,8 +480,8 @@ export default function CustomCloudinaryUpload({
                       {type === 'logo' && (
                         <>
                           <li>• 투명 배경(PNG)이 가장 깔끔합니다</li>
-                          <li>• 로고가 중앙에 위치하도록 여백을 두세요</li>
-                          <li>• 정사각형 비율로 조정됩니다</li>
+                          <li>• 최소 200x200 픽셀 이상 필요</li>
+                          <li>• 정사각형(1:1 비율)에 가까운 이미지 권장</li>
                         </>
                       )}
                       {type === 'banner' && (

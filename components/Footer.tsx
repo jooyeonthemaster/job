@@ -10,7 +10,7 @@ export default function Footer() {
           <div>
             <div className="flex items-center gap-2.5 mb-4">
               <Image
-                src="/logo.jpg"
+                src="/puterlogo.png"
                 alt="Bridge World"
                 width={48}
                 height={48}
