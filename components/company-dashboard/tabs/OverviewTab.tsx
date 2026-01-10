@@ -28,12 +28,12 @@ export const OverviewTab = ({ company, jobs, onTabChange }: OverviewTabProps) =>
   const isComplete = optionalPercentage >= 100;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1 sm:mb-2">
           안녕하세요, {company.name}님
         </h1>
-        <p className="text-gray-600">오늘의 채용 현황을 확인하세요</p>
+        <p className="text-sm sm:text-base text-gray-600">오늘의 채용 현황을 확인하세요</p>
       </div>
 
       {/* 프로필 완성 축하 배너 (선택 항목 100%일 때만) */}
@@ -51,37 +51,37 @@ export const OverviewTab = ({ company, jobs, onTabChange }: OverviewTabProps) =>
       )}
 
       {/* Quick Actions */}
-      <div className="bg-white rounded-md p-6 shadow-sm">
-        <h2 className="text-xl font-bold text-gray-900 mb-4">빠른 작업</h2>
-        <div className="grid md:grid-cols-4 gap-4">
+      <div className="bg-white rounded-md p-4 sm:p-6 shadow-sm">
+        <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-3 sm:mb-4">빠른 작업</h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
           <Link
             href="/company-dashboard/jobs/create"
-            className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-primary-500 hover:bg-primary-50 transition-all"
+            className="p-3 sm:p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-primary-500 hover:bg-primary-50 transition-all text-center"
           >
-            <PlusCircle className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-            <p className="text-sm font-medium text-gray-700">새 채용공고 등록</p>
+            <PlusCircle className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400 mx-auto mb-1.5 sm:mb-2" />
+            <p className="text-xs sm:text-sm font-medium text-gray-700">새 채용공고 등록</p>
           </Link>
           <button
             onClick={() => onTabChange('applicants')}
-            className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-primary-500 hover:bg-primary-50 transition-all"
+            className="p-3 sm:p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-primary-500 hover:bg-primary-50 transition-all text-center"
           >
-            <Users className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-            <p className="text-sm font-medium text-gray-700">지원자 관리</p>
+            <Users className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400 mx-auto mb-1.5 sm:mb-2" />
+            <p className="text-xs sm:text-sm font-medium text-gray-700">지원자 관리</p>
           </button>
           <Link
             href={`/companies/${company.id}`}
             target="_blank"
-            className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-primary-500 hover:bg-primary-50 transition-all"
+            className="p-3 sm:p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-primary-500 hover:bg-primary-50 transition-all text-center"
           >
-            <Eye className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-            <p className="text-sm font-medium text-gray-700">기업 정보 미리보기</p>
+            <Eye className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400 mx-auto mb-1.5 sm:mb-2" />
+            <p className="text-xs sm:text-sm font-medium text-gray-700">기업 정보 미리보기</p>
           </Link>
           <Link
             href="/company-dashboard/edit"
-            className="block p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-primary-500 hover:bg-primary-50 transition-all"
+            className="block p-3 sm:p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-primary-500 hover:bg-primary-50 transition-all text-center"
           >
-            <Edit className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-            <p className="text-sm font-medium text-gray-700">기업 정보 수정</p>
+            <Edit className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400 mx-auto mb-1.5 sm:mb-2" />
+            <p className="text-xs sm:text-sm font-medium text-gray-700">기업 정보 수정</p>
           </Link>
         </div>
       </div>

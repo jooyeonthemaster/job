@@ -13,16 +13,16 @@ interface ProfileTabProps {
 
 export const ProfileTab = ({ company }: ProfileTabProps) => {
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* 헤더 */}
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">기업 정보</h1>
-          <p className="text-gray-600">공개 프로필에 표시되는 기업 정보를 관리하세요</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1 sm:mb-2">기업 정보</h1>
+          <p className="text-sm sm:text-base text-gray-600">공개 프로필에 표시되는 기업 정보를 관리하세요</p>
         </div>
         <Link
           href="/company-dashboard/edit"
-          className="inline-flex items-center gap-2 px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm sm:text-base whitespace-nowrap"
         >
           <Edit className="w-4 h-4" />
           수정하기
@@ -30,38 +30,38 @@ export const ProfileTab = ({ company }: ProfileTabProps) => {
       </div>
 
       {/* 로고 & 기본 정보 카드 */}
-      <div className="bg-white rounded-md p-8 shadow-sm">
-        <div className="flex items-start gap-6">
+      <div className="bg-white rounded-md p-4 sm:p-8 shadow-sm">
+        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6">
           {/* 로고 */}
           {company.logo ? (
-            <div className="flex-shrink-0">
+            <div className="shrink-0">
               <img
                 src={company.logo}
                 alt={`${company.name} 로고`}
-                className="w-24 h-24 object-contain rounded-lg border border-gray-200"
+                className="w-20 h-20 sm:w-24 sm:h-24 object-contain rounded-lg border border-gray-200"
               />
             </div>
           ) : (
-            <div className="flex-shrink-0 w-24 h-24 bg-gray-100 rounded-lg flex items-center justify-center border border-gray-200">
-              <Building2 className="w-12 h-12 text-gray-400" />
+            <div className="shrink-0 w-20 h-20 sm:w-24 sm:h-24 bg-gray-100 rounded-lg flex items-center justify-center border border-gray-200">
+              <Building2 className="w-10 h-10 sm:w-12 sm:h-12 text-gray-400" />
             </div>
           )}
 
           {/* 기업명 & 한 줄 소개 */}
-          <div className="flex-1">
-            <h2 className="text-2xl font-bold text-gray-900 mb-1">
+          <div className="flex-1 min-w-0 text-center sm:text-left">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">
               {company.name}
-              {company.name_en && <span className="text-gray-500 font-normal ml-2">({company.name_en})</span>}
+              {company.name_en && <span className="text-gray-500 font-normal text-base sm:text-lg ml-1 sm:ml-2">({company.name_en})</span>}
             </h2>
             {company.summary && (
-              <p className="text-gray-600 mb-3">{company.summary}</p>
+              <p className="text-sm sm:text-base text-gray-600 mb-3">{company.summary}</p>
             )}
-            <div className="flex flex-wrap gap-2">
-              <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${getCompanyStatusColor(company.status)}`}>
+            <div className="flex flex-wrap justify-center sm:justify-start gap-2">
+              <span className={`inline-flex items-center px-2.5 sm:px-3 py-1 rounded-full text-xs font-medium ${getCompanyStatusColor(company.status)}`}>
                 {getCompanyStatusText(company.status)}
               </span>
               {company.profile_completed && (
-                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                <span className="inline-flex items-center px-2.5 sm:px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
                   프로필 완성
                 </span>
               )}
@@ -71,96 +71,96 @@ export const ProfileTab = ({ company }: ProfileTabProps) => {
       </div>
 
       {/* 사업자 정보 */}
-      <div className="bg-white rounded-md p-6 shadow-sm">
-        <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-          <FileText className="w-5 h-5 text-primary-600" />
+      <div className="bg-white rounded-md p-4 sm:p-6 shadow-sm">
+        <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-3 sm:mb-4 flex items-center gap-2">
+          <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-primary-600" />
           사업자 정보
         </h2>
-        <div className="grid md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-2 gap-3 sm:gap-6">
           <div>
-            <label className="text-sm text-gray-500">사업자등록번호</label>
-            <p className="text-gray-900 font-medium">{company.registration_number || '-'}</p>
+            <label className="text-xs sm:text-sm text-gray-500">사업자등록번호</label>
+            <p className="text-sm sm:text-base text-gray-900 font-medium">{company.registration_number || '-'}</p>
           </div>
           <div>
-            <label className="text-sm text-gray-500">대표자명</label>
-            <p className="text-gray-900 font-medium">{company.ceo_name || '-'}</p>
+            <label className="text-xs sm:text-sm text-gray-500">대표자명</label>
+            <p className="text-sm sm:text-base text-gray-900 font-medium">{company.ceo_name || '-'}</p>
           </div>
           <div>
-            <label className="text-sm text-gray-500">개업일자</label>
-            <p className="text-gray-900 font-medium">{company.established || '-'}</p>
+            <label className="text-xs sm:text-sm text-gray-500">개업일자</label>
+            <p className="text-sm sm:text-base text-gray-900 font-medium">{company.established || '-'}</p>
           </div>
           <div>
-            <label className="text-sm text-gray-500">사업자등록증</label>
+            <label className="text-xs sm:text-sm text-gray-500">사업자등록증</label>
             {company.registration_document ? (
               <a
                 href={company.registration_document}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-primary-600 hover:underline font-medium inline-flex items-center gap-1"
+                className="text-sm sm:text-base text-primary-600 hover:underline font-medium inline-flex items-center gap-1"
               >
-                <FileText className="w-4 h-4" />
+                <FileText className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 문서 보기
               </a>
             ) : (
-              <p className="text-gray-900 font-medium">-</p>
+              <p className="text-sm sm:text-base text-gray-900 font-medium">-</p>
             )}
           </div>
         </div>
       </div>
 
       {/* 기업 기본 정보 (K-Work 기반) */}
-      <div className="bg-white rounded-md p-6 shadow-sm">
-        <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-          <Building2 className="w-5 h-5 text-primary-600" />
+      <div className="bg-white rounded-md p-4 sm:p-6 shadow-sm">
+        <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-3 sm:mb-4 flex items-center gap-2">
+          <Building2 className="w-4 h-4 sm:w-5 sm:h-5 text-primary-600" />
           기업 기본 정보
         </h2>
-        <div className="grid md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-2 gap-3 sm:gap-6">
           <div>
-            <label className="text-sm text-gray-500">기업 형태</label>
-            <p className="text-gray-900 font-medium">{company.company_type || '-'}</p>
+            <label className="text-xs sm:text-sm text-gray-500">기업 형태</label>
+            <p className="text-sm sm:text-base text-gray-900 font-medium">{company.company_type || '-'}</p>
           </div>
           <div>
-            <label className="text-sm text-gray-500">기업 규모</label>
-            <p className="text-gray-900 font-medium">{company.employee_count || '-'}</p>
+            <label className="text-xs sm:text-sm text-gray-500">기업 규모</label>
+            <p className="text-sm sm:text-base text-gray-900 font-medium">{company.employee_count || '-'}</p>
           </div>
           <div>
-            <label className="text-sm text-gray-500">업태 (업종)</label>
-            <p className="text-gray-900 font-medium">{company.industry || '-'}</p>
+            <label className="text-xs sm:text-sm text-gray-500">업태 (업종)</label>
+            <p className="text-sm sm:text-base text-gray-900 font-medium">{company.industry || '-'}</p>
           </div>
           <div>
-            <label className="text-sm text-gray-500">대표번호</label>
-            <p className="text-gray-900 font-medium">{company.company_phone || company.phone || '-'}</p>
+            <label className="text-xs sm:text-sm text-gray-500">대표번호</label>
+            <p className="text-sm sm:text-base text-gray-900 font-medium">{company.company_phone || company.phone || '-'}</p>
           </div>
           <div>
-            <label className="text-sm text-gray-500">홈페이지</label>
+            <label className="text-xs sm:text-sm text-gray-500">홈페이지</label>
             {company.website ? (
               <a
                 href={company.website}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-primary-600 hover:underline font-medium inline-flex items-center gap-1"
+                className="text-sm sm:text-base text-primary-600 hover:underline font-medium inline-flex items-center gap-1"
               >
-                <Globe className="w-4 h-4" />
+                <Globe className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 바로가기
               </a>
             ) : (
-              <p className="text-gray-900 font-medium">-</p>
+              <p className="text-sm sm:text-base text-gray-900 font-medium">-</p>
             )}
           </div>
-          <div className="md:col-span-2">
-            <label className="text-sm text-gray-500">기업 주소</label>
-            <p className="text-gray-900 font-medium">{company.address || '-'}</p>
+          <div className="col-span-2">
+            <label className="text-xs sm:text-sm text-gray-500">기업 주소</label>
+            <p className="text-sm sm:text-base text-gray-900 font-medium">{company.address || '-'}</p>
             {company.location && company.location !== company.address && (
-              <p className="text-sm text-gray-500 mt-1">({company.location})</p>
+              <p className="text-xs sm:text-sm text-gray-500 mt-1">({company.location})</p>
             )}
           </div>
           {company.company_image && (
-            <div className="md:col-span-2">
-              <label className="text-sm text-gray-500 mb-2 block">회사 전경 이미지</label>
+            <div className="col-span-2">
+              <label className="text-xs sm:text-sm text-gray-500 mb-2 block">회사 전경 이미지</label>
               <img
                 src={company.company_image}
                 alt="회사 전경"
-                className="w-full max-h-64 object-cover rounded-lg border border-gray-200"
+                className="w-full max-h-48 sm:max-h-64 object-cover rounded-lg border border-gray-200"
               />
             </div>
           )}
@@ -168,52 +168,52 @@ export const ProfileTab = ({ company }: ProfileTabProps) => {
       </div>
 
       {/* 담당자 정보 */}
-      <div className="bg-white rounded-md p-6 shadow-sm">
-        <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-          <Users className="w-5 h-5 text-primary-600" />
+      <div className="bg-white rounded-md p-4 sm:p-6 shadow-sm">
+        <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-3 sm:mb-4 flex items-center gap-2">
+          <Users className="w-4 h-4 sm:w-5 sm:h-5 text-primary-600" />
           담당자 정보
         </h2>
-        <div className="grid md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-2 gap-3 sm:gap-6">
           <div>
-            <label className="text-sm text-gray-500">담당 부서</label>
-            <p className="text-gray-900 font-medium">{company.manager_department || '-'}</p>
+            <label className="text-xs sm:text-sm text-gray-500">담당 부서</label>
+            <p className="text-sm sm:text-base text-gray-900 font-medium">{company.manager_department || '-'}</p>
           </div>
           <div>
-            <label className="text-sm text-gray-500">담당자명</label>
-            <p className="text-gray-900 font-medium">{company.manager_name || '-'}</p>
+            <label className="text-xs sm:text-sm text-gray-500">담당자명</label>
+            <p className="text-sm sm:text-base text-gray-900 font-medium">{company.manager_name || '-'}</p>
           </div>
           <div>
-            <label className="text-sm text-gray-500">직급/직책</label>
-            <p className="text-gray-900 font-medium">{company.manager_position || '-'}</p>
+            <label className="text-xs sm:text-sm text-gray-500">직급/직책</label>
+            <p className="text-sm sm:text-base text-gray-900 font-medium">{company.manager_position || '-'}</p>
           </div>
           <div>
-            <label className="text-sm text-gray-500">담당자 연락처</label>
-            <p className="text-gray-900 font-medium">{company.manager_phone || '-'}</p>
+            <label className="text-xs sm:text-sm text-gray-500">담당자 연락처</label>
+            <p className="text-sm sm:text-base text-gray-900 font-medium">{company.manager_phone || '-'}</p>
           </div>
         </div>
       </div>
 
       {/* 복지 정보 */}
-      <div className="bg-white rounded-md p-6 shadow-sm">
-        <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-          <Building2 className="w-5 h-5 text-primary-600" />
+      <div className="bg-white rounded-md p-4 sm:p-6 shadow-sm">
+        <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-3 sm:mb-4 flex items-center gap-2">
+          <Building2 className="w-4 h-4 sm:w-5 sm:h-5 text-primary-600" />
           복지 정보
         </h2>
         <div>
-          <label className="text-sm text-gray-500 mb-2 block">제공 복지</label>
+          <label className="text-xs sm:text-sm text-gray-500 mb-2 block">제공 복지</label>
           {company.basic_benefits && company.basic_benefits.length > 0 ? (
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-1.5 sm:gap-2">
               {company.basic_benefits.map((benefit: any, idx: number) => (
                 <span
                   key={idx}
-                  className="px-3 py-1.5 bg-primary-50 text-primary-700 rounded-lg text-sm font-medium"
+                  className="px-2.5 sm:px-3 py-1 sm:py-1.5 bg-primary-50 text-primary-700 rounded-lg text-xs sm:text-sm font-medium"
                 >
                   {benefit.title || benefit}
                 </span>
               ))}
             </div>
           ) : (
-            <p className="text-gray-500">등록된 복지 정보가 없습니다</p>
+            <p className="text-sm sm:text-base text-gray-500">등록된 복지 정보가 없습니다</p>
           )}
         </div>
       </div>
